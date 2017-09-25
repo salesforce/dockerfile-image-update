@@ -1,0 +1,26 @@
+version: '2'
+services:
+    dockerfile-image-update:
+        # This has to point to the target registry and be the component name that the pipeline spits out
+        env_file:
+            # This tool gets external endpoints from environment variables. We store external endpoints in this file.
+            - ./dockerfile-image-update-itest/itest.env
+            # We recommend a seperate secret file containing git_api_token.
+            # export user_itest_secrets_file_secret=/path/to/secretFile in your shell
+            # For CI purposes, the secret file can be added to Jenkins Credential Store with the id user_itest_secrets_file
+            - ${user_itest_secrets_file_secret}
+        image: dockerfile-image-update
+        volumes:
+            # This allows us to get our test results back to workspace for the pipeline to pick up
+            - ./test-results:/tmp/test-results
+            # Place integration test into the component so that we don't have to ship integration tests inside the component
+            - ./dockerfile-image-update-itest/target/integration-test.jar:/tmp/integration-test.jar
+            # If you have a secret file, you can volume mount the file to gain access to it
+            # export user_itest_secrets_file_secret=/path/to/secretFile in shell
+            # For CI purposes, the secret file can be added to Jenkins Credential Store with the id user_itest_secrets_file
+            #- ${user_itest_secrets_file_secret}:/tmp/secretFile
+        # Override the default command, because we will invoke the command within the integration test
+        entrypoint:
+            - java
+            - -jar
+            - /tmp/integration-test.jar

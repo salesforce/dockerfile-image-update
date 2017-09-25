@@ -1,0 +1,30 @@
+# IntelliJ files
+.idea/
+*.ipr
+*.iws
+*.iml
+
+# Vim files
+*.swp
+*.bak
+tags
+
+# Eclipse files
+.classpath
+.project
+.settings
+test-output/
+
+configuration
+launcherHome*
+
+# Package Files #
+# Need some jar's #
+#*.jar
+*.war
+*.ear
+target/
+/test-results/
+.imageupdate/
+dockerfile-image-update-itest/src/test/
+test-results/
