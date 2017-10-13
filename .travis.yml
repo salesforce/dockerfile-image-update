@@ -8,3 +8,6 @@ services:
 script:
   - mvn install
   - docker build -t salesforce/dockerfile-image-update .
+
+after_success:
+  - mvn coveralls:report
