@@ -24,6 +24,7 @@
 
     <properties>
         <slf4j.version>1.7.25</slf4j.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
     <dependencies>
