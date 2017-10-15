@@ -1,3 +1,6 @@
+[![Build Status](https://travis-ci.org/salesforce/dockerfile-image-update.svg?branch=master)](https://travis-ci.org/salesforce/dockerfile-image-update)
+[![Coverage Status](https://coveralls.io/repos/github/salesforce/dockerfile-image-update/badge.svg?branch=master)](https://coveralls.io/github/salesforce/dockerfile-image-update?branch=master)
+
 # Dockerfile Image Updater
 
 Docker builds applications using a file called Dockerfile. Within the Dockerfile, we have a specified base image and a tag. If the base image is rebuilt onto a new tag, the application that relies on this base image will never be updated to the recent tag: this is especially an issue if the update is a security update. This tool, the Dockerfile Image Updater was created to fix that problem.
