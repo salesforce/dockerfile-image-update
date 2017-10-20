@@ -63,6 +63,7 @@ public class ChildCommandTest {
 
         GHRepository repo = org.createRepository(NAME)
                 .description("Delete if this exists. If it exists, then an integration test crashed somewhere.")
+                .private_(false)
                 .create();
         log.info("Initializing {}", repo.getFullName());
         createdRepos.add(repo);

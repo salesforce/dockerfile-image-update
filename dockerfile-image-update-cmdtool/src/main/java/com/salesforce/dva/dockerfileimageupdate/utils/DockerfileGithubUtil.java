@@ -194,7 +194,7 @@ public class DockerfileGithubUtil {
             String ownerOrg = myself.getLogin();
             storeRepo = githubUtil.getRepo(Paths.get(ownerOrg, store).toString());
         } catch (IOException e) {
-            storeRepo = githubUtil.createPrivateRepo(store);
+            storeRepo = githubUtil.createPublicRepo(store);
         }
         updateStoreOnGithub(storeRepo, STORE_JSON_FILE, img, tag);
     }

@@ -71,8 +71,7 @@ public class AllCommandTest {
         cleanBefore();
 
         GHOrganization org = github.getOrganization(ORGS.get(0));
-        initializeRepos(org, REPOS, IMAGE_1);
-
+        TestCommon.initializeRepos(org, REPOS, IMAGE_1, createdRepos, githubUtil);
 
         GHRepository store = github.createRepository(STORE_NAME)
                 .description("Delete if this exists. If it exists, then an integration test crashed somewhere.")
@@ -87,26 +86,13 @@ public class AllCommandTest {
 
         for (String s: ORGS) {
             org = github.getOrganization(s);
-            initializeRepos(org, DUPLICATES, IMAGE_2);
+            TestCommon.initializeRepos(org, DUPLICATES, IMAGE_2, createdRepos, githubUtil);
         }
         /* We need to wait because there is a delay on the search API used in the all command; it takes time
          * for the search API to pick up recently created repositories.
          */
         checkIfSearchUpToDate("image1", IMAGE_1, REPOS.size());
         checkIfSearchUpToDate("image2", IMAGE_2, DUPLICATES.size() * ORGS.size());
-    }
-
-    private void initializeRepos(GHOrganization org, List<String> repos, String image) throws Exception {
-        GHRepository repo;
-        for (String s : repos) {
-            repo = org.createRepository(s)
-                    .description("Delete if this exists. If it exists, then an integration test crashed somewhere.")
-                    .create();
-            repo.createContent("FROM " + image + ":test", "Integration Testing", "Dockerfile");
-            createdRepos.add(repo);
-            log.info("Initializing {}/{}", org.getLogin(), s);
-            githubUtil.tryRetrievingContent(repo, "Dockerfile", repo.getDefaultBranch());
-        }
     }
 
     /* We need to wait because there is a delay on the search API used in the all command; it takes time

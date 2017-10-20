@@ -41,9 +41,17 @@ public class GithubUtil {
         return github.getRepository(repo);
     }
 
-    public GHRepository createPrivateRepo(String repo) throws IOException {
-        GHCreateRepositoryBuilder repoBuilder = github.createRepository(repo);
-        repoBuilder.private_(true);
+    /**
+     * Create a public repo. We cannot make private repos for open source users because they'd be forced to buy a
+     * paid account.
+     *
+     * @param repoName Name of the repository
+     * @return
+     * @throws IOException
+     */
+    public GHRepository createPublicRepo(String repoName) throws IOException {
+        GHCreateRepositoryBuilder repoBuilder = github.createRepository(repoName);
+        repoBuilder.private_(false);
         return repoBuilder.create();
     }
 

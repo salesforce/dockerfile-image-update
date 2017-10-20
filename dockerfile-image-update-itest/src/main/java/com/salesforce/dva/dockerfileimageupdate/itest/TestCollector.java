@@ -25,12 +25,7 @@ public class TestCollector {
         // TODO: Can use reflection to automatically add these
         List<Object> tests = new ArrayList<>();
 
-        Set<ClassPath.ClassInfo> allClasses = new TreeSet<>(new Comparator<ClassPath.ClassInfo>() {
-            @Override
-            public int compare(ClassPath.ClassInfo l, ClassPath.ClassInfo r) {
-                return l.getName().compareTo(r.getName());
-            }
-        });
+        Set<ClassPath.ClassInfo> allClasses = new TreeSet<>(Comparator.comparing(ClassPath.ClassInfo::getName));
 
         ClassPath classpath = ClassPath.from(TestCollector.class.getClassLoader());
         allClasses.addAll(classpath.getTopLevelClasses("com.salesforce.dva.dockerfileimageupdate.itest.tests"));

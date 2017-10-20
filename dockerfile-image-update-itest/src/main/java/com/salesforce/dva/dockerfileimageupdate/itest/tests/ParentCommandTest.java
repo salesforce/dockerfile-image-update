@@ -1,11 +1,3 @@
-/*
- * Copyright (c) 2017, salesforce.com, inc.
- * All rights reserved.
- * Licensed under the BSD 3-Clause license.
- * For full license text, see LICENSE.txt file in the repo root or
- * https://opensource.org/licenses/BSD-3-Clause
- */
-
 package com.salesforce.dva.dockerfileimageupdate.itest.tests;
 
 import com.google.gson.JsonElement;
@@ -47,7 +39,7 @@ public class ParentCommandTest {
             DUPLICATES.get(1), DUPLICATES.get(1)+"-1", DUPLICATES.get(1)+"-2");
 
     private static final List<String> ORGS = Arrays.asList(
-            "dva-tests", "dva-tests-2", "dva-tests-3");
+            "dockerfile-image-update-itest", "dockerfile-image-update-itest-2", "dockerfile-image-update-itest-3");
 
     private static final String IMAGE_1 = UUID.randomUUID().toString();
     private static final String IMAGE_2 = UUID.randomUUID().toString();
@@ -78,11 +70,11 @@ public class ParentCommandTest {
         cleanBefore();
 
         GHOrganization org = github.getOrganization(ORGS.get(0));
-        initializeRepos(org, REPOS, IMAGE_1);
+        TestCommon.initializeRepos(org, REPOS, IMAGE_1, createdRepos, githubUtil);
 
         for (String s: ORGS) {
             org = github.getOrganization(s);
-            initializeRepos(org, DUPLICATES, IMAGE_2);
+            TestCommon.initializeRepos(org, DUPLICATES, IMAGE_2, createdRepos, githubUtil);
         }
         /* We need to wait because there is a delay on the search API used in the parent command; it takes time
          * for the search API to pick up recently created repositories.
@@ -93,7 +85,7 @@ public class ParentCommandTest {
 
     private void checkIfSearchUpToDate(String imageName, String image, int numberOfRepos) throws InterruptedException {
         boolean bypassedDelay = false;
-        for (int i = 0; i < 60; i++) {
+        for (int i = 0; i < 120; i++) {
             PagedSearchIterable<GHContent> searchImage1 = github.searchContent().
                     language("Dockerfile").q(image).list();
             log.info("Currently {} search gives {} results. It should be {}.", imageName,
@@ -107,19 +99,6 @@ public class ParentCommandTest {
         }
         if (!bypassedDelay) {
             log.error("Failed to initialize.");
-        }
-    }
-
-    private void initializeRepos(GHOrganization org, List<String> repos, String image) throws Exception {
-        GHRepository repo;
-        for (String s : repos) {
-            repo = org.createRepository(s)
-                    .description("Delete if this exists. If it exists, then an integration test crashed somewhere.")
-                    .create();
-            repo.createContent("FROM " + image + ":test", "Integration Testing", "Dockerfile");
-            createdRepos.add(repo);
-            log.info("Initializing {}/{}", org.getLogin(), s);
-            githubUtil.tryRetrievingContent(repo, "Dockerfile", repo.getDefaultBranch());
         }
     }
 
