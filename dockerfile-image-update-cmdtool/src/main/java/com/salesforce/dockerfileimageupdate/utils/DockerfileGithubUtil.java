@@ -115,7 +115,7 @@ public class DockerfileGithubUtil {
 
     protected void modifyOnGithubRecursive(GHRepository repo, GHContent content,
                                            String branch, String img, String tag) throws IOException {
-        if (content.getType().equals(Constants.GITHUB_FILE)) {
+        if (content.isFile()) {
             modifyOnGithub(content, branch, img, tag, "");
         } else {
             for (GHContent newContent : repo.getDirectoryContent(content.getPath(), branch)) {
@@ -209,7 +209,7 @@ public class DockerfileGithubUtil {
         log.info("Loading image store at commit {}", latestCommit);
         GHContent content = repo.getFileContent(path, latestCommit);
 
-        if (content.getType().equals(Constants.GITHUB_FILE)) {
+        if (content.isFile()) {
             JsonElement json;
             try (InputStream stream = content.read(); InputStreamReader streamR = new InputStreamReader(stream)) {
                 try {

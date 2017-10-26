@@ -234,7 +234,7 @@ public class DockerfileGithubUtilTest {
         List<GHContent> tree = mock(List.class);
         Iterator<GHContent> treeIterator = mock(Iterator.class);
         GHContent content = mock(GHContent.class);
-        when(content.getType()).thenReturn("tree", "file");
+        when(content.isFile()).thenReturn(false, true);
         when(content.getPath()).thenReturn("path");
         when(content.read()).thenReturn(new InputStream() {
             @Override
@@ -254,7 +254,7 @@ public class DockerfileGithubUtilTest {
         dockerfileGithubUtil = new DockerfileGithubUtil(githubUtil);
         dockerfileGithubUtil.modifyOnGithubRecursive(repo, content, branch, img, tag);
 
-        verify(content, times(6)).getType();
+        verify(content, times(6)).isFile();
 
     }
 
