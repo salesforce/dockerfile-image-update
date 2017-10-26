@@ -12,7 +12,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
         <artifactId>dockerfile-image-update-parent</artifactId>
-        <groupId>com.salesforce.dva</groupId>
+        <groupId>com.salesforce</groupId>
         <version>1.0-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -26,11 +26,6 @@
             <version>19.0</version>
         </dependency>
         <dependency>
-            <groupId>commons-io</groupId>
-            <artifactId>commons-io</artifactId>
-            <version>2.5</version>
-        </dependency>
-        <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
             <version>1.7.13</version>
@@ -41,7 +36,17 @@
             <version>6.8</version>
         </dependency>
         <dependency>
-            <groupId>com.salesforce.dva</groupId>
+            <groupId>org.assertj</groupId>
+            <artifactId>assertj-core</artifactId>
+            <version>3.8.0</version>
+        </dependency>
+        <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+            <version>2.6</version>
+        </dependency>
+        <dependency>
+            <groupId>com.salesforce</groupId>
             <artifactId>dockerfile-image-update-githubutils</artifactId>
             <version>1.0-SNAPSHOT</version>
         </dependency>
@@ -71,7 +76,7 @@
                             </filters>
                             <transformers>
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>com.salesforce.dva.dockerfileimageupdate.itest.TestStarter</mainClass>
+                                    <mainClass>com.salesforce.dockerfileimageupdate.itest.TestStarter</mainClass>
                                 </transformer>
                             </transformers>
                             <finalName>integration-test</finalName>

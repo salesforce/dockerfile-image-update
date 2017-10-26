@@ -1,13 +1,21 @@
+env:
+  global:
+  - secure: exlhJ14KXO22FaWhPfZWVV0Uu6wxSBVdbx/Ad7KWeU4OyecFJMdWZ9BvmTDN35jfrlbwxl+PnodrSBWy0HYe79/FmfPDATQw6CWcZxlN1PvoBzPaJjyVaKvDJioVwc0LHB15iwpZdpcmcOVZVGAxG7J1fjRCt6UNHEX/Pre30Z54fl0aGuGXryRPkVbxyPK4UYNA2w615hVQ1tSvrLPNe1pP3TKjHVVra1ds18wFunwviKf2fif+gDLAU44CbJKbISzVQbs+U3w1abdJ19QPzvNzxePZnxIN/h1txJAqqssTYFu6Jp/dyMFbQ9A9vaO1JcxbS2OOkbO5mMQIu1eEhdypSnDrXl3z3AsBc2b/CzDfZq5lAXNpzSeNYFF2cJZRFk6Ab6dq5G654+la+9O1om+Qzg3Ts9VXVLlATwWmJ80hZ5Ag+h3snxoBqO9zIMeMOJhVVKzgqsXB1ZqOSkrwWvNmNpNUp5Ecf+WU+8hXUhthaJp1r7xHspyAGfxDgI25DIeiXLmHCAQJaC+IMRWZAEgWR3BBf+HuXCoRxnhKL66DBxvyPpBSq9OU6L6gG0VmbPCkEf3j8bi8jTZ00OkgUcuuY/jZgLsaoo5S+hzhs9htBD34jTYktsOGYU5K65fyX/S8F/FMDSuqAzfoDxmUcjiGlAxljWssCENCRc6B2CI=
+  - secure: F0oPO+HqtBZ9qxWXcjq7mzXBVUHKWoX3zE2VGIumVxwvZANNoIbgJu4jMki6RKc8DIOeLd7YcT7Hl1m+kqs1NJ07iFPNI6z0752m0KOvJR+d2vh9X1pKbeEVjNFwtY15eiZdbNJfFzWgBdZJDEuJfeguRdTCWQqPr7FnPCvPf1nBQAvQuYgMoJK1Un9U3DGdOkMMb0he5QCwQc/DklBm7Qv1GyH2VsGB9v+hACaQsHsweKrosLZJPd/LEKSy2MNlevyO5QUnnrBjeKagrGCCCDjfsnP3OnnpSGhwmHqTSY/rTcoSmEbIe1+k5gaAhEh3oMZhe9jjtN7z03nL5OiTkC2s8Lgw4DsMdNiNp8PiA7WCPS/1N1rrgeZnFhBIz2c4h3ULexS7QHmcDzvUN9YageorPp8dWGxeA4LXEYiCfH8UhcdxPLSdJFHNfB+hfxUo3+it6xu2z4aE2AVFrLNS1M2/OJYUACIvQyiQeh2sKLZFLiwmwukZLlI2XUfogGaiFbhfP9o+IsCkPNbGB5W4ctXI4erqUppfcEn8ki4igB31t07n495yJIw64WzL4puu0SDcsdvDbinEga1+CIJsrHErIEhox8+EFjIGhXV0KMmHJE8gLMYO943qIHLCDNJgWxAlfpx4B95fDykEbw2HlfSH5/SWQlGVFleH7OHgpK0=
+  - secure: c3OrsEwYJ/g7zZmeEhG3A06jwk9rr8qDAnI43znyLlgGMuym9EViwM/yAScWz9tb6KjkkIss3VkYeV0bcQKgCE8HVrr49lZgAj28/Japa5TbidQ3tizDFr4KhRMOiI5ZnUD8X+NqOAuhZ7ulQ/AYDqOmeNoKbKVtBNimdjGuGbI6vwjrSwEhUhTZavOP9px0UfG/VI0ZBIeoJIeorGnAv/MKCMgk5HfSaoL692CWDpESis2a68pTeedHSRBCs4aM3BU++szdst2JEQ2qVbpF4ta+bvfLngjZazQsO53erHchWKUP/yqUdS89ZG8PM/yIBsDwcUgbcuy8WQpH7qCW/QN/GlDCug5I+aLfOSBpo92lWtp3RZiP/vvG8WguBSshr4zM+LcppW74NFs8REBOzeD978QSiS0//639Oa/jJaU2zpp+zGf/T/OUsHuVTh5CngQTtc6UIc6gF9Eqp2FVNcgETJSPoEEGdys6pFOfJblYgJFKB8/0LvZJSXh5p5MuleqSk+VJr6gxXyDDFwx9K+CwoejmnUgCEwJaSv6w0HeJdJV3lrnFWivHx/NG4Wg8DlRu/uSR8Kvgwg2hiihMmHyCeWA7BbRBSe5S/y3R5wULjBoNkFcoVRac2UVvWCxZ7170KxwyHO3DVCbEpVUr6Y20Z+SQA3Lgko0sVTcE8q4=
 sudo: required
-
 language: java
-
 services:
-  - docker
-
+- docker
 script:
-  - mvn install
-  - docker build -t salesforce/dockerfile-image-update .
-
+- mvn --quiet --batch-mode install
+- docker build -t salesforce/dockerfile-image-update .
+- echo git_api_token=${ITEST_GH_TOKEN} > `pwd`/itest.env
+- export user_itest_secrets_file_secret=`pwd`/itest.env
+- docker-compose up
 after_success:
-  - mvn coveralls:report
+- mvn coveralls:report
+- if [ "${TRAVIS_BRANCH}" == "master" ]; then 
+      docker login -u="${DOCKER_USER}" -p="${DOCKER_PASSWORD}";
+      docker push salesforce/dockerfile-image-update; 
+  fi
