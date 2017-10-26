@@ -121,7 +121,7 @@ public class GithubUtil {
         return repo;
     }
 
-    public GHContent tryRetrievingContent (GHRepository repo, String path, String branch) throws InterruptedException {
+    public GHContent tryRetrievingContent(GHRepository repo, String path, String branch) throws InterruptedException {
         /* There are issues with the Github api returning that the Github repository exists, but has no content,
          * when we try to pull on it the moment it is created. The system must wait a short time before we can move on.
          */

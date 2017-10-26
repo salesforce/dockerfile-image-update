@@ -9,7 +9,10 @@
 package com.salesforce.dockerfileimageupdate.itest.tests;
 
 import com.salesforce.dockerfileimageupdate.githubutils.GithubUtil;
-import org.kohsuke.github.*;
+import org.kohsuke.github.GHOrganization;
+import org.kohsuke.github.GHRepository;
+import org.kohsuke.github.GitHub;
+import org.kohsuke.github.GitHubBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.Assert;
@@ -17,15 +20,13 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import java.io.IOException;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 
-import static com.salesforce.dockerfileimageupdate.itest.tests.TestCommon.printCollectedExceptionsAndFail;
+import static com.salesforce.dockerfileimageupdate.itest.tests.TestCommon.*;
+import static com.salesforce.dockerfileimageupdate.itest.tests.TestValidationCommon.checkIfSearchUpToDate;
 
 /**
  * Created by minho.park on 8/8/16.
@@ -64,10 +65,10 @@ public class AllCommandTest {
         github.checkApiUrlValidity();
         githubUtil = new GithubUtil(github);
 
-        cleanBefore();
+        cleanBefore(REPOS, DUPLICATES_CREATED_BY_GIT_HUB, STORE_NAME, github);
 
-        GHOrganization org = github.getOrganization(TestCommon.ORGS.get(0));
-        TestCommon.initializeRepos(org, REPOS, IMAGE_1, createdRepos, githubUtil);
+        GHOrganization org = github.getOrganization(ORGS.get(0));
+        initializeRepos(org, REPOS, IMAGE_1, createdRepos, githubUtil);
 
         GHRepository store = github.createRepository(STORE_NAME)
                 .description("Delete if this exists. If it exists, then an integration test crashed somewhere.")
@@ -80,81 +81,15 @@ public class AllCommandTest {
                 "Integration Testing", "store.json");
         createdRepos.add(store);
 
-        for (String s: TestCommon.ORGS) {
+        for (String s: ORGS) {
             org = github.getOrganization(s);
-            TestCommon.initializeRepos(org, DUPLICATES, IMAGE_2, createdRepos, githubUtil);
+            initializeRepos(org, DUPLICATES, IMAGE_2, createdRepos, githubUtil);
         }
         /* We need to wait because there is a delay on the search API used in the all command; it takes time
          * for the search API to pick up recently created repositories.
          */
-        checkIfSearchUpToDate("image1", IMAGE_1, REPOS.size());
-        checkIfSearchUpToDate("image2", IMAGE_2, DUPLICATES.size() * TestCommon.ORGS.size());
-    }
-
-    /* We need to wait because there is a delay on the search API used in the all command; it takes time
-     * for the search API to pick up recently created repositories.
-     */
-    private void checkIfSearchUpToDate(String imageName, String image, int numberOfRepos) throws InterruptedException {
-        boolean bypassedDelay = false;
-        for (int i = 0; i < 60; i++) {
-            PagedSearchIterable<GHContent> searchImage1 = github.searchContent().
-                    language("Dockerfile").q(image).list();
-            log.info("Currently {} search gives {} results. It should be {}.", imageName,
-                    searchImage1.getTotalCount(), numberOfRepos);
-            if (searchImage1.getTotalCount() >= 4) {
-                bypassedDelay = true;
-                break;
-            } else {
-                /* Arbitrary 3 seconds to space out the API search calls. */
-                Thread.sleep(TimeUnit.SECONDS.toMillis(3));
-            }
-        }
-        if (!bypassedDelay) {
-            log.error("Failed to initialize.");
-        }
-    }
-
-    private void cleanBefore() throws Exception {
-        printCollectedExceptionsAndFail(checkAndDeleteBefore(REPOS));
-        printCollectedExceptionsAndFail(checkAndDeleteBefore(DUPLICATES_CREATED_BY_GIT_HUB));
-    }
-
-    private List<Exception> checkAndDeleteBefore(List<String> repoNames) throws IOException {
-        List<Exception> exceptions = new ArrayList<>();
-        String user = github.getMyself().getLogin();
-        for (String repoName : repoNames) {
-            for (String org : TestCommon.ORGS) {
-                Exception e1 = checkAndDeleteBefore(Paths.get(user, repoName).toString());
-                Exception e2 = checkAndDeleteBefore(Paths.get(org, repoName).toString());
-                if (e1 != null) {
-                    exceptions.add(e1);
-                }
-                if (e2 != null) {
-                    exceptions.add(e2);
-                }
-            }
-
-        }
-        Exception e3 = checkAndDeleteBefore(Paths.get(user, STORE_NAME).toString());
-        if (e3 != null) {
-            exceptions.add(e3);
-        }
-        return exceptions;
-    }
-
-    private Exception checkAndDeleteBefore(String repoName) {
-        GHRepository repo;
-        try {
-            repo = github.getRepository(repoName);
-        } catch (Exception e) {
-            return e;
-        }
-        try {
-            repo.delete();
-        } catch (Exception e) {
-            return e;
-        }
-        return null;
+        checkIfSearchUpToDate("image1", IMAGE_1, REPOS.size(), github);
+        checkIfSearchUpToDate("image2", IMAGE_2, DUPLICATES.size() * ORGS.size(), github);
     }
 
     @Test
@@ -182,7 +117,8 @@ public class AllCommandTest {
 
     @AfterClass
     public void cleanUp() throws Exception {
-        TestCommon.cleanAllRepos(github, STORE_NAME, createdRepos);
+        addVersionStoreRepo(github, createdRepos, STORE_NAME);
+        cleanAllRepos(createdRepos);
     }
 
 }

@@ -10,6 +10,7 @@ package com.salesforce.dockerfileimageupdate.itest.tests;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
+import com.salesforce.dockerfileimageupdate.githubutils.GithubUtil;
 import org.kohsuke.github.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,17 +20,14 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 import static com.salesforce.dockerfileimageupdate.itest.tests.TestCommon.ORGS;
+import static com.salesforce.dockerfileimageupdate.itest.tests.TestCommon.addVersionStoreRepo;
 
 /**
  * Created by minho.park on 7/14/16.
@@ -42,14 +40,11 @@ public class ChildCommandTest {
     private static final String TAG = UUID.randomUUID().toString();
     private static final String STORE_NAME = NAME + "-store";
     private static final String ORG = ORGS.get(0);
+
+    // The following are initialized in setup
     private List<GHRepository> createdRepos = new ArrayList<>();
     private GitHub github = null;
-
-
-    @Test
-    public void testExample() {
-        Assert.assertTrue(true);
-    }
+    private GithubUtil githubUtil;
 
     @BeforeClass
     public void setUp() throws Exception {
@@ -61,6 +56,7 @@ public class ChildCommandTest {
         github.checkApiUrlValidity();
         cleanBefore();
 
+        githubUtil = new GithubUtil(github);
         GHOrganization org = github.getOrganization(ORG);
 
         GHRepository repo = org.createRepository(NAME)
@@ -83,31 +79,7 @@ public class ChildCommandTest {
         int exitcode = pc.waitFor();
         Assert.assertEquals(exitcode, 0);
 
-        String login = github.getMyself().getLogin();
-        GHRepository repo = github.getRepository(Paths.get(login, NAME).toString());
-
-        try (InputStream stream = repo.getFileContent("Dockerfile").read();
-             InputStreamReader streamR = new InputStreamReader(stream);
-             BufferedReader reader = new BufferedReader(streamR)) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                if (line.contains("FROM")) {
-                    Assert.assertTrue(line.contains(IMAGE));
-                    Assert.assertTrue(line.endsWith(TAG));
-                }
-            }
-            validatePullRequestCreation(ORG, NAME, true);
-        }
-    }
-
-    private void validatePullRequestCreation(String org, String repoName, boolean created) throws Exception {
-        GHRepository parentRepo = github.getOrganization(org).getRepository(repoName);
-        List<GHPullRequest> prs = parentRepo.getPullRequests(GHIssueState.OPEN);
-        if (created) {
-            Assert.assertEquals(prs.size(), 1);
-        } else {
-            Assert.assertEquals(prs.size(), 0);
-        }
+        TestValidationCommon.validateRepo(NAME, IMAGE, TAG, github, githubUtil);
     }
 
     @Test(dependsOnMethods = "testChild")
@@ -178,32 +150,14 @@ public class ChildCommandTest {
                 Paths.get(login, NAME).toString(),
                 Paths.get(ORG, NAME).toString(),
                 Paths.get(login, STORE_NAME).toString());
-        checkAndDeleteBefore(repoNames);
+        for (String repoName : repoNames) {
+            TestCommon.checkAndDeleteBefore(repoName, github);
+        }
     }
 
     @AfterClass
     public void cleanUp() throws Exception {
-        TestCommon.cleanAllRepos(github, STORE_NAME, createdRepos);
-    }
-
-    private List<Exception> checkAndDeleteBefore(List<String> repoNames) throws IOException {
-        List<Exception> exceptions = new ArrayList<>();
-
-        GHRepository repo;
-        for (String repoName : repoNames) {
-            try {
-                repo = github.getRepository(repoName);
-            } catch (Exception e) {
-                exceptions.add(e);
-                continue;
-            }
-            try {
-                repo.delete();
-            } catch (Exception e) {
-                exceptions.add(e);
-            }
-        }
-
-        return exceptions;
+        addVersionStoreRepo(github, createdRepos, STORE_NAME);
+        TestCommon.cleanAllRepos(createdRepos);
     }
 }

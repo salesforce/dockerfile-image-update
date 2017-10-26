@@ -198,13 +198,17 @@ public class DockerfileGithubUtil {
     }
 
     protected void updateStoreOnGithub(GHRepository repo, String path, String img, String tag) throws IOException {
-        GHContent content;
         try {
-            content = repo.getFileContent(path);
+            repo.getFileContent(path);
         } catch (IOException e) {
-            GHContentUpdateResponse contentCreate = repo.createContent("", "initializing store", path);
-            content = contentCreate.getContent();
+            repo.createContent("", "initializing store", path);
+
         }
+
+        String latestCommit = repo.getBranches().get(repo.getDefaultBranch()).getSHA1();
+        log.info("Loading image store at commit {}", latestCommit);
+        GHContent content = repo.getFileContent(path, latestCommit);
+
         if (content.getType().equals(Constants.GITHUB_FILE)) {
             JsonElement json;
             try (InputStream stream = content.read(); InputStreamReader streamR = new InputStreamReader(stream)) {
