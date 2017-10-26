@@ -9,7 +9,7 @@ services:
             # export user_itest_secrets_file_secret=/path/to/secretFile in your shell
             # For CI purposes, the secret file can be added to Jenkins Credential Store with the id user_itest_secrets_file
             - ${user_itest_secrets_file_secret}
-        image: dockerfile-image-update
+        image: salesforce/dockerfile-image-update
         volumes:
             # This allows us to get our test results back to workspace for the pipeline to pick up
             - ./test-results:/tmp/test-results
