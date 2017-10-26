@@ -15,7 +15,7 @@ script:
 - docker-compose up
 after_success:
 - mvn coveralls:report
-- if [ "$TRAVIS_BRANCH" == "master" ]; then 
-      docker login -u="${DOCKER_USERNAME}" -p="${DOCKER_PASSWORD}";
+- if [ "${TRAVIS_BRANCH}" == "master" ]; then 
+      docker login -u="${DOCKER_USER}" -p="${DOCKER_PASSWORD}";
       docker push salesforce/dockerfile-image-update; 
   fi
