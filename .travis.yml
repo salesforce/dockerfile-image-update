@@ -8,10 +8,10 @@ language: java
 services:
 - docker
 script:
-- mvn --batch-mode install
+- mvn --quiet --batch-mode install
 - docker build -t salesforce/dockerfile-image-update .
 - echo git_api_token=${ITEST_GH_TOKEN} > `pwd`/itest.env
-- export `pwd`/itest.env
+- export user_itest_secrets_file_secret=`pwd`/itest.env
 - docker-compose up
 after_success:
 - mvn coveralls:report
