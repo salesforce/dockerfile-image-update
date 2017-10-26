@@ -8,9 +8,20 @@
 
 package com.salesforce.dockerfileimageupdate;
 
+import com.google.common.reflect.ClassPath;
+import org.testng.annotations.Test;
+
+import java.util.Set;
+
+import static org.testng.Assert.assertEquals;
+
 /**
- * Created by minho.park on 7/19/16.
+ * Created by afalko on 10/25/17.
  */
 public class CommandLineTest {
-
+    @Test
+    public void testLoadSubcommands() throws Exception {
+        Set<ClassPath.ClassInfo> classes = CommandLine.findSubcommands(CommandLine.getArgumentParser());
+        assertEquals(classes.size(), 3);
+    }
 }

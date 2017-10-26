@@ -1,0 +1,7 @@
+{
+  "images": {
+    "private-registry.example.com/ns/test-image": "123",
+    "openjdk": "8",
+    "private-registry.example.com/test-image": "latest"
+  }
+}

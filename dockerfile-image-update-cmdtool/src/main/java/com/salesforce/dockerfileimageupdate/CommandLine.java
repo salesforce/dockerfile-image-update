@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.util.Comparator;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 /**
  * Created by minho-park on 6/29/2016.
@@ -38,6 +39,20 @@ public class CommandLine {
 
     public static void main(String[] args)
             throws IOException, IllegalAccessException, InstantiationException, InterruptedException {
+        ArgumentParser parser = getArgumentParser();
+
+        Set<ClassPath.ClassInfo> allClasses = findSubcommands(parser);
+        Namespace ns = handleArguments(parser, args);
+        if (ns == null)
+            System.exit(1);
+        Class<?> runClass = loadCommand(allClasses, ns.get(Constants.COMMAND));
+        DockerfileGithubUtil dockerfileGithubUtil = initializeDockerfileGithubUtil(ns.get(Constants.GIT_API));
+
+        /* Execute given command. */
+        ((ExecutableWithNamespace)runClass.newInstance()).execute(ns, dockerfileGithubUtil);
+    }
+
+    static ArgumentParser getArgumentParser() {
         ArgumentParser parser = ArgumentParsers.newArgumentParser("dockerfile-image-update", true)
                 .description("Image Updates through Pull Request Automator");
 
@@ -54,16 +69,7 @@ public class CommandLine {
                 .help("message to provide for pull requests");
         parser.addArgument("-c")
                 .help("additional commit message for the commits in pull requests");
-
-        Set<ClassPath.ClassInfo> allClasses = findSubcommands(parser);
-        Namespace ns = handleArguments(parser, args);
-        if (ns == null)
-            System.exit(1);
-        Class<?> runClass = loadCommand(allClasses, ns.get(Constants.COMMAND));
-        DockerfileGithubUtil dockerfileGithubUtil = initializeDockerfileGithubUtil(ns.get(Constants.GIT_API));
-
-        /* Execute given command. */
-        ((ExecutableWithNamespace)runClass.newInstance()).execute(ns, dockerfileGithubUtil);
+        return parser;
     }
 
     /*  Adding subcommands to the subcommands list.
@@ -76,14 +82,12 @@ public class CommandLine {
                 .description("Specify which feature to perform")
                 .metavar("COMMAND");
 
-        Set<ClassPath.ClassInfo> allClasses = new TreeSet<>(new Comparator<ClassPath.ClassInfo>() {
-            @Override
-            public int compare(ClassPath.ClassInfo l, ClassPath.ClassInfo r) {
-                return l.getName().compareTo(r.getName());
-            }
-        });
+        Set<ClassPath.ClassInfo> allClasses = new TreeSet<>(Comparator.comparing(ClassPath.ClassInfo::getName));
         ClassPath classpath = ClassPath.from(CommandLine.class.getClassLoader());
         allClasses.addAll(classpath.getTopLevelClasses("com.salesforce.dockerfileimageupdate.subcommands.impl"));
+        allClasses = allClasses.stream()
+                .filter(classInfo -> !classInfo.getName().endsWith("Test"))
+                .collect(Collectors.toSet());
 
         for (ClassPath.ClassInfo classInfo : allClasses) {
             handleAnnotations(classInfo, subparsers);
@@ -171,8 +175,7 @@ public class CommandLine {
         github.checkApiUrlValidity();
 
         GithubUtil githubUtil = new GithubUtil(github);
-        DockerfileGithubUtil dockerfileGithubUtil = new DockerfileGithubUtil(githubUtil);
 
-        return dockerfileGithubUtil;
+        return new DockerfileGithubUtil(githubUtil);
     }
 }

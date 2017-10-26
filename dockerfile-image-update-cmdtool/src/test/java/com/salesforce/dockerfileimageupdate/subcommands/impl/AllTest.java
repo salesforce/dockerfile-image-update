@@ -9,19 +9,21 @@
 package com.salesforce.dockerfileimageupdate.subcommands.impl;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.gson.JsonElement;
 import com.salesforce.dockerfileimageupdate.utils.DockerfileGithubUtil;
-import org.kohsuke.github.GHContent;
-import org.kohsuke.github.GHRepository;
-import org.kohsuke.github.PagedIterator;
-import org.kohsuke.github.PagedSearchIterable;
+import org.kohsuke.github.*;
 import org.mockito.Mockito;
 import org.testng.annotations.Test;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
-import static org.mockito.Matchers.*;
-import static org.mockito.Mockito.times;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.*;
+import static org.testng.Assert.assertNotNull;
 
 /**
  * Created by minho.park on 7/19/16.
@@ -29,25 +31,25 @@ import static org.mockito.Mockito.times;
 public class AllTest {
     @Test
     public void testForkRepositoriesFound() throws Exception {
-        DockerfileGithubUtil dockerfileGithubUtil = Mockito.mock(DockerfileGithubUtil.class);
+        DockerfileGithubUtil dockerfileGithubUtil = mock(DockerfileGithubUtil.class);
 
-        GHRepository contentRepo1 = Mockito.mock(GHRepository.class);
-        GHRepository contentRepo2 = Mockito.mock(GHRepository.class);
-        GHRepository contentRepo3 = Mockito.mock(GHRepository.class);
+        GHRepository contentRepo1 = mock(GHRepository.class);
+        GHRepository contentRepo2 = mock(GHRepository.class);
+        GHRepository contentRepo3 = mock(GHRepository.class);
 
-        GHContent content1 = Mockito.mock(GHContent.class);
-        Mockito.when(content1.getOwner()).thenReturn(contentRepo1);
-        GHContent content2 = Mockito.mock(GHContent.class);
-        Mockito.when(content2.getOwner()).thenReturn(contentRepo2);
-        GHContent content3 = Mockito.mock(GHContent.class);
-        Mockito.when(content3.getOwner()).thenReturn(contentRepo3);
+        GHContent content1 = mock(GHContent.class);
+        when(content1.getOwner()).thenReturn(contentRepo1);
+        GHContent content2 = mock(GHContent.class);
+        when(content2.getOwner()).thenReturn(contentRepo2);
+        GHContent content3 = mock(GHContent.class);
+        when(content3.getOwner()).thenReturn(contentRepo3);
 
-        PagedSearchIterable<GHContent> contentsWithImage = Mockito.mock(PagedSearchIterable.class);
+        PagedSearchIterable<GHContent> contentsWithImage = mock(PagedSearchIterable.class);
 
-        PagedIterator<GHContent> contentsWithImageIterator = Mockito.mock(PagedIterator.class);
-        Mockito.when(contentsWithImageIterator.hasNext()).thenReturn(true, true, true, false);
-        Mockito.when(contentsWithImageIterator.next()).thenReturn(content1, content2, content3, null);
-        Mockito.when(contentsWithImage.iterator()).thenReturn(contentsWithImageIterator);
+        PagedIterator<GHContent> contentsWithImageIterator = mock(PagedIterator.class);
+        when(contentsWithImageIterator.hasNext()).thenReturn(true, true, true, false);
+        when(contentsWithImageIterator.next()).thenReturn(content1, content2, content3, null);
+        when(contentsWithImage.iterator()).thenReturn(contentsWithImageIterator);
 
         All all = new All();
         all.loadDockerfileGithubUtil(dockerfileGithubUtil);
@@ -58,9 +60,9 @@ public class AllTest {
 
     @Test
     public void testChangeDockerfiles_returnIfNotFork() throws Exception {
-        DockerfileGithubUtil dockerfileGithubUtil = Mockito.mock(DockerfileGithubUtil.class);
-        GHRepository initialRepo = Mockito.mock(GHRepository.class);
-        Mockito.when(initialRepo.isFork()).thenReturn(false);
+        DockerfileGithubUtil dockerfileGithubUtil = mock(DockerfileGithubUtil.class);
+        GHRepository initialRepo = mock(GHRepository.class);
+        when(initialRepo.isFork()).thenReturn(false);
 
         All all = new All();
         all.loadDockerfileGithubUtil(dockerfileGithubUtil);
@@ -71,19 +73,19 @@ public class AllTest {
 
     @Test
     public void testChangeDockerfiles_returnIfNotDesiredParent() throws Exception {
-        DockerfileGithubUtil dockerfileGithubUtil = Mockito.mock(DockerfileGithubUtil.class);
+        DockerfileGithubUtil dockerfileGithubUtil = mock(DockerfileGithubUtil.class);
 
-        GHRepository initialRepo = Mockito.mock(GHRepository.class);
-        Mockito.when(initialRepo.isFork()).thenReturn(true);
-        Mockito.when(initialRepo.getFullName()).thenReturn("repo");
+        GHRepository initialRepo = mock(GHRepository.class);
+        when(initialRepo.isFork()).thenReturn(true);
+        when(initialRepo.getFullName()).thenReturn("repo");
 
-        GHRepository retrievedRepo = Mockito.mock(GHRepository.class);
-        GHRepository parentRepo = Mockito.mock(GHRepository.class);
-        Mockito.when(parentRepo.getFullName()).thenReturn("test5");
-        Mockito.when(retrievedRepo.getParent()).thenReturn(parentRepo);
-        Mockito.when(retrievedRepo.getDefaultBranch()).thenReturn("branch");
+        GHRepository retrievedRepo = mock(GHRepository.class);
+        GHRepository parentRepo = mock(GHRepository.class);
+        when(parentRepo.getFullName()).thenReturn("test5");
+        when(retrievedRepo.getParent()).thenReturn(parentRepo);
+        when(retrievedRepo.getDefaultBranch()).thenReturn("branch");
 
-        Mockito.when(dockerfileGithubUtil.getRepo(initialRepo.getFullName())).thenReturn(retrievedRepo);
+        when(dockerfileGithubUtil.getRepo(initialRepo.getFullName())).thenReturn(retrievedRepo);
 
         Map<String, String> parentToPath = ImmutableMap.of(
                 "test1", "test",
@@ -106,19 +108,19 @@ public class AllTest {
 
     @Test
     public void testChangeDockerfiles_pullRequestCreation() throws Exception {
-        DockerfileGithubUtil dockerfileGithubUtil = Mockito.mock(DockerfileGithubUtil.class);
+        DockerfileGithubUtil dockerfileGithubUtil = mock(DockerfileGithubUtil.class);
 
-        GHRepository initialRepo = Mockito.mock(GHRepository.class);
-        Mockito.when(initialRepo.isFork()).thenReturn(true);
-        Mockito.when(initialRepo.getFullName()).thenReturn("repo");
+        GHRepository initialRepo = mock(GHRepository.class);
+        when(initialRepo.isFork()).thenReturn(true);
+        when(initialRepo.getFullName()).thenReturn("repo");
 
-        GHRepository retrievedRepo = Mockito.mock(GHRepository.class);
-        GHRepository parentRepo = Mockito.mock(GHRepository.class);
-        Mockito.when(parentRepo.getFullName()).thenReturn("test2");
-        Mockito.when(retrievedRepo.getParent()).thenReturn(parentRepo);
-        Mockito.when(retrievedRepo.getDefaultBranch()).thenReturn("branch");
+        GHRepository retrievedRepo = mock(GHRepository.class);
+        GHRepository parentRepo = mock(GHRepository.class);
+        when(parentRepo.getFullName()).thenReturn("test2");
+        when(retrievedRepo.getParent()).thenReturn(parentRepo);
+        when(retrievedRepo.getDefaultBranch()).thenReturn("branch");
 
-        Mockito.when(dockerfileGithubUtil.getRepo(initialRepo.getFullName())).thenReturn(retrievedRepo);
+        when(dockerfileGithubUtil.getRepo(initialRepo.getFullName())).thenReturn(retrievedRepo);
 
         Map<String, String> parentToPath = ImmutableMap.of(
                 "test1", "test",
@@ -150,5 +152,21 @@ public class AllTest {
                 .modifyOnGithub(any(), eq("branch"), eq("image2"), eq("tag2"), anyString());
         Mockito.verify(dockerfileGithubUtil, times(1)).createPullReq(eq(parentRepo), eq("branch"),
                 eq(retrievedRepo), anyString());
+    }
+
+    @Test
+    public void testParseStoreToImagesMap() throws Exception {
+        DockerfileGithubUtil dockerfileGithubUtil = mock(DockerfileGithubUtil.class);
+        when(dockerfileGithubUtil.getMyself()).thenReturn(mock(GHMyself.class));
+        when(dockerfileGithubUtil.getRepo(anyString())).thenReturn(mock(GHRepository.class));
+        GHContent mockContent = mock(GHContent.class);
+        ClassLoader classloader = Thread.currentThread().getContextClassLoader();
+        when(mockContent.read()).thenReturn(classloader.getResourceAsStream("image-store-sample.json"));
+        when(dockerfileGithubUtil.tryRetrievingContent(any(GHRepository.class), anyString(), anyString())).thenReturn(mockContent);
+
+        All all = new All();
+        all.loadDockerfileGithubUtil(dockerfileGithubUtil);
+        Set<Map.Entry<String, JsonElement>> imageSet = all.parseStoreToImagesMap("testStore");
+        assertNotNull(imageSet);
     }
 }

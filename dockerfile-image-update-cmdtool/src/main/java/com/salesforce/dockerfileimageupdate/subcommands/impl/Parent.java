@@ -87,10 +87,8 @@ public class Parent implements ExecutableWithNamespace {
             }
         }
 
-        int numOfContentsFound = 0;
-        if (contentsWithImage != null) {
-            numOfContentsFound = contentsWithImage.getTotalCount();
-        }
+        int numOfContentsFound;
+        numOfContentsFound = contentsWithImage.getTotalCount();
         if (numOfContentsFound <= 0) {
             log.info("Could not find any repositories with given image.");
             return null;
