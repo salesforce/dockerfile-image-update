@@ -11,8 +11,11 @@ package com.salesforce.dockerfileimageupdate;
 import com.google.common.reflect.ClassPath;
 import org.testng.annotations.Test;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.testng.Assert.assertEquals;
 
 /**
@@ -22,6 +25,10 @@ public class CommandLineTest {
     @Test
     public void testLoadSubcommands() throws Exception {
         Set<ClassPath.ClassInfo> classes = CommandLine.findSubcommands(CommandLine.getArgumentParser());
-        assertEquals(classes.size(), 3);
+        List<String> expectedSubCommands = Arrays.asList("All", "Parent", "Child");
+        assertEquals(classes.size(), expectedSubCommands.size());
+        classes.forEach(
+                classInfo -> assertThat(expectedSubCommands).contains(classInfo.getSimpleName())
+        );
     }
 }

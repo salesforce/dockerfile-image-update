@@ -13,8 +13,6 @@ import com.google.gson.JsonParser;
 import com.salesforce.dockerfileimageupdate.githubutils.GithubUtil;
 import org.kohsuke.github.*;
 import org.mockito.Mock;
-import org.mockito.Mockito;
-import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
@@ -24,8 +22,10 @@ import java.io.InputStream;
 import java.util.Iterator;
 import java.util.List;
 
-import static org.mockito.Matchers.*;
-import static org.mockito.Mockito.times;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.*;
 import static org.testng.Assert.*;
 
 /**
@@ -39,75 +39,75 @@ public class DockerfileGithubUtilTest {
 
     @Test
     public void testGetGithubUtil() throws Exception {
-        githubUtil = Mockito.mock(GithubUtil.class);
+        githubUtil = mock(GithubUtil.class);
         dockerfileGithubUtil = new DockerfileGithubUtil(githubUtil);
-        Assert.assertEquals(dockerfileGithubUtil.getGithubUtil(), githubUtil);
+        assertEquals(dockerfileGithubUtil.getGithubUtil(), githubUtil);
     }
 
     @Test
     public void testCheckFromParentAndFork() throws Exception {
-        githubUtil = Mockito.mock(GithubUtil.class);
+        githubUtil = mock(GithubUtil.class);
 
-        GHRepository parent = Mockito.mock(GHRepository.class);
-        GHRepository fork = Mockito.mock(GHRepository.class);
-        Mockito.when(fork.getOwnerName()).thenReturn("me");
+        GHRepository parent = mock(GHRepository.class);
+        GHRepository fork = mock(GHRepository.class);
+        when(fork.getOwnerName()).thenReturn("me");
 
-        Mockito.doCallRealMethod().when(githubUtil).safeDeleteRepo(fork);
+        doCallRealMethod().when(githubUtil).safeDeleteRepo(fork);
 
-        GHMyself myself = Mockito.mock(GHMyself.class);
-        Mockito.when(myself.getLogin()).thenReturn("me");
+        GHMyself myself = mock(GHMyself.class);
+        when(myself.getLogin()).thenReturn("me");
 
-        PagedIterable<GHRepository> listOfForks = Mockito.mock(PagedIterable.class);
-        PagedIterator<GHRepository> listOfForksIterator = Mockito.mock(PagedIterator.class);
+        PagedIterable<GHRepository> listOfForks = mock(PagedIterable.class);
+        PagedIterator<GHRepository> listOfForksIterator = mock(PagedIterator.class);
 
-        Mockito.when(githubUtil.createFork(parent)).thenReturn(new GHRepository());
-        Mockito.when(githubUtil.getMyself()).thenReturn(myself);
+        when(githubUtil.createFork(parent)).thenReturn(new GHRepository());
+        when(githubUtil.getMyself()).thenReturn(myself);
 
-        Mockito.when(listOfForksIterator.next()).thenReturn(fork);
-        Mockito.when(listOfForksIterator.hasNext()).thenReturn(true);
-        Mockito.when(listOfForks.iterator()).thenReturn(listOfForksIterator);
-        Mockito.when(parent.listForks()).thenReturn(listOfForks);
+        when(listOfForksIterator.next()).thenReturn(fork);
+        when(listOfForksIterator.hasNext()).thenReturn(true);
+        when(listOfForks.iterator()).thenReturn(listOfForksIterator);
+        when(parent.listForks()).thenReturn(listOfForks);
 
         dockerfileGithubUtil = new DockerfileGithubUtil(githubUtil);
         mockPullRequestAlreadyExists_True(parent, myself);
         GHRepository returnRepo = dockerfileGithubUtil.checkFromParentAndFork(parent);
         assertNotNull(returnRepo);
-        Mockito.verify(githubUtil, times(1)).createFork(parent);
+        verify(githubUtil, times(1)).createFork(parent);
 
         mockPullRequestAlreadyExists_False(parent, myself);
         returnRepo = dockerfileGithubUtil.checkFromParentAndFork(parent);
         assertNotNull(returnRepo);
-        Mockito.verify(githubUtil, times(1+2)).createFork(parent);
-        Mockito.verify(fork, times(1)).delete();
+        verify(githubUtil, times(1+2)).createFork(parent);
+        verify(fork, times(1)).delete();
 
         mockPullRequestAlreadyExists_Error(parent);
         returnRepo = dockerfileGithubUtil.checkFromParentAndFork(parent);
         assertNotNull(returnRepo);
-        Mockito.verify(githubUtil, times(1+2+2)).createFork(parent);
-        Mockito.verify(fork, times(2)).delete();
+        verify(githubUtil, times(1+2+2)).createFork(parent);
+        verify(fork, times(2)).delete();
     }
 
     @Test
     public void testCheckFromParentAndFork_returnNull() throws Exception {
-        githubUtil = Mockito.mock(GithubUtil.class);
+        githubUtil = mock(GithubUtil.class);
 
-        GHRepository parent = Mockito.mock(GHRepository.class);
-        GHRepository fork = Mockito.mock(GHRepository.class);
-        Mockito.when(fork.getOwnerName()).thenReturn("you");
+        GHRepository parent = mock(GHRepository.class);
+        GHRepository fork = mock(GHRepository.class);
+        when(fork.getOwnerName()).thenReturn("you");
 
-        GHMyself myself = Mockito.mock(GHMyself.class);
-        Mockito.when(myself.getLogin()).thenReturn("me");
+        GHMyself myself = mock(GHMyself.class);
+        when(myself.getLogin()).thenReturn("me");
 
-        PagedIterable<GHRepository> listOfForks = Mockito.mock(PagedIterable.class);
-        PagedIterator<GHRepository> listOfForksIterator = Mockito.mock(PagedIterator.class);
+        PagedIterable<GHRepository> listOfForks = mock(PagedIterable.class);
+        PagedIterator<GHRepository> listOfForksIterator = mock(PagedIterator.class);
 
-        Mockito.when(githubUtil.createFork(parent)).thenReturn(new GHRepository());
-        Mockito.when(githubUtil.getMyself()).thenReturn(myself);
+        when(githubUtil.createFork(parent)).thenReturn(new GHRepository());
+        when(githubUtil.getMyself()).thenReturn(myself);
 
-        Mockito.when(listOfForksIterator.next()).thenReturn(fork);
-        Mockito.when(listOfForksIterator.hasNext()).thenReturn(true, false);
-        Mockito.when(listOfForks.iterator()).thenReturn(listOfForksIterator);
-        Mockito.when(parent.listForks()).thenReturn(listOfForks);
+        when(listOfForksIterator.next()).thenReturn(fork);
+        when(listOfForksIterator.hasNext()).thenReturn(true, false);
+        when(listOfForks.iterator()).thenReturn(listOfForksIterator);
+        when(parent.listForks()).thenReturn(listOfForks);
 
         dockerfileGithubUtil = new DockerfileGithubUtil(githubUtil);
         GHRepository returnRepo = dockerfileGithubUtil.checkFromParentAndFork(parent);
@@ -115,63 +115,63 @@ public class DockerfileGithubUtilTest {
     }
 
     private void mockPullRequestAlreadyExists_True(GHRepository parent, GHMyself myself) throws IOException {
-        List<GHPullRequest> pullRequests = Mockito.mock(List.class);
-        Iterator<GHPullRequest> pullRequestIterator = Mockito.mock(Iterator.class);
+        List<GHPullRequest> pullRequests = mock(List.class);
+        Iterator<GHPullRequest> pullRequestIterator = mock(Iterator.class);
 
 
-        GHPullRequest ghPullRequest = Mockito.mock(GHPullRequest.class);
-        Mockito.when(ghPullRequest.getBody()).thenReturn(Constants.PULL_REQ_ID);
-        GHCommitPointer head = Mockito.mock(GHCommitPointer.class);
+        GHPullRequest ghPullRequest = mock(GHPullRequest.class);
+        when(ghPullRequest.getBody()).thenReturn(Constants.PULL_REQ_ID);
+        GHCommitPointer head = mock(GHCommitPointer.class);
 
-        Mockito.when(head.getUser()).thenReturn(myself);
-        Mockito.when(ghPullRequest.getHead()).thenReturn(head);
+        when(head.getUser()).thenReturn(myself);
+        when(ghPullRequest.getHead()).thenReturn(head);
 
-        Mockito.when(pullRequestIterator.next()).thenReturn(ghPullRequest);
-        Mockito.when(pullRequestIterator.hasNext()).thenReturn(true);
-        Mockito.when(pullRequests.iterator()).thenReturn(pullRequestIterator);
+        when(pullRequestIterator.next()).thenReturn(ghPullRequest);
+        when(pullRequestIterator.hasNext()).thenReturn(true);
+        when(pullRequests.iterator()).thenReturn(pullRequestIterator);
 
-        Mockito.when(parent.getPullRequests(GHIssueState.OPEN)).thenReturn(pullRequests);
+        when(parent.getPullRequests(GHIssueState.OPEN)).thenReturn(pullRequests);
     }
 
     private void mockPullRequestAlreadyExists_False(GHRepository parent, GHMyself myself) throws IOException {
-        List<GHPullRequest> pullRequests = Mockito.mock(List.class);
-        Iterator<GHPullRequest> pullRequestIterator = Mockito.mock(Iterator.class);
+        List<GHPullRequest> pullRequests = mock(List.class);
+        Iterator<GHPullRequest> pullRequestIterator = mock(Iterator.class);
 
 
-        GHPullRequest ghPullRequest = Mockito.mock(GHPullRequest.class);
-        Mockito.when(ghPullRequest.getBody()).thenReturn("-1");
-        GHCommitPointer head = Mockito.mock(GHCommitPointer.class);
+        GHPullRequest ghPullRequest = mock(GHPullRequest.class);
+        when(ghPullRequest.getBody()).thenReturn("-1");
+        GHCommitPointer head = mock(GHCommitPointer.class);
 
-        Mockito.when(head.getUser()).thenReturn(myself);
-        Mockito.when(ghPullRequest.getHead()).thenReturn(head);
+        when(head.getUser()).thenReturn(myself);
+        when(ghPullRequest.getHead()).thenReturn(head);
 
-        Mockito.when(pullRequestIterator.next()).thenReturn(ghPullRequest);
-        Mockito.when(pullRequestIterator.hasNext()).thenReturn(true, false);
-        Mockito.when(pullRequests.iterator()).thenReturn(pullRequestIterator);
+        when(pullRequestIterator.next()).thenReturn(ghPullRequest);
+        when(pullRequestIterator.hasNext()).thenReturn(true, false);
+        when(pullRequests.iterator()).thenReturn(pullRequestIterator);
 
-        Mockito.when(parent.getPullRequests(GHIssueState.OPEN)).thenReturn(pullRequests);
+        when(parent.getPullRequests(GHIssueState.OPEN)).thenReturn(pullRequests);
     }
 
     private void mockPullRequestAlreadyExists_Error(GHRepository parent) throws Exception {
-        Mockito.when(parent.getPullRequests(GHIssueState.OPEN)).thenThrow(new IOException());
+        when(parent.getPullRequests(GHIssueState.OPEN)).thenThrow(new IOException());
     }
 
     @Test
     public void testGetMyself() throws Exception {
-        githubUtil = Mockito.mock(GithubUtil.class);
+        githubUtil = mock(GithubUtil.class);
 
-        GHMyself myself = Mockito.mock(GHMyself.class);
-        Mockito.when(githubUtil.getMyself()).thenReturn(myself);
+        GHMyself myself = mock(GHMyself.class);
+        when(githubUtil.getMyself()).thenReturn(myself);
         dockerfileGithubUtil = new DockerfileGithubUtil(githubUtil);
         assertEquals(dockerfileGithubUtil.getMyself(), myself);
     }
 
     @Test
     public void testGetRepo() throws Exception {
-        githubUtil = Mockito.mock(GithubUtil.class);
+        githubUtil = mock(GithubUtil.class);
 
-        GHRepository repo = Mockito.mock(GHRepository.class);
-        Mockito.when(githubUtil.getRepo(eq("test"))).thenReturn(repo);
+        GHRepository repo = mock(GHRepository.class);
+        when(githubUtil.getRepo(eq("test"))).thenReturn(repo);
         dockerfileGithubUtil = new DockerfileGithubUtil(githubUtil);
         assertEquals(dockerfileGithubUtil.getRepo("test"), repo);
     }
@@ -198,14 +198,14 @@ public class DockerfileGithubUtilTest {
 
     @Test(dataProvider = "inputEmptyImages", expectedExceptions = IOException.class)
     public void testFindFiles_EmptyQuery(String query, String org) throws Exception {
-        githubUtil = Mockito.mock(GithubUtil.class);
+        githubUtil = mock(GithubUtil.class);
 
-        GHContentSearchBuilder ghContentSearchBuilder = Mockito.mock(GHContentSearchBuilder.class);
-        PagedSearchIterable<GHContent> list = Mockito.mock(PagedSearchIterable.class);
-        Mockito.when(list.getTotalCount()).thenReturn(0);
+        GHContentSearchBuilder ghContentSearchBuilder = mock(GHContentSearchBuilder.class);
+        PagedSearchIterable<GHContent> list = mock(PagedSearchIterable.class);
+        when(list.getTotalCount()).thenReturn(0);
 
-        Mockito.when(ghContentSearchBuilder.list()).thenReturn(list);
-        Mockito.when(githubUtil.startSearch()).thenReturn(ghContentSearchBuilder);
+        when(ghContentSearchBuilder.list()).thenReturn(list);
+        when(githubUtil.startSearch()).thenReturn(ghContentSearchBuilder);
 
         dockerfileGithubUtil = new DockerfileGithubUtil(githubUtil);
         dockerfileGithubUtil.findFilesWithImage(query, org);
@@ -213,14 +213,14 @@ public class DockerfileGithubUtilTest {
 
     @Test
     public void testFindFiles() throws Exception {
-        githubUtil = Mockito.mock(GithubUtil.class);
+        githubUtil = mock(GithubUtil.class);
 
-        GHContentSearchBuilder ghContentSearchBuilder = Mockito.mock(GHContentSearchBuilder.class);
-        PagedSearchIterable<GHContent> list = Mockito.mock(PagedSearchIterable.class);
-        Mockito.when(list.getTotalCount()).thenReturn(100);
+        GHContentSearchBuilder ghContentSearchBuilder = mock(GHContentSearchBuilder.class);
+        PagedSearchIterable<GHContent> list = mock(PagedSearchIterable.class);
+        when(list.getTotalCount()).thenReturn(100);
 
-        Mockito.when(ghContentSearchBuilder.list()).thenReturn(list);
-        Mockito.when(githubUtil.startSearch()).thenReturn(ghContentSearchBuilder);
+        when(ghContentSearchBuilder.list()).thenReturn(list);
+        when(githubUtil.startSearch()).thenReturn(ghContentSearchBuilder);
 
         dockerfileGithubUtil = new DockerfileGithubUtil(githubUtil);
         assertEquals(dockerfileGithubUtil.findFilesWithImage("test", "test"), list);
@@ -228,42 +228,42 @@ public class DockerfileGithubUtilTest {
 
     @Test(dependsOnMethods = "testFindImagesAndFix")
     public void testModifyOnGithubRecursive() throws Exception {
-        githubUtil = Mockito.mock(GithubUtil.class);
+        githubUtil = mock(GithubUtil.class);
 
-        GHRepository repo = Mockito.mock(GHRepository.class);
-        List<GHContent> tree = Mockito.mock(List.class);
-        Iterator<GHContent> treeIterator = Mockito.mock(Iterator.class);
-        GHContent content = Mockito.mock(GHContent.class);
-        Mockito.when(content.getType()).thenReturn("tree", "file");
-        Mockito.when(content.getPath()).thenReturn("path");
-        Mockito.when(content.read()).thenReturn(new InputStream() {
+        GHRepository repo = mock(GHRepository.class);
+        List<GHContent> tree = mock(List.class);
+        Iterator<GHContent> treeIterator = mock(Iterator.class);
+        GHContent content = mock(GHContent.class);
+        when(content.getType()).thenReturn("tree", "file");
+        when(content.getPath()).thenReturn("path");
+        when(content.read()).thenReturn(new InputStream() {
             @Override
             public int read() throws IOException {
                 return -1;
             }
         });
-        Mockito.when(treeIterator.hasNext()).thenReturn(true, true, true, true, true, false);
-        Mockito.when(treeIterator.next()).thenReturn(content);
-        Mockito.when(tree.iterator()).thenReturn(treeIterator);
+        when(treeIterator.hasNext()).thenReturn(true, true, true, true, true, false);
+        when(treeIterator.next()).thenReturn(content);
+        when(tree.iterator()).thenReturn(treeIterator);
         String branch = "branch";
         String img = "img";
         String tag = "tag";
 
-        Mockito.when(repo.getDirectoryContent("path", branch)).thenReturn(tree);
+        when(repo.getDirectoryContent("path", branch)).thenReturn(tree);
 
         dockerfileGithubUtil = new DockerfileGithubUtil(githubUtil);
         dockerfileGithubUtil.modifyOnGithubRecursive(repo, content, branch, img, tag);
 
-        Mockito.verify(content, times(6)).getType();
+        verify(content, times(6)).getType();
 
     }
 
     @Test
     public void testTryRetrievingContent() throws Exception {
-        githubUtil = Mockito.mock(GithubUtil.class);
+        githubUtil = mock(GithubUtil.class);
 
-        GHContent content = Mockito.mock(GHContent.class);
-        Mockito.when(githubUtil.tryRetrievingContent(any(), anyString(), anyString())).thenReturn(content);
+        GHContent content = mock(GHContent.class);
+        when(githubUtil.tryRetrievingContent(any(), anyString(), anyString())).thenReturn(content);
         dockerfileGithubUtil = new DockerfileGithubUtil(githubUtil);
         assertEquals(dockerfileGithubUtil.tryRetrievingContent(new GHRepository(), "path", "branch"), content);
     }
@@ -291,47 +291,47 @@ public class DockerfileGithubUtilTest {
     public void testFindImagesAndFix(String branch, String currentImage,
                                      String searchImage, String currentTag,
                                      String newTag, int modified) throws Exception {
-        githubUtil = Mockito.mock(GithubUtil.class);
+        githubUtil = mock(GithubUtil.class);
 
-        BufferedReader reader = Mockito.mock(BufferedReader.class);
-        GHContent content = Mockito.mock(GHContent.class);
-        Mockito.when(content.getPath()).thenReturn("path");
-        Mockito.when(content.update(anyString(), anyString(), eq(branch))).thenReturn(null);
+        BufferedReader reader = mock(BufferedReader.class);
+        GHContent content = mock(GHContent.class);
+        when(content.getPath()).thenReturn("path");
+        when(content.update(anyString(), anyString(), eq(branch))).thenReturn(null);
 
-        Mockito.when(reader.readLine()).thenReturn("FROM " + currentImage + ":" + currentTag, "", null);
+        when(reader.readLine()).thenReturn("FROM " + currentImage + ":" + currentTag, "", null);
         dockerfileGithubUtil = new DockerfileGithubUtil(githubUtil);
         dockerfileGithubUtil.findImagesAndFix(content, branch, searchImage, newTag, "", reader);
-        Mockito.verify(content, times(modified)).update(anyString(), anyString(), eq(branch));
+        verify(content, times(modified)).update(anyString(), anyString(), eq(branch));
     }
 
     @Test(dataProvider = "inputBranchesImagesAndTags")
     public void testFindImagesAndFix_KeepLinesIntact(String branch, String currentImage,
                                                      String searchImage, String currentTag,
                                                      String newTag, int modified) throws Exception {
-        githubUtil = Mockito.mock(GithubUtil.class);
+        githubUtil = mock(GithubUtil.class);
 
-        BufferedReader reader = Mockito.mock(BufferedReader.class);
-        GHContent content = Mockito.mock(GHContent.class);
-        Mockito.when(content.getPath()).thenReturn("path");
-        Mockito.when(content.update(anyString(), anyString(), eq(branch))).thenReturn(null);
+        BufferedReader reader = mock(BufferedReader.class);
+        GHContent content = mock(GHContent.class);
+        when(content.getPath()).thenReturn("path");
+        when(content.update(anyString(), anyString(), eq(branch))).thenReturn(null);
 
-        Mockito.when(reader.readLine()).thenReturn("blahblahblah", "FROM " + currentImage + ":" + currentTag,
+        when(reader.readLine()).thenReturn("blahblahblah", "FROM " + currentImage + ":" + currentTag,
                 "blahblahblah", null);
         dockerfileGithubUtil = new DockerfileGithubUtil(githubUtil);
         dockerfileGithubUtil.findImagesAndFix(content, branch, searchImage, newTag, "", reader);
-        Mockito.verify(content, times(modified)).update(anyString(), anyString(), eq(branch));
+        verify(content, times(modified)).update(anyString(), anyString(), eq(branch));
     }
 
     @Test
     public void testFindImagesAndFix_doNotDeleteOtherLines() throws Exception {
-        githubUtil = Mockito.mock(GithubUtil.class);
+        githubUtil = mock(GithubUtil.class);
 
-        BufferedReader reader = Mockito.mock(BufferedReader.class);
-        GHContent content = Mockito.mock(GHContent.class);
-        Mockito.when(content.getPath()).thenReturn("path");
-        Mockito.when(content.update(anyString(), anyString(), anyString())).thenReturn(null);
+        BufferedReader reader = mock(BufferedReader.class);
+        GHContent content = mock(GHContent.class);
+        when(content.getPath()).thenReturn("path");
+        when(content.update(anyString(), anyString(), anyString())).thenReturn(null);
 
-        Mockito.when(reader.readLine()).thenReturn("hello", "FROM image:tag",
+        when(reader.readLine()).thenReturn("hello", "FROM image:tag",
                 "this is a test", "", "", "", "world", null);
 
         dockerfileGithubUtil = new DockerfileGithubUtil(githubUtil);
@@ -370,7 +370,7 @@ public class DockerfileGithubUtilTest {
     @Test(dataProvider = "inputlines")
     public void testChangeIfDockerfileBaseImageLine(String img, String tag,
                                                     String line, boolean expected) throws Exception {
-        githubUtil = Mockito.mock(GithubUtil.class);
+        githubUtil = mock(GithubUtil.class);
         dockerfileGithubUtil = new DockerfileGithubUtil(githubUtil);
         assertEquals(dockerfileGithubUtil.changeIfDockerfileBaseImageLine(img, tag, new StringBuilder(), line),
                 expected);
@@ -378,7 +378,7 @@ public class DockerfileGithubUtilTest {
 
     @Test
     public void testChangeIfDockerfileBaseImageLine_modifyingStringBuilder() throws Exception {
-        githubUtil = Mockito.mock(GithubUtil.class);
+        githubUtil = mock(GithubUtil.class);
         dockerfileGithubUtil = new DockerfileGithubUtil(githubUtil);
         StringBuilder stringBuilder = new StringBuilder();
         String img = "image";
@@ -462,7 +462,7 @@ public class DockerfileGithubUtilTest {
 
     @Test(dataProvider = "inputStores")
     public void testGetAndModifyJsonString(String storeContent, String image, String tag, String expectedOutput) throws Exception {
-        githubUtil = Mockito.mock(GithubUtil.class);
+        githubUtil = mock(GithubUtil.class);
 
         JsonElement json = new JsonParser().parse(storeContent);
 
@@ -473,25 +473,25 @@ public class DockerfileGithubUtilTest {
 
     @Test
     public void testCreatePullReq_Loop() throws Exception {
-        githubUtil = Mockito.mock(GithubUtil.class);
+        githubUtil = mock(GithubUtil.class);
 
-        Mockito.when(githubUtil.createPullReq(any(), anyString(), any(), anyString(), eq(Constants.PULL_REQ_ID))).thenReturn(-1, -1, -1, 0);
+        when(githubUtil.createPullReq(any(), anyString(), any(), anyString(), eq(Constants.PULL_REQ_ID))).thenReturn(-1, -1, -1, 0);
         dockerfileGithubUtil = new DockerfileGithubUtil(githubUtil);
         dockerfileGithubUtil.createPullReq(new GHRepository(), "branch", new GHRepository(), "Automatic Dockerfile Image Updater");
-        Mockito.verify(githubUtil, times(4)).createPullReq(any(), anyString(), any(), anyString(), eq(Constants.PULL_REQ_ID));
+        verify(githubUtil, times(4)).createPullReq(any(), anyString(), any(), anyString(), eq(Constants.PULL_REQ_ID));
     }
 
     @Test
     public void testCreatePullReq_Delete() throws Exception {
-        githubUtil = Mockito.mock(GithubUtil.class);
+        githubUtil = mock(GithubUtil.class);
 
-        GHRepository forkRepo = Mockito.mock(GHRepository.class);
-        Mockito.when(githubUtil.createPullReq(any(), anyString(), any(), anyString(), eq(Constants.PULL_REQ_ID))).thenReturn(1);
-        Mockito.doCallRealMethod().when(githubUtil).safeDeleteRepo(forkRepo);
+        GHRepository forkRepo = mock(GHRepository.class);
+        when(githubUtil.createPullReq(any(), anyString(), any(), anyString(), eq(Constants.PULL_REQ_ID))).thenReturn(1);
+        doCallRealMethod().when(githubUtil).safeDeleteRepo(forkRepo);
         dockerfileGithubUtil = new DockerfileGithubUtil(githubUtil);
         dockerfileGithubUtil.createPullReq(new GHRepository(), "branch", forkRepo, "Automatic Dockerfile Image Updater");
-        Mockito.verify(githubUtil, times(1)).createPullReq(any(), anyString(), any(), anyString(), eq(Constants.PULL_REQ_ID));
-        Mockito.verify(forkRepo, times(1)).delete();
+        verify(githubUtil, times(1)).createPullReq(any(), anyString(), any(), anyString(), eq(Constants.PULL_REQ_ID));
+        verify(forkRepo, times(1)).delete();
     }
 
 }
