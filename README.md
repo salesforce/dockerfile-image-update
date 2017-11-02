@@ -15,6 +15,8 @@ Docker builds images using a declared Dockerfile. Within the Dockerfile, there i
     * [Precautions](#precautions)
     * [How To Use It](#how-to-use-it)
  * [Developer Guide](#developer-guide)
+    * [Building](#building)
+    * [Running locally](#running-locally)
     * [Creating a New Feature](#creating-a-new-feature)
     * [Running Unit Tests](#running-unit-tests)
     * [Running Integration Tests](#running-integration-tests)
@@ -37,8 +39,8 @@ export git_api_url=https://api.github.com
 export git_api_token=my_github_token
 docker run --rm -e git_api_token -e git_api_url salesforce/dockerfile-image-update parent my_org/my_image v1.0.1 image-to-tag-store
 ```
- 3. `child` -  
-The tool takes in the following parameters: image name, tag, and git repository for persistent storage of . It will search GitHub for any repositories that have the specified image as a base image and replace them with the tag. The repositories are **NOT** automatically modified; pull requests are opened in that repository.
+ 3. `child` - Given a specific git repo, sends a pull request to update the image to a given version. You can optionally persist the image version combination in the image-to-tag store. 
+Example:
 ```
 export git_api_url=https://api.github.com
 export git_api_token=my_github_token
