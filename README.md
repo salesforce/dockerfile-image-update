@@ -3,7 +3,9 @@
 
 # Dockerfile Image Updater
 
-Docker builds applications using a file called Dockerfile. Within the Dockerfile, we have a specified base image and a tag. If the base image is rebuilt onto a new tag, the application that relies on this base image will never be updated to the recent tag: this is especially an issue if the update is a security update. This tool, the Dockerfile Image Updater was created to fix that problem.
+This tool provides a mechanism to make security updates to docker images at scale. The tool searches github for declared docker images and sends pull requests to projects that are not using the desired version of the requested docker image.
+
+Docker builds images using a declared Dockerfile. Within the Dockerfile, there is a `FROM` declaration that specifies the base image and a tag that will be used as the starting layers for the new image. If the base image that `FROM` depends on is rebuilt, the Docker images that depend on it will never be updated with the newer layers. This becomes a major problem if the reason the base image was updated was to fix a security vulnerability. All Docker images are often based on operating system libraries and these get patched for security updates quite frequently. This tool, the Dockerfile Image Updater was created to automatically make sure that child images are updated when the images they depend on get updated.
 
 ## Table of contents
 
@@ -20,7 +22,28 @@ Docker builds applications using a file called Dockerfile. Within the Dockerfile
 User Guide
 ==========
 ### What it does
-The tool takes in the following parameters: image name, tag, a potential store that holds images to tags. It will search GitHub for any repositories that have the specified image as a base image and replace them with the tag. The repositories are **NOT** automatically modified; pull requests are opened in that repository.
+The tool has three modes
+ 1. `all` - Reads store that declares the docker images and versions that you intend others to use. 
+ Example:
+```
+export git_api_url=https://api.github.com
+export git_api_token=my_github_token
+docker run --rm -e git_api_token -e git_api_url salesforce/dockerfile-image-update all image-to-tag-store
+```
+ 2. `parent` - Searches github for images that use a specified image name and sends pull requests if the image tag doesn't match intended tag. The intended image with tag is passed in the command line parameters. The intended image-to-tag mapping is persisted in a store in a specified git repository under the token owner. 
+Example:
+```
+export git_api_url=https://api.github.com
+export git_api_token=my_github_token
+docker run --rm -e git_api_token -e git_api_url salesforce/dockerfile-image-update parent my_org/my_image v1.0.1 image-to-tag-store
+```
+ 3. `child` -  
+The tool takes in the following parameters: image name, tag, and git repository for persistent storage of . It will search GitHub for any repositories that have the specified image as a base image and replace them with the tag. The repositories are **NOT** automatically modified; pull requests are opened in that repository.
+```
+export git_api_url=https://api.github.com
+export git_api_token=my_github_token
+docker run --rm -e git_api_token -e git_api_url salesforce/dockerfile-image-update child my_gh_org/my_gh_repo my_image_name v1.0.1
+```
 
 ### Prerequisites
 In environment variables, please provide:
@@ -31,14 +54,12 @@ In environment variables, please provide:
 This tool may create a LOT of forks in your account. All pull requests created are through a fork on your own account.
 
 ### How to use it
+Our recommendation is to run it as a docker container:
 ```
-git clone https://github.com/salesforce/dockerfile-image-update.git
-cd dockerfile-image-update
-mvn clean install
-cd dockerfile-image-update-cmdtool/target
-java -jar dockerfile-image-update.jar <COMMAND> <PARAMETERS>
+export git_api_url=https://api.github.com
+export git_api_token=my_github_token
+docker run --rm -e git_api_token -e git_api_url salesforce/dockerfile-image-update <COMMAND> <PARAMETERS>
 ```
-
     ```
     usage: dockerfile-image-update [-h] [-o ORG] [-b BRANCH] [-g GHAPI] [-f] [-m M] [-c C] COMMAND ...
     
@@ -84,7 +105,7 @@ java -jar dockerfile-image-update.jar <COMMAND> <PARAMETERS>
       -h, --help             show this help message and exit
       -s <IMG_TAG_STORE>     OPTIONAL
     ```
-* The `parent` command: given an image, tag, and store, it will create pull requests for any Dockerfiles that has the image as a base image and an outdated tag. also updates the store. 
+* The `parent` command: given an image, tag, and store, it will create pull requests for any Dockerfiles that has the image as a base image and an outdated tag. It also updates the store. 
     ```
     usage: dockerfile-image-update parent [-h] <IMG> <TAG> <IMG_TAG_STORE>
     
@@ -99,6 +120,19 @@ java -jar dockerfile-image-update.jar <COMMAND> <PARAMETERS>
 
 Developer Guide
 ===============
+### Building
+```
+git clone https://github.com/salesforce/dockerfile-image-update.git
+cd dockerfile-image-update
+mvn clean install
+```
+
+### Running locally
+```
+cd dockerfile-image-update-cmdtool/target
+java -jar dockerfile-image-update.jar <COMMAND> <PARAMETERS>
+```
+
 ### Creating a new feature
 Under dockerfile-image-update-cmdtool/src/main/java/com/salesforce/dva/dockerfileimageupdate/subcommands/impl, create a new class `YOUR_FEATURE.java`. Make sure it implements `ExecutableWithNamespace` and has the `SubCommand` annotation with a `help`, `requiredParams`, and `optionalParams`. Then, under the `execute` method, code what you want this tool to do.
 
@@ -107,9 +141,9 @@ Run unit tests by running `mvn test`.
  
 ### Running integration tests
 Before you run the integration tests (locally):
- * Make sure that you have access to the github org specified in TestCommon.ORGS. You likely will need to change it three
-   orgs where you can create repositories. 
- * Make sure you have `git_api_url` in `/dockerfile-image-update-itest/itest.env`.
+ * Make sure that you have access to the github orgs specified in TestCommon.ORGS. You likely will need to change it to three
+   orgs where you have permissions to create repositories. 
+ * Make sure you have `git_api_url=https://api.github.com` in `/dockerfile-image-update-itest/itest.env`.
  * Make sure you have a secret file which contains the `git_api_token`. This needs access to CRUD repositories and
    github statuses. 
  * Export the following environment variable: `export user_itest_secrets_file_secret=/path/to/secretFile`
