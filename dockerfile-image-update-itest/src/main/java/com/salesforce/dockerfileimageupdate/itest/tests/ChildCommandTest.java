@@ -10,7 +10,7 @@ package com.salesforce.dockerfileimageupdate.itest.tests;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
-import com.salesforce.dockerfileimageupdate.githubutils.GithubUtil;
+import com.salesforce.dockerfileimageupdate.utils.GitHubUtil;
 import org.kohsuke.github.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,7 +44,7 @@ public class ChildCommandTest {
     // The following are initialized in setup
     private List<GHRepository> createdRepos = new ArrayList<>();
     private GitHub github = null;
-    private GithubUtil githubUtil;
+    private GitHubUtil gitHubUtil;
 
     @BeforeClass
     public void setUp() throws Exception {
@@ -56,7 +56,7 @@ public class ChildCommandTest {
         github.checkApiUrlValidity();
         cleanBefore();
 
-        githubUtil = new GithubUtil(github);
+        gitHubUtil = new GitHubUtil(github);
         GHOrganization org = github.getOrganization(ORG);
 
         GHRepository repo = org.createRepository(NAME)
@@ -79,7 +79,7 @@ public class ChildCommandTest {
         int exitcode = pc.waitFor();
         Assert.assertEquals(exitcode, 0);
 
-        TestValidationCommon.validateRepo(NAME, IMAGE, TAG, github, githubUtil);
+        TestValidationCommon.validateRepo(NAME, IMAGE, TAG, github, gitHubUtil);
     }
 
     @Test(dependsOnMethods = "testChild")
