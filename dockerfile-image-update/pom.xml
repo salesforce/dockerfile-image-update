@@ -20,6 +20,22 @@
 
     <artifactId>dockerfile-image-update</artifactId>
 
+    <name>${project.groupId}:${project.artifactId}</name>
+    <description>This tool provides a mechanism to make security updates to docker images at scale.
+        The tool searches github for declared docker images and sends pull requests to projects that are not using
+        the desired version of the requested docker image.</description>
+    <url>https://github.com/salesforce/dockerfile-image-update</url>
+    <organization>
+        <name>Salesforce</name>
+        <url>http://www.salesforce.com</url>
+    </organization>
+    <licenses>
+        <license>
+            <name>BSD 3-Clause</name>
+            <url>file://${basedir}/LICENSE.txt</url>
+        </license>
+    </licenses>
+
     <dependencies>
         <dependency>
             <groupId>com.google.guava</groupId>

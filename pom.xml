@@ -16,6 +16,21 @@
     <artifactId>dockerfile-image-update-parent</artifactId>
     <packaging>pom</packaging>
     <version>1.0-SNAPSHOT</version>
+
+    <name>${project.groupId}:${project.artifactId}</name>
+    <description>Parent pom ${project.groupId}:${project.artifactId}.</description>
+    <url>https://github.com/salesforce/dockerfile-image-update</url>
+    <organization>
+        <name>Salesforce</name>
+        <url>http://www.salesforce.com</url>
+    </organization>
+    <licenses>
+        <license>
+            <name>BSD 3-Clause</name>
+            <url>file://${basedir}/LICENSE.txt</url>
+        </license>
+    </licenses>
+
     <modules>
         <module>dockerfile-image-update</module>
         <module>dockerfile-image-update-itest</module>
