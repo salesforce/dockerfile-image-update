@@ -33,6 +33,19 @@
         </license>
     </licenses>
 
+    <developers>
+        <developer>
+            <name>Andrey Falko</name>
+            <email>afalko@salesforce.com</email>
+            <organization>Salesforce</organization>
+        </developer>
+        <developer>
+            <name>Justin Harringa</name>
+            <email>jharringa@salesforce.com</email>
+            <organization>Salesforce</organization>
+        </developer>
+    </developers>
+
     <dependencies>
         <dependency>
             <groupId>com.google.guava</groupId>
