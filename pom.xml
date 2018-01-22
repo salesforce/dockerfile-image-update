@@ -26,7 +26,7 @@
     </organization>
     <licenses>
         <license>
-            <name>BSD 3-Clause</name>
+            <name>BSD 3-Clause License</name>
             <url>file://${basedir}/LICENSE.txt</url>
         </license>
     </licenses>
