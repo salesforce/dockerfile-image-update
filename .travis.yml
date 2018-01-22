@@ -20,7 +20,10 @@ after_success:
 - mvn coveralls:report
 deploy:
   provider: script
-  script: "./travis.deploy.sh"
+  script: ".travis.deploy.sh"
   skip_cleanup: true
   on:
     branch: master
+before_install:
+- openssl aes-256-cbc -K $encrypted_96e73e3cb232_key -iv $encrypted_96e73e3cb232_iv
+  -in id_rsa_dockerfile_image_update.enc -out id_rsa_dockerfile_image_update -d

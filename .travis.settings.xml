@@ -2,6 +2,7 @@
     <servers>
         <server>
             <id>ossrh</id>
+            <privateKey>id_rsa_dockerfile_image_update</privateKey>
             <username>${env.CI_DEPLOY_USER}</username>
             <password>${env.CI_DEPLOY_PASSWORD}</password>
         </server>
