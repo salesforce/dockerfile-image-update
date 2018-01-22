@@ -8,7 +8,7 @@
 
 package com.salesforce.dockerfileimageupdate.itest.tests;
 
-import com.salesforce.dockerfileimageupdate.githubutils.GithubUtil;
+import com.salesforce.dockerfileimageupdate.utils.GithubUtil;
 import org.kohsuke.github.GHOrganization;
 import org.kohsuke.github.GHRepository;
 import org.kohsuke.github.GitHub;

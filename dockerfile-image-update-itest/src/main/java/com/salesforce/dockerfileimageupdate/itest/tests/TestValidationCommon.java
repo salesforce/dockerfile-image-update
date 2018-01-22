@@ -8,7 +8,7 @@
 
 package com.salesforce.dockerfileimageupdate.itest.tests;
 
-import com.salesforce.dockerfileimageupdate.githubutils.GithubUtil;
+import com.salesforce.dockerfileimageupdate.utils.GithubUtil;
 import org.apache.commons.io.IOUtils;
 import org.assertj.core.api.Assertions;
 import org.kohsuke.github.*;

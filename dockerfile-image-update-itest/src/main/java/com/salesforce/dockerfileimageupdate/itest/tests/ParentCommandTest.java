@@ -10,7 +10,7 @@ package com.salesforce.dockerfileimageupdate.itest.tests;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
-import com.salesforce.dockerfileimageupdate.githubutils.GithubUtil;
+import com.salesforce.dockerfileimageupdate.utils.GithubUtil;
 import org.kohsuke.github.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
