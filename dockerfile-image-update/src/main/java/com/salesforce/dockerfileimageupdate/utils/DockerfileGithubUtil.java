@@ -10,7 +10,6 @@ package com.salesforce.dockerfileimageupdate.utils;
 
 import com.google.gson.*;
 import com.salesforce.dockerfileimageupdate.subcommands.impl.Child;
-import com.salesforce.dockerfileimageupdate.githubutils.GithubUtil;
 import org.kohsuke.github.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

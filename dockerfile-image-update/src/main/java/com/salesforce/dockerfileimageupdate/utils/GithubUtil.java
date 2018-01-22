@@ -6,7 +6,7 @@
  * https://opensource.org/licenses/BSD-3-Clause
  */
 
-package com.salesforce.dockerfileimageupdate.githubutils;
+package com.salesforce.dockerfileimageupdate.utils;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;

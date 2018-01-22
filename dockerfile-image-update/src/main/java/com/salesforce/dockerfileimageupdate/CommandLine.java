@@ -10,7 +10,7 @@ package com.salesforce.dockerfileimageupdate;
 
 
 import com.google.common.reflect.ClassPath;
-import com.salesforce.dockerfileimageupdate.githubutils.GithubUtil;
+import com.salesforce.dockerfileimageupdate.utils.GithubUtil;
 import com.salesforce.dockerfileimageupdate.subcommands.ExecutableWithNamespace;
 import com.salesforce.dockerfileimageupdate.utils.Constants;
 import com.salesforce.dockerfileimageupdate.utils.DockerfileGithubUtil;

@@ -6,11 +6,12 @@
  * https://opensource.org/licenses/BSD-3-Clause
  */
 
-package com.salesforce.dockerfileimageupdate.githubutils;
+package com.salesforce.dockerfileimageupdate.utils;
 
 import com.google.common.collect.ImmutableMap;
 import org.kohsuke.github.*;
 import org.mockito.Mockito;
+import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
@@ -158,6 +159,6 @@ public class GithubUtilTest {
         GitHub github = Mockito.mock(GitHub.class);
         GithubUtil githubUtil = new GithubUtil(github);
         PagedIterable<GHRepository> returnList = githubUtil.getGHRepositories(parentToPath, currentUser);
-        assertEquals(returnList, listOfRepos);
+        Assert.assertEquals(returnList, listOfRepos);
     }
 }

@@ -17,9 +17,8 @@
     <packaging>pom</packaging>
     <version>1.0-SNAPSHOT</version>
     <modules>
-        <module>dockerfile-image-update-cmdtool</module>
+        <module>dockerfile-image-update</module>
         <module>dockerfile-image-update-itest</module>
-        <module>dockerfile-image-update-githubutils</module>
     </modules>
 
     <properties>
