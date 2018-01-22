@@ -12,8 +12,8 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
     <parent>
-        <artifactId>dockerfile-image-update-parent</artifactId>
         <groupId>com.salesforce.dockerfile-image-update</groupId>
+        <artifactId>dockerfile-image-update-parent</artifactId>
         <version>1.0-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -24,58 +24,29 @@
     <description>This tool provides a mechanism to make security updates to docker images at scale.
         The tool searches github for declared docker images and sends pull requests to projects that are not using
         the desired version of the requested docker image.</description>
-    <url>https://github.com/salesforce/dockerfile-image-update</url>
-    <organization>
-        <name>Salesforce</name>
-        <url>http://www.salesforce.com</url>
-    </organization>
-    <licenses>
-        <license>
-            <name>BSD 3-Clause</name>
-            <url>file://${basedir}/LICENSE.txt</url>
-        </license>
-    </licenses>
-
-    <developers>
-        <developer>
-            <name>Andrey Falko</name>
-            <email>afalko@salesforce.com</email>
-            <organization>Salesforce</organization>
-        </developer>
-        <developer>
-            <name>Justin Harringa</name>
-            <email>jharringa@salesforce.com</email>
-            <organization>Salesforce</organization>
-        </developer>
-    </developers>
 
     <dependencies>
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
-            <version>19.0</version>
         </dependency>
         <dependency>
             <groupId>org.testng</groupId>
             <artifactId>testng</artifactId>
-            <version>6.8</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>net.sourceforge.argparse4j</groupId>
             <artifactId>argparse4j</artifactId>
-            <version>0.7.0</version>
         </dependency>
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-all</artifactId>
-            <version>1.10.19</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.assertj</groupId>
             <artifactId>assertj-core</artifactId>
-            <version>3.8.0</version>
             <scope>test</scope>
         </dependency>
 
