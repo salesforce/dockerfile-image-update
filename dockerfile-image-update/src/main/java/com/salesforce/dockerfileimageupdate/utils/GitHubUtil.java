@@ -24,13 +24,13 @@ import java.util.concurrent.TimeUnit;
 /**
  * Created by minho-park on 7/1/16.
  */
-public class GithubUtil {
-    private final static Logger log = LoggerFactory.getLogger(GithubUtil.class);
+public class GitHubUtil {
+    private final static Logger log = LoggerFactory.getLogger(GitHubUtil.class);
 
     private final GitHub github;
 
-    public GithubUtil(GitHub _github) throws IOException {
-        github = _github;
+    public GitHubUtil(GitHub gitHub) throws IOException {
+        github = gitHub;
     }
 
     public GitHub getGithub() {

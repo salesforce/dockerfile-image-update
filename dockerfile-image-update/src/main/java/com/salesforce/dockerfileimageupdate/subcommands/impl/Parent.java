@@ -11,7 +11,7 @@ package com.salesforce.dockerfileimageupdate.subcommands.impl;
 import com.salesforce.dockerfileimageupdate.SubCommand;
 import com.salesforce.dockerfileimageupdate.subcommands.ExecutableWithNamespace;
 import com.salesforce.dockerfileimageupdate.utils.Constants;
-import com.salesforce.dockerfileimageupdate.utils.DockerfileGithubUtil;
+import com.salesforce.dockerfileimageupdate.utils.DockerfileGitHubUtil;
 import net.sourceforge.argparse4j.inf.Namespace;
 import org.kohsuke.github.*;
 import org.slf4j.Logger;
@@ -30,18 +30,18 @@ import java.util.Map;
 public class Parent implements ExecutableWithNamespace {
     private final static Logger log = LoggerFactory.getLogger(Parent.class);
 
-    private DockerfileGithubUtil dockerfileGithubUtil;
+    private DockerfileGitHubUtil dockerfileGitHubUtil;
 
     @Override
-    public void execute(final Namespace ns, DockerfileGithubUtil dockerfileGithubUtil)
+    public void execute(final Namespace ns, DockerfileGitHubUtil dockerfileGitHubUtil)
             throws IOException, InterruptedException {
-        loadDockerfileGithubUtil(dockerfileGithubUtil);
+        loadDockerfileGithubUtil(dockerfileGitHubUtil);
         Map<String, String> parentToPath = new HashMap<>();
         String img = ns.get(Constants.IMG);
         String tag = ns.get(Constants.TAG);
 
         log.info("Updating store...");
-        this.dockerfileGithubUtil.updateStore(ns.get(Constants.STORE), img, tag);
+        this.dockerfileGitHubUtil.updateStore(ns.get(Constants.STORE), img, tag);
 
         log.info("Finding Dockerfiles with the given image...");
         PagedSearchIterable<GHContent> contentsWithImage = getGHContents(ns.get("o"), img);
@@ -49,12 +49,12 @@ public class Parent implements ExecutableWithNamespace {
 
         forkRepositoriesFound(parentToPath, contentsWithImage);
 
-        GHMyself currentUser = this.dockerfileGithubUtil.getMyself();
+        GHMyself currentUser = this.dockerfileGitHubUtil.getMyself();
         if (currentUser == null) {
             throw new IOException("Could not retrieve authenticated user.");
         }
 
-        PagedIterable<GHRepository> listOfRepos = dockerfileGithubUtil.getGHRepositories(parentToPath, currentUser);
+        PagedIterable<GHRepository> listOfRepos = dockerfileGitHubUtil.getGHRepositories(parentToPath, currentUser);
 
         String message = ns.get("m");
         List<IOException> exceptions = new ArrayList<>();
@@ -71,15 +71,15 @@ public class Parent implements ExecutableWithNamespace {
         }
     }
 
-    protected void loadDockerfileGithubUtil(DockerfileGithubUtil _dockerfileGithubUtil) {
-        dockerfileGithubUtil = _dockerfileGithubUtil;
+    protected void loadDockerfileGithubUtil(DockerfileGitHubUtil _dockerfileGitHubUtil) {
+        dockerfileGitHubUtil = _dockerfileGitHubUtil;
     }
 
     protected PagedSearchIterable<GHContent> getGHContents(String org, String img)
             throws IOException, InterruptedException {
         PagedSearchIterable<GHContent> contentsWithImage = null;
         for (int i = 0; i < 5; i++) {
-            contentsWithImage = dockerfileGithubUtil.findFilesWithImage(img, org);
+            contentsWithImage = dockerfileGitHubUtil.findFilesWithImage(img, org);
             if (contentsWithImage.getTotalCount() > 0) {
                 break;
             } else {
@@ -115,7 +115,7 @@ public class Parent implements ExecutableWithNamespace {
             GHRepository parent = c.getOwner();
             log.info("Forking {}...", parent.getFullName());
             parentToPath.put(c.getOwner().getFullName(), c.getPath());
-            dockerfileGithubUtil.checkFromParentAndFork(parent);
+            dockerfileGitHubUtil.checkFromParentAndFork(parent);
         }
     }
 
@@ -128,7 +128,7 @@ public class Parent implements ExecutableWithNamespace {
         if (initialRepo.isFork()) {
             log.info("Re-retrieving repo {}...", initialRepo.getFullName());
             try {
-                retrievedRepo = dockerfileGithubUtil.getRepo(initialRepo.getFullName());
+                retrievedRepo = dockerfileGitHubUtil.getRepo(initialRepo.getFullName());
             } catch (FileNotFoundException e) {
                 /* The edge case here: If a different command calls getGHRepositories, and then this command calls
                  * it again within 60 seconds, it will still have the same list of repositories (because of caching).
@@ -161,9 +161,9 @@ public class Parent implements ExecutableWithNamespace {
         } else {
             currBranch = branch;
         }
-        GHContent content = dockerfileGithubUtil.tryRetrievingContent(retrievedRepo, parentToPath.get(parentName),
+        GHContent content = dockerfileGitHubUtil.tryRetrievingContent(retrievedRepo, parentToPath.get(parentName),
                 currBranch);
-        dockerfileGithubUtil.modifyOnGithub(content, currBranch, ns.get(Constants.IMG), ns.get(Constants.TAG), ns.get("c"));
-        dockerfileGithubUtil.createPullReq(parent, currBranch, retrievedRepo, message);
+        dockerfileGitHubUtil.modifyOnGithub(content, currBranch, ns.get(Constants.IMG), ns.get(Constants.TAG), ns.get("c"));
+        dockerfileGitHubUtil.createPullReq(parent, currBranch, retrievedRepo, message);
     }
 }

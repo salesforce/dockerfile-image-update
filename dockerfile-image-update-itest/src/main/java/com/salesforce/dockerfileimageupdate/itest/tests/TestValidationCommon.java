@@ -8,7 +8,7 @@
 
 package com.salesforce.dockerfileimageupdate.itest.tests;
 
-import com.salesforce.dockerfileimageupdate.utils.GithubUtil;
+import com.salesforce.dockerfileimageupdate.utils.GitHubUtil;
 import org.apache.commons.io.IOUtils;
 import org.assertj.core.api.Assertions;
 import org.kohsuke.github.*;
@@ -27,16 +27,16 @@ public class TestValidationCommon {
     private static final Logger log = LoggerFactory.getLogger(TestValidationCommon.class);
     private static final long MAX_CONTENT_SIZE = 512L * 1024;
 
-    public static void validateRepo(String repoName, String image, String testTag, GitHub github, GithubUtil githubUtil) throws Exception {
+    public static void validateRepo(String repoName, String image, String testTag, GitHub github, GitHubUtil gitHubUtil) throws Exception {
         String login = github.getMyself().getLogin();
         // Github is eventually consistent, give it some time to read
         for (int attempt = 0; attempt < 5; attempt++) {
-            GHRepository repo = githubUtil.tryRetrievingRepository(Paths.get(login, repoName).toString());
+            GHRepository repo = gitHubUtil.tryRetrievingRepository(Paths.get(login, repoName).toString());
             if (repo == null) {
                 fail("Repository not found: " + Paths.get(login, repoName).toString());
             }
             String latestCommit = repo.getBranches().get(repo.getDefaultBranch()).getSHA1();
-            GHContent content = githubUtil.tryRetrievingContent(repo, "Dockerfile", latestCommit);
+            GHContent content = gitHubUtil.tryRetrievingContent(repo, "Dockerfile", latestCommit);
             if (content.getSize() > MAX_CONTENT_SIZE) {
                 fail(String.format("Content is suspiciously large: %s, should be below %s", content.getSize(), MAX_CONTENT_SIZE));
             }

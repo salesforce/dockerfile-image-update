@@ -10,7 +10,7 @@ package com.salesforce.dockerfileimageupdate.subcommands.impl;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.JsonElement;
-import com.salesforce.dockerfileimageupdate.utils.DockerfileGithubUtil;
+import com.salesforce.dockerfileimageupdate.utils.DockerfileGitHubUtil;
 import org.kohsuke.github.*;
 import org.mockito.Mockito;
 import org.testng.annotations.Test;
@@ -31,7 +31,7 @@ import static org.testng.Assert.assertNotNull;
 public class AllTest {
     @Test
     public void testForkRepositoriesFound() throws Exception {
-        DockerfileGithubUtil dockerfileGithubUtil = mock(DockerfileGithubUtil.class);
+        DockerfileGitHubUtil dockerfileGitHubUtil = mock(DockerfileGitHubUtil.class);
 
         GHRepository contentRepo1 = mock(GHRepository.class);
         GHRepository contentRepo2 = mock(GHRepository.class);
@@ -52,28 +52,28 @@ public class AllTest {
         when(contentsWithImage.iterator()).thenReturn(contentsWithImageIterator);
 
         All all = new All();
-        all.loadDockerfileGithubUtil(dockerfileGithubUtil);
+        all.loadDockerfileGithubUtil(dockerfileGitHubUtil);
         all.forkRepositoriesFound(new HashMap<>(), new HashMap<>(), contentsWithImage, "image");
 
-        Mockito.verify(dockerfileGithubUtil, times(3)).checkFromParentAndFork(any());
+        Mockito.verify(dockerfileGitHubUtil, times(3)).checkFromParentAndFork(any());
     }
 
     @Test
     public void testChangeDockerfiles_returnIfNotFork() throws Exception {
-        DockerfileGithubUtil dockerfileGithubUtil = mock(DockerfileGithubUtil.class);
+        DockerfileGitHubUtil dockerfileGitHubUtil = mock(DockerfileGitHubUtil.class);
         GHRepository initialRepo = mock(GHRepository.class);
         when(initialRepo.isFork()).thenReturn(false);
 
         All all = new All();
-        all.loadDockerfileGithubUtil(dockerfileGithubUtil);
+        all.loadDockerfileGithubUtil(dockerfileGitHubUtil);
         all.changeDockerfiles(null, null, null, initialRepo, "Automatic Dockerfile Image Updater", "");
 
-        Mockito.verify(dockerfileGithubUtil, times(0)).getRepo(anyString());
+        Mockito.verify(dockerfileGitHubUtil, times(0)).getRepo(anyString());
     }
 
     @Test
     public void testChangeDockerfiles_returnIfNotDesiredParent() throws Exception {
-        DockerfileGithubUtil dockerfileGithubUtil = mock(DockerfileGithubUtil.class);
+        DockerfileGitHubUtil dockerfileGitHubUtil = mock(DockerfileGitHubUtil.class);
 
         GHRepository initialRepo = mock(GHRepository.class);
         when(initialRepo.isFork()).thenReturn(true);
@@ -85,7 +85,7 @@ public class AllTest {
         when(retrievedRepo.getParent()).thenReturn(parentRepo);
         when(retrievedRepo.getDefaultBranch()).thenReturn("branch");
 
-        when(dockerfileGithubUtil.getRepo(initialRepo.getFullName())).thenReturn(retrievedRepo);
+        when(dockerfileGitHubUtil.getRepo(initialRepo.getFullName())).thenReturn(retrievedRepo);
 
         Map<String, String> parentToPath = ImmutableMap.of(
                 "test1", "test",
@@ -94,21 +94,21 @@ public class AllTest {
                 "test4", "test");
 
         All all = new All();
-        all.loadDockerfileGithubUtil(dockerfileGithubUtil);
+        all.loadDockerfileGithubUtil(dockerfileGitHubUtil);
         all.changeDockerfiles(parentToPath, null, null, initialRepo, "Automatic Dockerfile Image Updater", "");
 
-        Mockito.verify(dockerfileGithubUtil, times(1)).getRepo(anyString());
-        Mockito.verify(dockerfileGithubUtil, times(0)).tryRetrievingContent(eq(retrievedRepo),
+        Mockito.verify(dockerfileGitHubUtil, times(1)).getRepo(anyString());
+        Mockito.verify(dockerfileGitHubUtil, times(0)).tryRetrievingContent(eq(retrievedRepo),
                 eq("correct"), eq("branch"));
-        Mockito.verify(dockerfileGithubUtil, times(0))
+        Mockito.verify(dockerfileGitHubUtil, times(0))
                 .modifyOnGithub(any(), eq("branch"), eq("image"), eq("tag"), anyString());
-        Mockito.verify(dockerfileGithubUtil, times(0)).createPullReq(eq(parentRepo), eq("branch"),
+        Mockito.verify(dockerfileGitHubUtil, times(0)).createPullReq(eq(parentRepo), eq("branch"),
                 eq(retrievedRepo), anyString());
     }
 
     @Test
     public void testChangeDockerfiles_pullRequestCreation() throws Exception {
-        DockerfileGithubUtil dockerfileGithubUtil = mock(DockerfileGithubUtil.class);
+        DockerfileGitHubUtil dockerfileGitHubUtil = mock(DockerfileGitHubUtil.class);
 
         GHRepository initialRepo = mock(GHRepository.class);
         when(initialRepo.isFork()).thenReturn(true);
@@ -120,7 +120,7 @@ public class AllTest {
         when(retrievedRepo.getParent()).thenReturn(parentRepo);
         when(retrievedRepo.getDefaultBranch()).thenReturn("branch");
 
-        when(dockerfileGithubUtil.getRepo(initialRepo.getFullName())).thenReturn(retrievedRepo);
+        when(dockerfileGitHubUtil.getRepo(initialRepo.getFullName())).thenReturn(retrievedRepo);
 
         Map<String, String> parentToPath = ImmutableMap.of(
                 "test1", "test",
@@ -141,31 +141,31 @@ public class AllTest {
                 "image4", "tag4");
 
         All all = new All();
-        all.loadDockerfileGithubUtil(dockerfileGithubUtil);
+        all.loadDockerfileGithubUtil(dockerfileGitHubUtil);
         all.changeDockerfiles(parentToPath, parentToImage, imageToTagMap,
                 initialRepo, "Automatic Dockerfile Image Updater", "");
 
-        Mockito.verify(dockerfileGithubUtil, times(1)).getRepo(anyString());
-        Mockito.verify(dockerfileGithubUtil, times(1)).tryRetrievingContent(eq(retrievedRepo),
+        Mockito.verify(dockerfileGitHubUtil, times(1)).getRepo(anyString());
+        Mockito.verify(dockerfileGitHubUtil, times(1)).tryRetrievingContent(eq(retrievedRepo),
                 eq("correct"), eq("branch"));
-        Mockito.verify(dockerfileGithubUtil, times(1))
+        Mockito.verify(dockerfileGitHubUtil, times(1))
                 .modifyOnGithub(any(), eq("branch"), eq("image2"), eq("tag2"), anyString());
-        Mockito.verify(dockerfileGithubUtil, times(1)).createPullReq(eq(parentRepo), eq("branch"),
+        Mockito.verify(dockerfileGitHubUtil, times(1)).createPullReq(eq(parentRepo), eq("branch"),
                 eq(retrievedRepo), anyString());
     }
 
     @Test
     public void testParseStoreToImagesMap() throws Exception {
-        DockerfileGithubUtil dockerfileGithubUtil = mock(DockerfileGithubUtil.class);
-        when(dockerfileGithubUtil.getMyself()).thenReturn(mock(GHMyself.class));
-        when(dockerfileGithubUtil.getRepo(anyString())).thenReturn(mock(GHRepository.class));
+        DockerfileGitHubUtil dockerfileGitHubUtil = mock(DockerfileGitHubUtil.class);
+        when(dockerfileGitHubUtil.getMyself()).thenReturn(mock(GHMyself.class));
+        when(dockerfileGitHubUtil.getRepo(anyString())).thenReturn(mock(GHRepository.class));
         GHContent mockContent = mock(GHContent.class);
         ClassLoader classloader = Thread.currentThread().getContextClassLoader();
         when(mockContent.read()).thenReturn(classloader.getResourceAsStream("image-store-sample.json"));
-        when(dockerfileGithubUtil.tryRetrievingContent(any(GHRepository.class), anyString(), anyString())).thenReturn(mockContent);
+        when(dockerfileGitHubUtil.tryRetrievingContent(any(GHRepository.class), anyString(), anyString())).thenReturn(mockContent);
 
         All all = new All();
-        all.loadDockerfileGithubUtil(dockerfileGithubUtil);
+        all.loadDockerfileGithubUtil(dockerfileGitHubUtil);
         Set<Map.Entry<String, JsonElement>> imageSet = all.parseStoreToImagesMap("testStore");
         assertNotNull(imageSet);
     }

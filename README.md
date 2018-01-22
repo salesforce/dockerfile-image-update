@@ -131,12 +131,12 @@ mvn clean install
 
 ### Running locally
 ```
-cd dockerfile-image-update-cmdtool/target
+cd dockerfile-image-update/target
 java -jar dockerfile-image-update.jar <COMMAND> <PARAMETERS>
 ```
 
 ### Creating a new feature
-Under dockerfile-image-update-cmdtool/src/main/java/com/salesforce/dva/dockerfileimageupdate/subcommands/impl, create a new class `YOUR_FEATURE.java`. Make sure it implements `ExecutableWithNamespace` and has the `SubCommand` annotation with a `help`, `requiredParams`, and `optionalParams`. Then, under the `execute` method, code what you want this tool to do.
+Under dockerfile-image-update/src/main/java/com/salesforce/dva/dockerfileimageupdate/subcommands/impl, create a new class `YOUR_FEATURE.java`. Make sure it implements `ExecutableWithNamespace` and has the `SubCommand` annotation with a `help`, `requiredParams`, and `optionalParams`. Then, under the `execute` method, code what you want this tool to do.
 
 ### Running unit tests
 Run unit tests by running `mvn test`. 

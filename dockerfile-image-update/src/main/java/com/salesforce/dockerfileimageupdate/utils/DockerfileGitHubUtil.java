@@ -22,27 +22,27 @@ import java.util.Map;
 /**
  * Created by minho.park on 7/22/16.
  */
-public class DockerfileGithubUtil {
+public class DockerfileGitHubUtil {
     private final static Logger log = LoggerFactory.getLogger(Child.class);
-    private final GithubUtil githubUtil;
+    private final GitHubUtil gitHubUtil;
 
-    public DockerfileGithubUtil(GithubUtil _githubUtil) {
-        githubUtil = _githubUtil;
+    public DockerfileGitHubUtil(GitHubUtil gitHubUtil) {
+        this.gitHubUtil = gitHubUtil;
     }
 
-    protected GithubUtil getGithubUtil() { return githubUtil; }
+    protected GitHubUtil getGitHubUtil() { return gitHubUtil; }
 
     public GHRepository checkFromParentAndFork(GHRepository parent) throws IOException {
-        githubUtil.createFork(parent);
+        gitHubUtil.createFork(parent);
 
         for (GHRepository fork : parent.listForks()) {
             String forkOwner = fork.getOwnerName();
-            GHMyself myself = githubUtil.getMyself();
+            GHMyself myself = gitHubUtil.getMyself();
             String myselfLogin = myself.getLogin();
             if (forkOwner.equals(myselfLogin)) {
                 if (!pullRequestAlreadyExists(parent)) {
-                    githubUtil.safeDeleteRepo(fork);
-                    return githubUtil.createFork(parent);
+                    gitHubUtil.safeDeleteRepo(fork);
+                    return gitHubUtil.createFork(parent);
                 }
                 return fork;
             }
@@ -51,15 +51,15 @@ public class DockerfileGithubUtil {
     }
 
     public GHMyself getMyself() throws IOException {
-        return githubUtil.getMyself();
+        return gitHubUtil.getMyself();
     }
 
     public GHRepository getRepo(String repoName) throws IOException {
-        return githubUtil.getRepo(repoName);
+        return gitHubUtil.getRepo(repoName);
     }
 
     public PagedSearchIterable<GHContent> findFilesWithImage(String query, String org) throws IOException {
-        GHContentSearchBuilder search = githubUtil.startSearch();
+        GHContentSearchBuilder search = gitHubUtil.startSearch();
         search.language("Dockerfile");
         if (org != null) {
             search.user(org);
@@ -88,7 +88,7 @@ public class DockerfileGithubUtil {
      */
     public PagedIterable<GHRepository> getGHRepositories(Map<String, String> parentToPath,
                                                             GHMyself currentUser) throws InterruptedException {
-        return githubUtil.getGHRepositories(parentToPath, currentUser);
+        return gitHubUtil.getGHRepositories(parentToPath, currentUser);
     }
 
     public void modifyAllOnGithub(GHRepository repo, String branch,
@@ -124,7 +124,7 @@ public class DockerfileGithubUtil {
     }
 
     public GHContent tryRetrievingContent(GHRepository repo, String path, String branch) throws InterruptedException {
-        return githubUtil.tryRetrievingContent(repo, path, branch);
+        return gitHubUtil.tryRetrievingContent(repo, path, branch);
     }
 
 
@@ -187,11 +187,11 @@ public class DockerfileGithubUtil {
         log.info("Updating store...");
         GHRepository storeRepo;
         try {
-            GHMyself myself = githubUtil.getMyself();
+            GHMyself myself = gitHubUtil.getMyself();
             String ownerOrg = myself.getLogin();
-            storeRepo = githubUtil.getRepo(Paths.get(ownerOrg, store).toString());
+            storeRepo = gitHubUtil.getRepo(Paths.get(ownerOrg, store).toString());
         } catch (IOException e) {
-            storeRepo = githubUtil.createPublicRepo(store);
+            storeRepo = gitHubUtil.createPublicRepo(store);
         }
         updateStoreOnGithub(storeRepo, Constants.STORE_JSON_FILE, img, tag);
     }
@@ -251,11 +251,11 @@ public class DockerfileGithubUtil {
             message = "Automatic Dockerfile Image Updater";
         }
         while (true) {
-            int pullRequestExitCode = githubUtil.createPullReq(origRepo, branch, forkRepo, message, Constants.PULL_REQ_ID);
+            int pullRequestExitCode = gitHubUtil.createPullReq(origRepo, branch, forkRepo, message, Constants.PULL_REQ_ID);
             if (pullRequestExitCode == 0) {
                 return;
             } else if (pullRequestExitCode == 1) {
-                githubUtil.safeDeleteRepo(forkRepo);
+                gitHubUtil.safeDeleteRepo(forkRepo);
                 return;
             }
         }
@@ -266,7 +266,7 @@ public class DockerfileGithubUtil {
         GHUser myself;
         try {
             pullRequests = parent.getPullRequests(GHIssueState.OPEN);
-            myself = githubUtil.getMyself();
+            myself = gitHubUtil.getMyself();
         } catch (IOException e) {
             log.warn("Error occurred while retrieving pull requests for {}", parent.getFullName());
             return false;

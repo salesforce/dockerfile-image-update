@@ -9,7 +9,7 @@
 package com.salesforce.dockerfileimageupdate.subcommands.impl;
 
 import com.google.common.collect.ImmutableMap;
-import com.salesforce.dockerfileimageupdate.utils.DockerfileGithubUtil;
+import com.salesforce.dockerfileimageupdate.utils.DockerfileGitHubUtil;
 import net.sourceforge.argparse4j.inf.Namespace;
 import org.kohsuke.github.GHRepository;
 import org.mockito.Mockito;
@@ -49,15 +49,15 @@ public class ChildTest {
     public void checkPullRequestMade(Map<String, Object> inputMap) throws Exception {
         Child child = new Child();
         Namespace ns = new Namespace(inputMap);
-        DockerfileGithubUtil dockerfileGithubUtil = Mockito.mock(DockerfileGithubUtil.class);
-        Mockito.when(dockerfileGithubUtil.getRepo(Mockito.any())).thenReturn(new GHRepository());
-        doNothing().when(dockerfileGithubUtil).modifyAllOnGithub(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
-        doNothing().when(dockerfileGithubUtil).updateStore(anyString(), anyString(), anyString());
-        doNothing().when(dockerfileGithubUtil).createPullReq(Mockito.any(), anyString(), Mockito.any(), anyString());
+        DockerfileGitHubUtil dockerfileGitHubUtil = Mockito.mock(DockerfileGitHubUtil.class);
+        Mockito.when(dockerfileGitHubUtil.getRepo(Mockito.any())).thenReturn(new GHRepository());
+        doNothing().when(dockerfileGitHubUtil).modifyAllOnGithub(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
+        doNothing().when(dockerfileGitHubUtil).updateStore(anyString(), anyString(), anyString());
+        doNothing().when(dockerfileGitHubUtil).createPullReq(Mockito.any(), anyString(), Mockito.any(), anyString());
 
-        child.execute(ns, dockerfileGithubUtil);
+        child.execute(ns, dockerfileGitHubUtil);
 
-        Mockito.verify(dockerfileGithubUtil, atLeastOnce())
+        Mockito.verify(dockerfileGitHubUtil, atLeastOnce())
                 .createPullReq(Mockito.any(), anyString(), Mockito.any(), anyString());
     }
 }

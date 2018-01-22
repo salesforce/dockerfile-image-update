@@ -11,7 +11,7 @@ package com.salesforce.dockerfileimageupdate.subcommands.impl;
 import com.salesforce.dockerfileimageupdate.utils.Constants;
 import com.salesforce.dockerfileimageupdate.SubCommand;
 import com.salesforce.dockerfileimageupdate.subcommands.ExecutableWithNamespace;
-import com.salesforce.dockerfileimageupdate.utils.DockerfileGithubUtil;
+import com.salesforce.dockerfileimageupdate.utils.DockerfileGitHubUtil;
 import net.sourceforge.argparse4j.inf.Namespace;
 import org.kohsuke.github.GHRepository;
 import org.slf4j.Logger;
@@ -25,29 +25,29 @@ public class Child implements ExecutableWithNamespace {
     private final static Logger log = LoggerFactory.getLogger(Child.class);
 
     @Override
-    public void execute(final Namespace ns, final DockerfileGithubUtil dockerfileGithubUtil)
+    public void execute(final Namespace ns, final DockerfileGitHubUtil dockerfileGitHubUtil)
             throws IOException, InterruptedException {
         String branch = ns.get("b");
         String img = ns.get(Constants.IMG);
         String forceTag = ns.get(Constants.FORCE_TAG);
 
         /* Updates store if a store is specified. */
-        dockerfileGithubUtil.updateStore(ns.get(Constants.STORE), img, forceTag);
+        dockerfileGitHubUtil.updateStore(ns.get(Constants.STORE), img, forceTag);
 
         log.info("Retrieving repository and creating fork...");
-        GHRepository repo = dockerfileGithubUtil.getRepo(ns.get(Constants.GIT_REPO));
-        GHRepository fork = dockerfileGithubUtil.checkFromParentAndFork(repo);
+        GHRepository repo = dockerfileGitHubUtil.getRepo(ns.get(Constants.GIT_REPO));
+        GHRepository fork = dockerfileGitHubUtil.checkFromParentAndFork(repo);
 
         if (branch == null) {
             branch = repo.getDefaultBranch();
         }
         log.info("Modifying on Github...");
-        dockerfileGithubUtil.modifyAllOnGithub(fork, branch, img, forceTag);
+        dockerfileGitHubUtil.modifyAllOnGithub(fork, branch, img, forceTag);
 
         String message = ns.get("m");
 
 
-        dockerfileGithubUtil.createPullReq(repo, branch, fork, message);
+        dockerfileGitHubUtil.createPullReq(repo, branch, fork, message);
 
         /* TODO: A potential problem that requires a design decision:
          * 1. Leave forks in authenticated repository.

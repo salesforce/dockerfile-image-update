@@ -10,10 +10,10 @@ package com.salesforce.dockerfileimageupdate;
 
 
 import com.google.common.reflect.ClassPath;
-import com.salesforce.dockerfileimageupdate.utils.GithubUtil;
+import com.salesforce.dockerfileimageupdate.utils.GitHubUtil;
 import com.salesforce.dockerfileimageupdate.subcommands.ExecutableWithNamespace;
 import com.salesforce.dockerfileimageupdate.utils.Constants;
-import com.salesforce.dockerfileimageupdate.utils.DockerfileGithubUtil;
+import com.salesforce.dockerfileimageupdate.utils.DockerfileGitHubUtil;
 import net.sourceforge.argparse4j.ArgumentParsers;
 import net.sourceforge.argparse4j.impl.Arguments;
 import net.sourceforge.argparse4j.inf.*;
@@ -46,10 +46,10 @@ public class CommandLine {
         if (ns == null)
             System.exit(1);
         Class<?> runClass = loadCommand(allClasses, ns.get(Constants.COMMAND));
-        DockerfileGithubUtil dockerfileGithubUtil = initializeDockerfileGithubUtil(ns.get(Constants.GIT_API));
+        DockerfileGitHubUtil dockerfileGitHubUtil = initializeDockerfileGithubUtil(ns.get(Constants.GIT_API));
 
         /* Execute given command. */
-        ((ExecutableWithNamespace)runClass.newInstance()).execute(ns, dockerfileGithubUtil);
+        ((ExecutableWithNamespace)runClass.newInstance()).execute(ns, dockerfileGitHubUtil);
     }
 
     static ArgumentParser getArgumentParser() {
@@ -156,7 +156,7 @@ public class CommandLine {
     }
 
     /* Validate API URL and connect to the API using credentials. */
-    public static DockerfileGithubUtil initializeDockerfileGithubUtil(String gitApiUrl) throws IOException {
+    public static DockerfileGitHubUtil initializeDockerfileGithubUtil(String gitApiUrl) throws IOException {
         if (gitApiUrl == null) {
             gitApiUrl = System.getenv("git_api_url");
             if (gitApiUrl == null) {
@@ -174,8 +174,8 @@ public class CommandLine {
                 .build();
         github.checkApiUrlValidity();
 
-        GithubUtil githubUtil = new GithubUtil(github);
+        GitHubUtil gitHubUtil = new GitHubUtil(github);
 
-        return new DockerfileGithubUtil(githubUtil);
+        return new DockerfileGitHubUtil(gitHubUtil);
     }
 }

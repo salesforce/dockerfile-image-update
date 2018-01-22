@@ -8,7 +8,7 @@
 
 package com.salesforce.dockerfileimageupdate.itest.tests;
 
-import com.salesforce.dockerfileimageupdate.utils.GithubUtil;
+import com.salesforce.dockerfileimageupdate.utils.GitHubUtil;
 import org.kohsuke.github.GHOrganization;
 import org.kohsuke.github.GHRepository;
 import org.kohsuke.github.GitHub;
@@ -52,7 +52,7 @@ public class AllCommandTest {
 
 
     private List<GHRepository> createdRepos = new ArrayList<>();
-    private GithubUtil githubUtil; //initialized in setUp
+    private GitHubUtil gitHubUtil; //initialized in setUp
     private GitHub github = null; //initialized in setUp
 
     @BeforeClass
@@ -63,12 +63,12 @@ public class AllCommandTest {
                 .withOAuthToken(token)
                 .build();
         github.checkApiUrlValidity();
-        githubUtil = new GithubUtil(github);
+        gitHubUtil = new GitHubUtil(github);
 
         cleanBefore(REPOS, DUPLICATES_CREATED_BY_GIT_HUB, STORE_NAME, github);
 
         GHOrganization org = github.getOrganization(ORGS.get(0));
-        initializeRepos(org, REPOS, IMAGE_1, createdRepos, githubUtil);
+        initializeRepos(org, REPOS, IMAGE_1, createdRepos, gitHubUtil);
 
         GHRepository store = github.createRepository(STORE_NAME)
                 .description("Delete if this exists. If it exists, then an integration test crashed somewhere.")
@@ -83,7 +83,7 @@ public class AllCommandTest {
 
         for (String s: ORGS) {
             org = github.getOrganization(s);
-            initializeRepos(org, DUPLICATES, IMAGE_2, createdRepos, githubUtil);
+            initializeRepos(org, DUPLICATES, IMAGE_2, createdRepos, gitHubUtil);
         }
         /* We need to wait because there is a delay on the search API used in the all command; it takes time
          * for the search API to pick up recently created repositories.
@@ -103,10 +103,10 @@ public class AllCommandTest {
         Assert.assertEquals(exitcode, 0, "All command for testAllCommand failed.");
 
         for (String repoName : REPOS) {
-            TestValidationCommon.validateRepo(repoName, IMAGE_1, TEST_TAG, github, githubUtil);
+            TestValidationCommon.validateRepo(repoName, IMAGE_1, TEST_TAG, github, gitHubUtil);
         }
         for (String repoName : DUPLICATES_CREATED_BY_GIT_HUB) {
-            TestValidationCommon.validateRepo(repoName, IMAGE_2, TEST_TAG, github, githubUtil);
+            TestValidationCommon.validateRepo(repoName, IMAGE_2, TEST_TAG, github, gitHubUtil);
         }
     }
 

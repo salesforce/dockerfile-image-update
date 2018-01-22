@@ -8,7 +8,7 @@
 
 package com.salesforce.dockerfileimageupdate.itest.tests;
 
-import com.salesforce.dockerfileimageupdate.utils.GithubUtil;
+import com.salesforce.dockerfileimageupdate.utils.GitHubUtil;
 import org.kohsuke.github.GHOrganization;
 import org.kohsuke.github.GHRepository;
 import org.kohsuke.github.GitHub;
@@ -33,7 +33,7 @@ public class TestCommon {
             "dockerfile-image-update-itest", "dockerfile-image-update-itest-2", "dockerfile-image-update-itest-3");
 
     public static void initializeRepos(GHOrganization org, List<String> repos, String image,
-                                       List<GHRepository> createdRepos, GithubUtil githubUtil) throws Exception {
+                                       List<GHRepository> createdRepos, GitHubUtil gitHubUtil) throws Exception {
         for (String repoName : repos) {
             GHRepository repo = org.createRepository(repoName)
                     .description("Delete if this exists. If it exists, then an integration test crashed somewhere.")
@@ -42,7 +42,7 @@ public class TestCommon {
             // Ensure that repository exists
             for (int attempts = 0; attempts < 5; attempts++) {
                 try {
-                    repo = githubUtil.getRepo(repo.getFullName());
+                    repo = gitHubUtil.getRepo(repo.getFullName());
                     break;
                 } catch (Exception e) {
                     log.info("Waiting for {} to be created", repo.getFullName());
@@ -53,7 +53,7 @@ public class TestCommon {
             repo.createContent("FROM " + image + ":test", "Integration Testing", "Dockerfile");
             createdRepos.add(repo);
             log.info("Initializing {}/{}", org.getLogin(), repoName);
-            githubUtil.tryRetrievingContent(repo, "Dockerfile", repo.getDefaultBranch());
+            gitHubUtil.tryRetrievingContent(repo, "Dockerfile", repo.getDefaultBranch());
         }
     }
 

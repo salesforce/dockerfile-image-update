@@ -13,7 +13,7 @@ import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
 import com.salesforce.dockerfileimageupdate.subcommands.ExecutableWithNamespace;
 import com.salesforce.dockerfileimageupdate.utils.Constants;
-import com.salesforce.dockerfileimageupdate.utils.DockerfileGithubUtil;
+import com.salesforce.dockerfileimageupdate.utils.DockerfileGitHubUtil;
 import com.salesforce.dockerfileimageupdate.SubCommand;
 import net.sourceforge.argparse4j.inf.Namespace;
 import org.kohsuke.github.*;
@@ -31,11 +31,11 @@ import java.util.*;
 public class All implements ExecutableWithNamespace {
     private final static Logger log = LoggerFactory.getLogger(All.class);
 
-    private DockerfileGithubUtil dockerfileGithubUtil;
+    private DockerfileGitHubUtil dockerfileGitHubUtil;
 
     @Override
-    public void execute(final Namespace ns, final DockerfileGithubUtil dockerfileGithubUtil) throws IOException, InterruptedException {
-        loadDockerfileGithubUtil(dockerfileGithubUtil);
+    public void execute(final Namespace ns, final DockerfileGitHubUtil dockerfileGitHubUtil) throws IOException, InterruptedException {
+        loadDockerfileGithubUtil(dockerfileGitHubUtil);
 
         Map<String, String> imageToTagMap = new HashMap<>();
         Map<String, String> parentToImage = new HashMap<>();
@@ -47,17 +47,17 @@ public class All implements ExecutableWithNamespace {
             log.info("Repositories with image {} being forked.", image);
             imageToTagMap.put(image, imageToTag.getValue().getAsString());
             PagedSearchIterable<GHContent> contentsWithImage =
-                    this.dockerfileGithubUtil.findFilesWithImage(image, ns.get("o"));
+                    this.dockerfileGitHubUtil.findFilesWithImage(image, ns.get("o"));
             forkRepositoriesFound(parentToPath, parentToImage, contentsWithImage, image);
         }
 
-        GHMyself currentUser = this.dockerfileGithubUtil.getMyself();
+        GHMyself currentUser = this.dockerfileGitHubUtil.getMyself();
         if (currentUser == null) {
             throw new IOException("Could not retrieve authenticated user.");
         }
 
         log.info("Retrieving all the forks...");
-        PagedIterable<GHRepository> repos = dockerfileGithubUtil.getGHRepositories(parentToPath, currentUser);
+        PagedIterable<GHRepository> repos = dockerfileGitHubUtil.getGHRepositories(parentToPath, currentUser);
 
         String message = ns.get("m");
         List<IOException> exceptions = new ArrayList<>();
@@ -75,8 +75,8 @@ public class All implements ExecutableWithNamespace {
         }
     }
 
-    protected void loadDockerfileGithubUtil(DockerfileGithubUtil _dockerfileGithubUtil) {
-        dockerfileGithubUtil = _dockerfileGithubUtil;
+    protected void loadDockerfileGithubUtil(DockerfileGitHubUtil _dockerfileGitHubUtil) {
+        dockerfileGitHubUtil = _dockerfileGitHubUtil;
     }
 
     protected void forkRepositoriesFound(Map<String, String> parentToPath,
@@ -95,17 +95,17 @@ public class All implements ExecutableWithNamespace {
             log.info("Forking {}...", parent.getFullName());
             parentToPath.put(c.getOwner().getFullName(), c.getPath());
             parentToImage.put(c.getOwner().getFullName(), image);
-            dockerfileGithubUtil.checkFromParentAndFork(parent);
+            dockerfileGitHubUtil.checkFromParentAndFork(parent);
         }
     }
 
     protected Set<Map.Entry<String, JsonElement>> parseStoreToImagesMap(String storeName)
             throws IOException, InterruptedException {
-        GHMyself myself = dockerfileGithubUtil.getMyself();
+        GHMyself myself = dockerfileGitHubUtil.getMyself();
         String login = myself.getLogin();
-        GHRepository store = dockerfileGithubUtil.getRepo(Paths.get(login, storeName).toString());
+        GHRepository store = dockerfileGitHubUtil.getRepo(Paths.get(login, storeName).toString());
 
-        GHContent storeContent = dockerfileGithubUtil.tryRetrievingContent(store, Constants.STORE_JSON_FILE,
+        GHContent storeContent = dockerfileGitHubUtil.tryRetrievingContent(store, Constants.STORE_JSON_FILE,
                 store.getDefaultBranch());
 
         if (storeContent == null) {
@@ -135,7 +135,7 @@ public class All implements ExecutableWithNamespace {
          */
         GHRepository retrievedRepo;
         if (initialRepo.isFork()) {
-            retrievedRepo = dockerfileGithubUtil.getRepo(initialRepo.getFullName());
+            retrievedRepo = dockerfileGitHubUtil.getRepo(initialRepo.getFullName());
         } else {
             return;
         }
@@ -149,10 +149,10 @@ public class All implements ExecutableWithNamespace {
         String image = parentToImage.get(parentName);
         String tag = imageToTagMap.get(image);
         String branch = retrievedRepo.getDefaultBranch();
-        GHContent content = dockerfileGithubUtil.tryRetrievingContent(retrievedRepo, parentToPath.get(parentName),
+        GHContent content = dockerfileGitHubUtil.tryRetrievingContent(retrievedRepo, parentToPath.get(parentName),
                 branch);
-        dockerfileGithubUtil.modifyOnGithub(content, branch, image, tag, commitMessage);
-        dockerfileGithubUtil.createPullReq(parent, branch, retrievedRepo, message);
+        dockerfileGitHubUtil.modifyOnGithub(content, branch, image, tag, commitMessage);
+        dockerfileGitHubUtil.createPullReq(parent, branch, retrievedRepo, message);
     }
 
 

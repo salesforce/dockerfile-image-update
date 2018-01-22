@@ -24,20 +24,20 @@ import static org.testng.Assert.assertEquals;
 /**
  * Created by minho.park on 8/2/16.
  */
-public class GithubUtilTest {
+public class GitHubUtilTest {
     @Test
     public void testGetGithub() throws Exception {
         GitHub github = Mockito.mock(GitHub.class);
-        GithubUtil githubUtil = new GithubUtil(github);
-        assertEquals(githubUtil.getGithub(), github);
+        GitHubUtil gitHubUtil = new GitHubUtil(github);
+        assertEquals(gitHubUtil.getGithub(), github);
     }
 
     @Test
     public void testGetRepo() throws Exception {
         GitHub github = Mockito.mock(GitHub.class);
         Mockito.when(github.getRepository(eq("repo"))).thenReturn(new GHRepository());
-        GithubUtil githubUtil = new GithubUtil(github);
-        githubUtil.getRepo("repo");
+        GitHubUtil gitHubUtil = new GitHubUtil(github);
+        gitHubUtil.getRepo("repo");
         Mockito.verify(github, times(1)).getRepository(eq("repo"));
     }
 
@@ -46,64 +46,64 @@ public class GithubUtilTest {
         GitHub github = Mockito.mock(GitHub.class);
         GHMyself myself = Mockito.mock(GHMyself.class);
         Mockito.when(github.getMyself()).thenReturn(myself);
-        GithubUtil githubUtil = new GithubUtil(github);
-        assertEquals(githubUtil.getMyself(), myself);
+        GitHubUtil gitHubUtil = new GitHubUtil(github);
+        assertEquals(gitHubUtil.getMyself(), myself);
     }
 
     @Test
     public void testStartSearch() throws Exception {
         GitHub github = Mockito.mock(GitHub.class);
-        GithubUtil githubUtil = new GithubUtil(github);
-        githubUtil.startSearch();
+        GitHubUtil gitHubUtil = new GitHubUtil(github);
+        gitHubUtil.startSearch();
         Mockito.verify(github, times(1)).searchContent();
     }
 
     @Test
     public void testCreateFork() throws Exception {
         GitHub github = Mockito.mock(GitHub.class);
-        GithubUtil githubUtil = new GithubUtil(github);
+        GitHubUtil gitHubUtil = new GitHubUtil(github);
         GHRepository repo = Mockito.mock(GHRepository.class);
-        githubUtil.createFork(repo);
+        gitHubUtil.createFork(repo);
         Mockito.verify(repo, times(1)).fork();
     }
 
     @Test
     public void testCreatePullReq_correctCallToPullRequest() throws Exception {
         GitHub github = Mockito.mock(GitHub.class);
-        GithubUtil githubUtil = new GithubUtil(github);
+        GitHubUtil gitHubUtil = new GitHubUtil(github);
         GHRepository origRepo = Mockito.mock(GHRepository.class);
         Mockito.when(origRepo.getDefaultBranch()).thenReturn("master");
         GHRepository forkRepo = Mockito.mock(GHRepository.class);
         Mockito.when(forkRepo.getOwnerName()).thenReturn("owner");
-        assertEquals(githubUtil.createPullReq(origRepo, "branch", forkRepo, "title", "body"), 0);
+        assertEquals(gitHubUtil.createPullReq(origRepo, "branch", forkRepo, "title", "body"), 0);
         Mockito.verify(origRepo, times(1)).createPullRequest(eq("title"), eq("owner:branch"), eq("master"), eq("body"));
     }
 
     @Test
     public void testCreatePullReq_errorCase0() throws Exception {
         GitHub github = Mockito.mock(GitHub.class);
-        GithubUtil githubUtil = new GithubUtil(github);
+        GitHubUtil gitHubUtil = new GitHubUtil(github);
         GHRepository origRepo = Mockito.mock(GHRepository.class);
         Mockito.when(origRepo.getDefaultBranch()).thenReturn("master");
         Mockito.when(origRepo.createPullRequest(eq("title"), eq("owner:branch"), eq("master"), eq("body")))
                 .thenThrow(new IOException("{\"message\":\"Validation Failed\",\"errors\":[{\"resource\":\"PullRequest\",\"code\":\"custom\",\"message\":\"A pull request already exists for someone:somebranch.\"}],\"documentation_url\":\"https://developer.github.com/enterprise/2.6/v3/pulls/#create-a-pull-request\"}"));
         GHRepository forkRepo = Mockito.mock(GHRepository.class);
         Mockito.when(forkRepo.getOwnerName()).thenReturn("owner");
-        assertEquals(githubUtil.createPullReq(origRepo, "branch", forkRepo, "title", "body"), 0);
+        assertEquals(gitHubUtil.createPullReq(origRepo, "branch", forkRepo, "title", "body"), 0);
         Mockito.verify(origRepo, times(1)).createPullRequest(eq("title"), eq("owner:branch"), eq("master"), eq("body"));
     }
 
     @Test
     public void testCreatePullReq_errorCase1() throws Exception {
         GitHub github = Mockito.mock(GitHub.class);
-        GithubUtil githubUtil = new GithubUtil(github);
+        GitHubUtil gitHubUtil = new GitHubUtil(github);
         GHRepository origRepo = Mockito.mock(GHRepository.class);
         Mockito.when(origRepo.getDefaultBranch()).thenReturn("master");
         Mockito.when(origRepo.createPullRequest(eq("title"), eq("owner:branch"), eq("master"), eq("body")))
                 .thenThrow(new IOException("{\"message\":\"Validation Failed\",\"errors\":[{\"resource\":\"PullRequest\",\"code\":\"custom\",\"message\":\"No commits between thisrepo and thatrepo.\"}],\"documentation_url\":\"https://developer.github.com/enterprise/2.6/v3/pulls/#create-a-pull-request\"}"));
         GHRepository forkRepo = Mockito.mock(GHRepository.class);
         Mockito.when(forkRepo.getOwnerName()).thenReturn("owner");
-        assertEquals(githubUtil.createPullReq(origRepo, "branch", forkRepo, "title", "body"), 1);
+        assertEquals(gitHubUtil.createPullReq(origRepo, "branch", forkRepo, "title", "body"), 1);
         Mockito.verify(origRepo, times(1)).createPullRequest(eq("title"), eq("owner:branch"), eq("master"), eq("body"));
     }
 
@@ -111,8 +111,8 @@ public class GithubUtilTest {
     public void testTryRetrievingRepository() throws Exception {
         GitHub github = Mockito.mock(GitHub.class);
         Mockito.when(github.getRepository(eq("repo"))).thenReturn(new GHRepository());
-        GithubUtil githubUtil = new GithubUtil(github);
-        githubUtil.tryRetrievingRepository("repo");
+        GitHubUtil gitHubUtil = new GitHubUtil(github);
+        gitHubUtil.tryRetrievingRepository("repo");
         Mockito.verify(github, times(1)).getRepository(eq("repo"));
     }
 
@@ -121,8 +121,8 @@ public class GithubUtilTest {
         GitHub github = Mockito.mock(GitHub.class);
         GHRepository repo = Mockito.mock(GHRepository.class);
         Mockito.when(repo.getFileContent(eq("path"), eq("branch"))).thenReturn(new GHContent());
-        GithubUtil githubUtil = new GithubUtil(github);
-        githubUtil.tryRetrievingContent(repo, "path", "branch");
+        GitHubUtil gitHubUtil = new GitHubUtil(github);
+        gitHubUtil.tryRetrievingContent(repo, "path", "branch");
         Mockito.verify(repo, times(1)).getFileContent(eq("path"), eq("branch"));
     }
 
@@ -157,8 +157,8 @@ public class GithubUtilTest {
         Mockito.when(currentUser.listRepositories(100, GHMyself.RepositoryListFilter.OWNER)).thenReturn(listOfRepos);
 
         GitHub github = Mockito.mock(GitHub.class);
-        GithubUtil githubUtil = new GithubUtil(github);
-        PagedIterable<GHRepository> returnList = githubUtil.getGHRepositories(parentToPath, currentUser);
+        GitHubUtil gitHubUtil = new GitHubUtil(github);
+        PagedIterable<GHRepository> returnList = gitHubUtil.getGHRepositories(parentToPath, currentUser);
         Assert.assertEquals(returnList, listOfRepos);
     }
 }

@@ -10,7 +10,7 @@ package com.salesforce.dockerfileimageupdate.itest.tests;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
-import com.salesforce.dockerfileimageupdate.utils.GithubUtil;
+import com.salesforce.dockerfileimageupdate.utils.GitHubUtil;
 import org.kohsuke.github.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -56,7 +56,7 @@ public class ParentCommandTest {
 
 
     private List<GHRepository> createdRepos = new ArrayList<>();
-    private GithubUtil githubUtil; //initialized in setUp
+    private GitHubUtil gitHubUtil; //initialized in setUp
     private GitHub github = null; //initialized in setUp
 
     @BeforeClass
@@ -67,16 +67,16 @@ public class ParentCommandTest {
                 .withOAuthToken(token)
                 .build();
         github.checkApiUrlValidity();
-        githubUtil = new GithubUtil(github);
+        gitHubUtil = new GitHubUtil(github);
 
         TestCommon.cleanBefore(REPOS, DUPLICATES_CREATED_BY_GIT_HUB, STORE_NAME, github);
 
         GHOrganization org = github.getOrganization(ORGS.get(0));
-        TestCommon.initializeRepos(org, REPOS, IMAGE_1, createdRepos, githubUtil);
+        TestCommon.initializeRepos(org, REPOS, IMAGE_1, createdRepos, gitHubUtil);
 
         for (String s: ORGS) {
             org = github.getOrganization(s);
-            TestCommon.initializeRepos(org, DUPLICATES, IMAGE_2, createdRepos, githubUtil);
+            TestCommon.initializeRepos(org, DUPLICATES, IMAGE_2, createdRepos, gitHubUtil);
         }
         /* We need to wait because there is a delay on the search API used in the parent command; it takes time
          * for the search API to pick up recently created repositories.
@@ -97,7 +97,7 @@ public class ParentCommandTest {
         assertEquals(exitcode, 0, "Parent command for testParent failed.");
 
         for (String repoName : REPOS) {
-            TestValidationCommon.validateRepo(repoName, IMAGE_1, TAG, github, githubUtil);
+            TestValidationCommon.validateRepo(repoName, IMAGE_1, TAG, github, gitHubUtil);
         }
     }
 
@@ -118,7 +118,7 @@ public class ParentCommandTest {
         assertEquals(exitcode, 0, "Parent command for testSameNameAcrossDifferentOrgs failed.");
 
         for (String repoName : DUPLICATES_CREATED_BY_GIT_HUB) {
-            TestValidationCommon.validateRepo(repoName, IMAGE_2, TAG, github, githubUtil);
+            TestValidationCommon.validateRepo(repoName, IMAGE_2, TAG, github, gitHubUtil);
         }
     }
 
