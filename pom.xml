@@ -46,7 +46,7 @@
 
     <scm>
         <connection>scm:git:git://github.com/salesforce/dockerfile-image-update.git</connection>
-        <developerConnection>scm:git:ssh://github.com:salesforce/dockerfile-image-update.git</developerConnection>
+        <developerConnection>scm:git:git://github.com:salesforce/dockerfile-image-update.git</developerConnection>
         <url>http://github.com/salesforce/dockerfile-image-update/tree/master</url>
     </scm>
 
