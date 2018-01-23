@@ -15,7 +15,7 @@ script:
 - docker build -t salesforce/dockerfile-image-update .
 - echo git_api_token=${ITEST_GH_TOKEN} > `pwd`/itest.env
 - export user_itest_secrets_file_secret=`pwd`/itest.env
-- docker-compose up
+- docker-compose up --abort-on-container-exit
 after_success:
 - mvn coveralls:report
 deploy:
