@@ -19,7 +19,6 @@ script:
 - rm itest.env
 - mkdir -p ${HOME}/.ssh
 - mv -f id_rsa_dockerfile_image_update ${HOME}/.ssh/id_rsa
-- git config -l
 after_success:
 - mvn coveralls:report
 deploy:
