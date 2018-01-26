@@ -16,6 +16,9 @@ script:
 - echo git_api_token=${ITEST_GH_TOKEN} > `pwd`/itest.env
 - export user_itest_secrets_file_secret=`pwd`/itest.env
 - docker-compose up --abort-on-container-exit
+- rm itest.env
+- mkdir -p ${HOME}/.ssh
+- mv -f id_rsa_dockerfile_image_update ${HOME}/.ssh/id_rsa
 after_success:
 - mvn coveralls:report
 deploy:
