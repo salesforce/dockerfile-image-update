@@ -97,6 +97,16 @@
                 <groupId>com.github.danielflower.mavenplugins</groupId>
                 <artifactId>multi-module-maven-release-plugin</artifactId>
                 <version>2.2.0</version>
+                <configuration>
+                    <releaseGoals>
+                        <releaseGoal>clean</releaseGoal>
+                        <releaseGoal>deploy</releaseGoal>
+                    </releaseGoals>
+                    <releaseProfiles>
+                        <releaseProfile>release</releaseProfile>
+                        <releaseProfile>gpg</releaseProfile>
+                    </releaseProfiles>
+                </configuration>
             </plugin>
 
             <plugin>
