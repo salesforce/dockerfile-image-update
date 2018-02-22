@@ -1,5 +1,6 @@
 [![Build Status](https://travis-ci.org/salesforce/dockerfile-image-update.svg?branch=master)](https://travis-ci.org/salesforce/dockerfile-image-update)
 [![Coverage Status](https://coveralls.io/repos/github/salesforce/dockerfile-image-update/badge.svg?branch=master)](https://coveralls.io/github/salesforce/dockerfile-image-update?branch=master)
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.salesforce.dockerfile-image-update/dockerfile-image-update/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.salesforce.dockerfile-image-update/dockerfile-image-update)
 
 # Dockerfile Image Updater
 
@@ -62,7 +63,6 @@ export git_api_url=https://api.github.com
 export git_api_token=my_github_token
 docker run --rm -e git_api_token -e git_api_url salesforce/dockerfile-image-update <COMMAND> <PARAMETERS>
 ```
-    ```
     usage: dockerfile-image-update [-h] [-o ORG] [-b BRANCH] [-g GHAPI] [-f] [-m M] [-c C] COMMAND ...
     
     Image Updates through Pull Request Automator
@@ -83,9 +83,9 @@ docker run --rm -e git_api_token -e git_api_url salesforce/dockerfile-image-upda
         all                  updates all repositories' Dockerfiles
         child                updates one specific repository with given tag
         parent               updates all repositories' Dockerfiles with given base image
-    ```
+
 * The `all` command: specify an image-to-tag store (a repository name on GitHub that contains a file called store.json); looks through the JSON file and checks/updates all the base images in GitHub to the tag in the store.
-    ```
+
     usage: dockerfile-image-update all [-h] <IMG_TAG_STORE>
     
     positional arguments:
@@ -93,9 +93,9 @@ docker run --rm -e git_api_token -e git_api_url salesforce/dockerfile-image-upda
     
     optional arguments:
       -h, --help             show this help message and exit
-    ```
+
 * The `child` command: forcefully updates a repository's Dockerfile(s) to given tag. If specified a store, it will also forcefully update the store.
-    ```
+
     usage: dockerfile-image-update child [-h] [-s <IMG_TAG_STORE>] <GIT_REPO> <IMG> <FORCE_TAG>
     
     positional arguments:
@@ -106,9 +106,9 @@ docker run --rm -e git_api_token -e git_api_url salesforce/dockerfile-image-upda
     optional arguments:
       -h, --help             show this help message and exit
       -s <IMG_TAG_STORE>     OPTIONAL
-    ```
+
 * The `parent` command: given an image, tag, and store, it will create pull requests for any Dockerfiles that has the image as a base image and an outdated tag. It also updates the store. 
-    ```
+
     usage: dockerfile-image-update parent [-h] <IMG> <TAG> <IMG_TAG_STORE>
     
     positional arguments:
@@ -118,7 +118,6 @@ docker run --rm -e git_api_token -e git_api_url salesforce/dockerfile-image-upda
     
     optional arguments:
       -h, --help             show this help message and exit
-    ```
 
 Developer Guide
 ===============
@@ -132,7 +131,7 @@ mvn clean install
 ### Running locally
 ```
 cd dockerfile-image-update/target
-java -jar dockerfile-image-update.jar <COMMAND> <PARAMETERS>
+java -jar dockerfile-image-update-1.0-SNAPSHOT.jar <COMMAND> <PARAMETERS>
 ```
 
 ### Creating a new feature
