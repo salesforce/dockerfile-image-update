@@ -1,5 +1,6 @@
 [![Build Status](https://travis-ci.org/salesforce/dockerfile-image-update.svg?branch=master)](https://travis-ci.org/salesforce/dockerfile-image-update)
 [![Coverage Status](https://coveralls.io/repos/github/salesforce/dockerfile-image-update/badge.svg?branch=master)](https://coveralls.io/github/salesforce/dockerfile-image-update?branch=master)
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.salesforce.dockerfile-image-update/dockerfile-image-update/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.salesforce.dockerfile-image-update/dockerfile-image-update)
 
 # Dockerfile Image Updater
 
@@ -27,21 +28,21 @@ User Guide
 The tool has three modes
  1. `all` - Reads store that declares the docker images and versions that you intend others to use. 
  Example:
-```
+```commandline
 export git_api_url=https://api.github.com
 export git_api_token=my_github_token
 docker run --rm -e git_api_token -e git_api_url salesforce/dockerfile-image-update all image-to-tag-store
 ```
  2. `parent` - Searches github for images that use a specified image name and sends pull requests if the image tag doesn't match intended tag. The intended image with tag is passed in the command line parameters. The intended image-to-tag mapping is persisted in a store in a specified git repository under the token owner. 
 Example:
-```
+```commandline
 export git_api_url=https://api.github.com
 export git_api_token=my_github_token
 docker run --rm -e git_api_token -e git_api_url salesforce/dockerfile-image-update parent my_org/my_image v1.0.1 image-to-tag-store
 ```
  3. `child` - Given a specific git repo, sends a pull request to update the image to a given version. You can optionally persist the image version combination in the image-to-tag store. 
 Example:
-```
+```commandline
 export git_api_url=https://api.github.com
 export git_api_token=my_github_token
 docker run --rm -e git_api_token -e git_api_url salesforce/dockerfile-image-update child my_gh_org/my_gh_repo my_image_name v1.0.1
@@ -57,82 +58,92 @@ This tool may create a LOT of forks in your account. All pull requests created a
 
 ### How to use it
 Our recommendation is to run it as a docker container:
-```
+```commandline
 export git_api_url=https://api.github.com
 export git_api_token=my_github_token
 docker run --rm -e git_api_token -e git_api_url salesforce/dockerfile-image-update <COMMAND> <PARAMETERS>
 ```
-    ```
-    usage: dockerfile-image-update [-h] [-o ORG] [-b BRANCH] [-g GHAPI] [-f] [-m M] [-c C] COMMAND ...
-    
-    Image Updates through Pull Request Automator
-    
-    optional arguments:
-      -h, --help                   show this help message and exit
-      -o ORG, --org ORG            search within specific organization (default: all of github)
-      -b BRANCH, --branch BRANCH   make pull requests for given branch name (default: master)
-      -g GHAPI, --ghapi GHAPI      link to github api; overrides environment variable
-      -f, --auto-merge             NOT IMPLEMENTED / set to automatically merge pull requests if available
-      -m PULL_REQ_MESSAGE          message to provide for pull requests
-      -c COMMIT_MESSAGE            additional commit message for the commits in pull requests
-    
-    subcommands:
-      Specify which feature to perform
-    
-      COMMAND                FEATURE
-        all                  updates all repositories' Dockerfiles
-        child                updates one specific repository with given tag
-        parent               updates all repositories' Dockerfiles with given base image
-    ```
-* The `all` command: specify an image-to-tag store (a repository name on GitHub that contains a file called store.json); looks through the JSON file and checks/updates all the base images in GitHub to the tag in the store.
-    ```
-    usage: dockerfile-image-update all [-h] <IMG_TAG_STORE>
-    
-    positional arguments:
-      <IMG_TAG_STORE>        REQUIRED
-    
-    optional arguments:
-      -h, --help             show this help message and exit
-    ```
-* The `child` command: forcefully updates a repository's Dockerfile(s) to given tag. If specified a store, it will also forcefully update the store.
-    ```
-    usage: dockerfile-image-update child [-h] [-s <IMG_TAG_STORE>] <GIT_REPO> <IMG> <FORCE_TAG>
-    
-    positional arguments:
-      <GIT_REPO>             REQUIRED
-      <IMG>                  REQUIRED
-      <FORCE_TAG>            REQUIRED
-    
-    optional arguments:
-      -h, --help             show this help message and exit
-      -s <IMG_TAG_STORE>     OPTIONAL
-    ```
-* The `parent` command: given an image, tag, and store, it will create pull requests for any Dockerfiles that has the image as a base image and an outdated tag. It also updates the store. 
-    ```
-    usage: dockerfile-image-update parent [-h] <IMG> <TAG> <IMG_TAG_STORE>
-    
-    positional arguments:
-      <IMG>                  REQUIRED
-      <TAG>                  REQUIRED
-      <IMG_TAG_STORE>        REQUIRED
-    
-    optional arguments:
-      -h, --help             show this help message and exit
-    ```
+
+```commandline
+usage: dockerfile-image-update [-h] [-o ORG] [-b BRANCH] [-g GHAPI] [-f] [-m M] [-c C] COMMAND ...
+
+Image Updates through Pull Request Automator
+
+optional arguments:
+  -h, --help                   show this help message and exit
+  -o ORG, --org ORG            search within specific organization (default: all of github)
+  -b BRANCH, --branch BRANCH   make pull requests for given branch name (default: master)
+  -g GHAPI, --ghapi GHAPI      link to github api; overrides environment variable
+  -f, --auto-merge             NOT IMPLEMENTED / set to automatically merge pull requests if available
+  -m PULL_REQ_MESSAGE          message to provide for pull requests
+  -c COMMIT_MESSAGE            additional commit message for the commits in pull requests
+
+subcommands:
+  Specify which feature to perform
+
+  COMMAND                FEATURE
+    all                  updates all repositories' Dockerfiles
+    child                updates one specific repository with given tag
+    parent               updates all repositories' Dockerfiles with given base image
+```
+
+#### The `all` command
+Specify an image-to-tag store (a repository name on GitHub that contains a file called store.json); looks through the JSON file and checks/updates all the base images in GitHub to the tag in the store.
+
+```commandline
+usage: dockerfile-image-update all [-h] <IMG_TAG_STORE>
+
+positional arguments:
+  <IMG_TAG_STORE>        REQUIRED
+
+optional arguments:
+  -h, --help             show this help message and exit
+```
+
+#### The `child` command
+Forcefully updates a repository's Dockerfile(s) to given tag. If specified a store, it will also forcefully update the store.
+
+```commandline
+usage: dockerfile-image-update child [-h] [-s <IMG_TAG_STORE>] <GIT_REPO> <IMG> <FORCE_TAG>
+
+positional arguments:
+  <GIT_REPO>             REQUIRED
+  <IMG>                  REQUIRED
+  <FORCE_TAG>            REQUIRED
+
+optional arguments:
+  -h, --help             show this help message and exit
+  -s <IMG_TAG_STORE>     OPTIONAL
+```
+
+#### The `parent` command
+Given an image, tag, and store, it will create pull requests for any Dockerfiles that has the image as a base image and an outdated tag. It also updates the store. 
+
+```commandline
+usage: dockerfile-image-update parent [-h] <IMG> <TAG> <IMG_TAG_STORE>
+
+positional arguments:
+  <IMG>                  REQUIRED
+  <TAG>                  REQUIRED
+  <IMG_TAG_STORE>        REQUIRED
+
+optional arguments:
+  -h, --help             show this help message and exit
+```
 
 Developer Guide
 ===============
 ### Building
-```
+```commandline
 git clone https://github.com/salesforce/dockerfile-image-update.git
 cd dockerfile-image-update
 mvn clean install
 ```
 
 ### Running locally
-```
+```commandline
 cd dockerfile-image-update/target
-java -jar dockerfile-image-update.jar <COMMAND> <PARAMETERS>
+java -jar dockerfile-image-update-1.0-SNAPSHOT.jar <COMMAND> <PARAMETERS>
 ```
 
 ### Creating a new feature
