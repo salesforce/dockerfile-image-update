@@ -11,6 +11,9 @@ sudo: required
 language: java
 services:
 - docker
+branches:
+  except:
+  - /^dockerfile-image-update-.*$/
 script:
 - mvn --quiet --batch-mode verify
 - docker build -t salesforce/dockerfile-image-update .
