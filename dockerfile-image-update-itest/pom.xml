@@ -77,7 +77,6 @@
                                     <mainClass>com.salesforce.dockerfileimageupdate.itest.TestStarter</mainClass>
                                 </transformer>
                             </transformers>
-                            <finalName>integration-test</finalName>
                         </configuration>
                     </execution>
                 </executions>
