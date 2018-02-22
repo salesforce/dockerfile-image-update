@@ -79,7 +79,6 @@
                                     <mainClass>com.salesforce.dockerfileimageupdate.CommandLine</mainClass>
                                 </transformer>
                             </transformers>
-                            <finalName>dockerfile-image-update</finalName>
                         </configuration>
                     </execution>
                 </executions>
