@@ -28,21 +28,21 @@ User Guide
 The tool has three modes
  1. `all` - Reads store that declares the docker images and versions that you intend others to use. 
  Example:
-```
+```commandline
 export git_api_url=https://api.github.com
 export git_api_token=my_github_token
 docker run --rm -e git_api_token -e git_api_url salesforce/dockerfile-image-update all image-to-tag-store
 ```
  2. `parent` - Searches github for images that use a specified image name and sends pull requests if the image tag doesn't match intended tag. The intended image with tag is passed in the command line parameters. The intended image-to-tag mapping is persisted in a store in a specified git repository under the token owner. 
 Example:
-```
+```commandline
 export git_api_url=https://api.github.com
 export git_api_token=my_github_token
 docker run --rm -e git_api_token -e git_api_url salesforce/dockerfile-image-update parent my_org/my_image v1.0.1 image-to-tag-store
 ```
  3. `child` - Given a specific git repo, sends a pull request to update the image to a given version. You can optionally persist the image version combination in the image-to-tag store. 
 Example:
-```
+```commandline
 export git_api_url=https://api.github.com
 export git_api_token=my_github_token
 docker run --rm -e git_api_token -e git_api_url salesforce/dockerfile-image-update child my_gh_org/my_gh_repo my_image_name v1.0.1
@@ -58,13 +58,13 @@ This tool may create a LOT of forks in your account. All pull requests created a
 
 ### How to use it
 Our recommendation is to run it as a docker container:
-```
+```commandline
 export git_api_url=https://api.github.com
 export git_api_token=my_github_token
 docker run --rm -e git_api_token -e git_api_url salesforce/dockerfile-image-update <COMMAND> <PARAMETERS>
 ```
 
-```bash
+```commandline
 usage: dockerfile-image-update [-h] [-o ORG] [-b BRANCH] [-g GHAPI] [-f] [-m M] [-c C] COMMAND ...
 
 Image Updates through Pull Request Automator
@@ -90,7 +90,7 @@ subcommands:
 #### The `all` command
 Specify an image-to-tag store (a repository name on GitHub that contains a file called store.json); looks through the JSON file and checks/updates all the base images in GitHub to the tag in the store.
 
-```bash
+```commandline
 usage: dockerfile-image-update all [-h] <IMG_TAG_STORE>
 
 positional arguments:
@@ -103,7 +103,7 @@ optional arguments:
 #### The `child` command
 Forcefully updates a repository's Dockerfile(s) to given tag. If specified a store, it will also forcefully update the store.
 
-```bash
+```commandline
 usage: dockerfile-image-update child [-h] [-s <IMG_TAG_STORE>] <GIT_REPO> <IMG> <FORCE_TAG>
 
 positional arguments:
@@ -119,7 +119,7 @@ optional arguments:
 #### The `parent` command
 Given an image, tag, and store, it will create pull requests for any Dockerfiles that has the image as a base image and an outdated tag. It also updates the store. 
 
-```bash
+```commandline
 usage: dockerfile-image-update parent [-h] <IMG> <TAG> <IMG_TAG_STORE>
 
 positional arguments:
@@ -134,14 +134,14 @@ optional arguments:
 Developer Guide
 ===============
 ### Building
-```
+```commandline
 git clone https://github.com/salesforce/dockerfile-image-update.git
 cd dockerfile-image-update
 mvn clean install
 ```
 
 ### Running locally
-```
+```commandline
 cd dockerfile-image-update/target
 java -jar dockerfile-image-update-1.0-SNAPSHOT.jar <COMMAND> <PARAMETERS>
 ```
