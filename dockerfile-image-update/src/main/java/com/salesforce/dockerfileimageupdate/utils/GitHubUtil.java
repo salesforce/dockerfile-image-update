@@ -65,7 +65,12 @@ public class GitHubUtil {
      * already exists.
      */
     public GHRepository createFork(GHRepository repo) throws IOException {
-        return repo.fork();
+        try {
+            return repo.fork();
+        } catch (IOException e) {
+            log.error("Could not fork {}", repo.getFullName(), e);
+        }
+        return null;
     }
 
     public void safeDeleteRepo(GHRepository repo) throws IOException {
