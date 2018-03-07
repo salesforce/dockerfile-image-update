@@ -156,7 +156,7 @@ public class GitHubUtil {
      */
     public PagedIterable<GHRepository> getGHRepositories(Map<String, String> parentToPath,
                                                          GHMyself currentUser) throws InterruptedException {
-        PagedIterable<GHRepository> listOfRepos = null;
+        PagedIterable<GHRepository> listOfRepos;
         Set<String> repoNamesSet = new HashSet<>();
         while (true) {
             listOfRepos = currentUser.listRepositories(100, GHMyself.RepositoryListFilter.OWNER);

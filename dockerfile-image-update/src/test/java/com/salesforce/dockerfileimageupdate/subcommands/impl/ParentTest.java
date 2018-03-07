@@ -43,14 +43,14 @@ public class ParentTest {
         GHContent content3 = mock(GHContent.class);
 
         PagedSearchIterable<GHContent> contentsWithImage = mock(PagedSearchIterable.class);
-        Mockito.when(contentsWithImage.getTotalCount()).thenReturn(3);
+        when(contentsWithImage.getTotalCount()).thenReturn(3);
 
         PagedIterator<GHContent> contentsWithImageIterator = mock(PagedIterator.class);
-        Mockito.when(contentsWithImageIterator.hasNext()).thenReturn(true, true, true, false);
-        Mockito.when(contentsWithImageIterator.next()).thenReturn(content1, content2, content3, null);
-        Mockito.when(contentsWithImage.iterator()).thenReturn(contentsWithImageIterator);
+        when(contentsWithImageIterator.hasNext()).thenReturn(true, true, true, false);
+        when(contentsWithImageIterator.next()).thenReturn(content1, content2, content3, null);
+        when(contentsWithImage.iterator()).thenReturn(contentsWithImageIterator);
 
-        Mockito.when(dockerfileGitHubUtil.findFilesWithImage(anyString(), eq("org"))).thenReturn(contentsWithImage);
+        when(dockerfileGitHubUtil.findFilesWithImage(anyString(), eq("org"))).thenReturn(contentsWithImage);
 
         parent.loadDockerfileGithubUtil(dockerfileGitHubUtil);
 
@@ -62,10 +62,10 @@ public class ParentTest {
         Parent parent = new Parent();
 
         PagedSearchIterable<GHContent> contentsWithImage = mock(PagedSearchIterable.class);
-        Mockito.when(contentsWithImage.getTotalCount()).thenReturn(0);
+        when(contentsWithImage.getTotalCount()).thenReturn(0);
 
         DockerfileGitHubUtil dockerfileGitHubUtil = mock(DockerfileGitHubUtil.class);
-        Mockito.when(dockerfileGitHubUtil.findFilesWithImage(anyString(), eq("org"))).thenReturn(contentsWithImage);
+        when(dockerfileGitHubUtil.findFilesWithImage(anyString(), eq("org"))).thenReturn(contentsWithImage);
         parent.loadDockerfileGithubUtil(dockerfileGitHubUtil);
 
         assertNull(parent.getGHContents("org", "image"));
@@ -76,41 +76,74 @@ public class ParentTest {
         DockerfileGitHubUtil dockerfileGitHubUtil = mock(DockerfileGitHubUtil.class);
 
         GHRepository contentRepo1 = mock(GHRepository.class);
+        when(contentRepo1.getFullName()).thenReturn("1");
         GHRepository contentRepo2 = mock(GHRepository.class);
+        when(contentRepo2.getFullName()).thenReturn("2");
         GHRepository contentRepo3 = mock(GHRepository.class);
+        when(contentRepo3.getFullName()).thenReturn("3");
+
 
         GHContent content1 = mock(GHContent.class);
-        Mockito.when(content1.getOwner()).thenReturn(contentRepo1);
+        when(content1.getOwner()).thenReturn(contentRepo1);
         GHContent content2 = mock(GHContent.class);
-        Mockito.when(content2.getOwner()).thenReturn(contentRepo2);
+        when(content2.getOwner()).thenReturn(contentRepo2);
         GHContent content3 = mock(GHContent.class);
-        Mockito.when(content3.getOwner()).thenReturn(contentRepo3);
+        when(content3.getOwner()).thenReturn(contentRepo3);
 
         PagedSearchIterable<GHContent> contentsWithImage = mock(PagedSearchIterable.class);
 
         PagedIterator<GHContent> contentsWithImageIterator = mock(PagedIterator.class);
-        Mockito.when(contentsWithImageIterator.hasNext()).thenReturn(true, true, true, false);
-        Mockito.when(contentsWithImageIterator.next()).thenReturn(content1, content2, content3, null);
-        Mockito.when(contentsWithImage.iterator()).thenReturn(contentsWithImageIterator);
+        when(contentsWithImageIterator.hasNext()).thenReturn(true, true, true, false);
+        when(contentsWithImageIterator.next()).thenReturn(content1, content2, content3, null);
+        when(contentsWithImage.iterator()).thenReturn(contentsWithImageIterator);
 
         Parent parent = new Parent();
         parent.loadDockerfileGithubUtil(dockerfileGitHubUtil);
-        parent.forkRepositoriesFound(new HashMap<>(), contentsWithImage);
+        Map repoMap = new HashMap<>();
+        parent.forkRepositoriesFound(repoMap, contentsWithImage);
 
-        Mockito.verify(dockerfileGitHubUtil, times(3)).checkFromParentAndFork(any());
+        verify(dockerfileGitHubUtil, times(3)).checkFromParentAndFork(any());
+        assertEquals(repoMap.size(), 3);
+    }
+
+    @Test
+    public void testForkRepositoriesFound_forkRepoIsSkipped() throws Exception {
+        DockerfileGitHubUtil dockerfileGitHubUtil = mock(DockerfileGitHubUtil.class);
+
+        GHRepository contentRepo1 = mock(GHRepository.class);
+        when(contentRepo1.getFullName()).thenReturn("1");
+
+        GHContent content1 = mock(GHContent.class);
+        when(content1.getOwner()).thenReturn(contentRepo1);
+        when(contentRepo1.isFork()).thenReturn(true);
+
+        PagedSearchIterable<GHContent> contentsWithImage = mock(PagedSearchIterable.class);
+
+        PagedIterator<GHContent> contentsWithImageIterator = mock(PagedIterator.class);
+        when(contentsWithImageIterator.hasNext()).thenReturn(true, false);
+        when(contentsWithImageIterator.next()).thenReturn(content1, null);
+        when(contentsWithImage.iterator()).thenReturn(contentsWithImageIterator);
+
+        Parent parent = new Parent();
+        parent.loadDockerfileGithubUtil(dockerfileGitHubUtil);
+        Map repoMap = new HashMap<>();
+        parent.forkRepositoriesFound(repoMap, contentsWithImage);
+
+        verify(dockerfileGitHubUtil, never()).checkFromParentAndFork(any());
+        assertEquals(repoMap.size(), 0);
     }
 
     @Test
     public void testChangeDockerfiles_returnIfNotFork() throws Exception {
         DockerfileGitHubUtil dockerfileGitHubUtil = mock(DockerfileGitHubUtil.class);
         GHRepository initialRepo = mock(GHRepository.class);
-        Mockito.when(initialRepo.isFork()).thenReturn(false);
+        when(initialRepo.isFork()).thenReturn(false);
 
         Parent parent = new Parent();
         parent.loadDockerfileGithubUtil(dockerfileGitHubUtil);
         parent.changeDockerfiles(null, null, initialRepo, "Automatic Dockerfile Image Updater");
 
-        Mockito.verify(dockerfileGitHubUtil, times(0)).getRepo(anyString());
+        verify(dockerfileGitHubUtil, times(0)).getRepo(anyString());
     }
 
     @Test
@@ -118,16 +151,16 @@ public class ParentTest {
         DockerfileGitHubUtil dockerfileGitHubUtil = mock(DockerfileGitHubUtil.class);
 
         GHRepository initialRepo = mock(GHRepository.class);
-        Mockito.when(initialRepo.isFork()).thenReturn(true);
-        Mockito.when(initialRepo.getFullName()).thenReturn("repo");
+        when(initialRepo.isFork()).thenReturn(true);
+        when(initialRepo.getFullName()).thenReturn("repo");
 
         GHRepository retrievedRepo = mock(GHRepository.class);
         GHRepository parentRepo = mock(GHRepository.class);
-        Mockito.when(parentRepo.getFullName()).thenReturn("test5");
-        Mockito.when(retrievedRepo.getParent()).thenReturn(parentRepo);
-        Mockito.when(retrievedRepo.getDefaultBranch()).thenReturn("branch");
+        when(parentRepo.getFullName()).thenReturn("test5");
+        when(retrievedRepo.getParent()).thenReturn(parentRepo);
+        when(retrievedRepo.getDefaultBranch()).thenReturn("branch");
 
-        Mockito.when(dockerfileGitHubUtil.getRepo(initialRepo.getFullName())).thenReturn(retrievedRepo);
+        when(dockerfileGitHubUtil.getRepo(initialRepo.getFullName())).thenReturn(retrievedRepo);
 
         Map<String, String> parentToPath = ImmutableMap.of(
                 "test1", "test",
@@ -139,12 +172,12 @@ public class ParentTest {
         parent.loadDockerfileGithubUtil(dockerfileGitHubUtil);
         parent.changeDockerfiles(null, parentToPath, initialRepo, "Automatic Dockerfile Image Updater");
 
-        Mockito.verify(dockerfileGitHubUtil, times(1)).getRepo(anyString());
-        Mockito.verify(dockerfileGitHubUtil, times(0))
+        verify(dockerfileGitHubUtil, times(1)).getRepo(anyString());
+        verify(dockerfileGitHubUtil, times(0))
                 .tryRetrievingContent(eq(retrievedRepo), eq("correct"), eq("branch"));
-        Mockito.verify(dockerfileGitHubUtil, times(0))
+        verify(dockerfileGitHubUtil, times(0))
                 .modifyOnGithub(any(), eq("branch"), eq("image"), eq("tag"), anyString());
-        Mockito.verify(dockerfileGitHubUtil, times(0))
+        verify(dockerfileGitHubUtil, times(0))
                 .createPullReq(eq(parentRepo), eq("branch"), eq(retrievedRepo), anyString());
     }
 
@@ -156,16 +189,16 @@ public class ParentTest {
         DockerfileGitHubUtil dockerfileGitHubUtil = mock(DockerfileGitHubUtil.class);
 
         GHRepository initialRepo = mock(GHRepository.class);
-        Mockito.when(initialRepo.isFork()).thenReturn(true);
-        Mockito.when(initialRepo.getFullName()).thenReturn("repo");
+        when(initialRepo.isFork()).thenReturn(true);
+        when(initialRepo.getFullName()).thenReturn("repo");
 
         GHRepository retrievedRepo = mock(GHRepository.class);
         GHRepository parentRepo = mock(GHRepository.class);
-        Mockito.when(parentRepo.getFullName()).thenReturn("test2");
-        Mockito.when(retrievedRepo.getParent()).thenReturn(parentRepo);
-        Mockito.when(retrievedRepo.getDefaultBranch()).thenReturn("branch");
+        when(parentRepo.getFullName()).thenReturn("test2");
+        when(retrievedRepo.getParent()).thenReturn(parentRepo);
+        when(retrievedRepo.getDefaultBranch()).thenReturn("branch");
 
-        Mockito.when(dockerfileGitHubUtil.getRepo(initialRepo.getFullName())).thenReturn(retrievedRepo);
+        when(dockerfileGitHubUtil.getRepo(initialRepo.getFullName())).thenReturn(retrievedRepo);
 
         Map<String, String> parentToPath = ImmutableMap.of(
                 "test1", "test",
@@ -177,12 +210,12 @@ public class ParentTest {
         parent.loadDockerfileGithubUtil(dockerfileGitHubUtil);
         parent.changeDockerfiles(ns, parentToPath, initialRepo, "Automatic Dockerfile Image Updater");
 
-        Mockito.verify(dockerfileGitHubUtil, times(1)).getRepo(anyString());
-        Mockito.verify(dockerfileGitHubUtil, times(1))
+        verify(dockerfileGitHubUtil, times(1)).getRepo(anyString());
+        verify(dockerfileGitHubUtil, times(1))
                 .tryRetrievingContent(eq(retrievedRepo), eq("correct"), eq("branch"));
-        Mockito.verify(dockerfileGitHubUtil, times(1))
+        verify(dockerfileGitHubUtil, times(1))
                 .modifyOnGithub(any(), eq("branch"), eq("image"), eq("tag"), anyString());
-        Mockito.verify(dockerfileGitHubUtil, times(1))
+        verify(dockerfileGitHubUtil, times(1))
                 .createPullReq(eq(parentRepo), eq("branch"), eq(retrievedRepo), anyString());
     }
 }
