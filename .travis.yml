@@ -11,6 +11,9 @@ sudo: required
 language: java
 services:
 - docker
+branches:
+  except:
+  - /^dockerfile-image-update-.*$/
 script:
 - mvn --quiet --batch-mode verify
 - docker build -t salesforce/dockerfile-image-update .
@@ -18,8 +21,6 @@ script:
 - export user_itest_secrets_file_secret=`pwd`/itest.env
 - docker-compose up --abort-on-container-exit
 - rm itest.env
-- mkdir -p ${HOME}/.ssh
-- mv -f id_rsa_dockerfile_image_update ${HOME}/.ssh/id_rsa
 cache:
   directories:
   - "~/.m2/repository"
@@ -31,6 +32,3 @@ deploy:
   skip_cleanup: true
   on:
     branch: master
-before_install:
-- openssl aes-256-cbc -K $encrypted_96e73e3cb232_key -iv $encrypted_96e73e3cb232_iv
-  -in id_rsa_dockerfile_image_update.enc -out id_rsa_dockerfile_image_update -d

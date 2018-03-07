@@ -100,6 +100,9 @@ public class Parent implements ExecutableWithNamespace {
      * on Github, where after the fork, there may be a time gap between repository creation and content replication
      * when forking. So, in hopes of alleviating the situation a little bit, we do all the forking before the
      * Dockerfile updates.
+     *
+     * NOTE: We are not currently forking repositories that are already forks
+     * TODO: We should probably return parentToPath instead of mutating the Map
      */
     protected void forkRepositoriesFound(Map<String, String> parentToPath,
                                          PagedSearchIterable<GHContent> contentsWithImage) throws IOException {
@@ -113,9 +116,14 @@ public class Parent implements ExecutableWithNamespace {
              * in the map above, find the list of repositories under the authorized user, and iterate through that list.
              */
             GHRepository parent = c.getOwner();
-            log.info("Forking {}...", parent.getFullName());
-            parentToPath.put(c.getOwner().getFullName(), c.getPath());
-            dockerfileGitHubUtil.checkFromParentAndFork(parent);
+            if (parent.isFork()) {
+                log.warn("Skipping {} because it's a fork already. Sending a PR to a fork is unsupported at the moment.",
+                        parent.getFullName());
+            } else {
+                log.info("Forking {}...", parent.getFullName());
+                parentToPath.put(c.getOwner().getFullName(), c.getPath());
+                dockerfileGitHubUtil.checkFromParentAndFork(parent);
+            }
         }
     }
 

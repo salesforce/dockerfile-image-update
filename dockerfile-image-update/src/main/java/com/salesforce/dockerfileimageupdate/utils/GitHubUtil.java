@@ -65,7 +65,12 @@ public class GitHubUtil {
      * already exists.
      */
     public GHRepository createFork(GHRepository repo) throws IOException {
-        return repo.fork();
+        try {
+            return repo.fork();
+        } catch (IOException e) {
+            log.error("Could not fork {}", repo.getFullName(), e);
+        }
+        return null;
     }
 
     public void safeDeleteRepo(GHRepository repo) throws IOException {
@@ -151,7 +156,7 @@ public class GitHubUtil {
      */
     public PagedIterable<GHRepository> getGHRepositories(Map<String, String> parentToPath,
                                                          GHMyself currentUser) throws InterruptedException {
-        PagedIterable<GHRepository> listOfRepos = null;
+        PagedIterable<GHRepository> listOfRepos;
         Set<String> repoNamesSet = new HashSet<>();
         while (true) {
             listOfRepos = currentUser.listRepositories(100, GHMyself.RepositoryListFilter.OWNER);

@@ -42,6 +42,16 @@
             <email>jharringa@salesforce.com</email>
             <organization>Salesforce</organization>
         </developer>
+        <developer>
+            <name>Nelson Wolf</name>
+            <email>nelson.wolf@salesforce.com</email>
+            <organization>Salesforce</organization>
+        </developer>
+        <developer>
+            <name>Jinesh Doshi</name>
+            <email>j.doshi@salesforce.com</email>
+            <organization>Salesforce</organization>
+        </developer>
     </developers>
 
     <scm>

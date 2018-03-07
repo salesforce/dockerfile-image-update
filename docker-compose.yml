@@ -5,7 +5,7 @@ services:
         env_file:
             # This tool gets external endpoints from environment variables. We store external endpoints in this file.
             - ./dockerfile-image-update-itest/itest.env
-            # We recommend a seperate secret file containing git_api_token.
+            # We recommend a separate secret file containing git_api_token.
             # export user_itest_secrets_file_secret=/path/to/secretFile in your shell
             # For CI purposes, the secret file can be added to Jenkins Credential Store with the id user_itest_secrets_file
             - ${user_itest_secrets_file_secret}
