@@ -117,7 +117,7 @@ public class Parent implements ExecutableWithNamespace {
              */
             GHRepository parent = c.getOwner();
             if (parent.isFork()) {
-                log.info("Skipping {} because it's a fork already. Sending a PR to a fork is unsupported at the moment.",
+                log.warn("Skipping {} because it's a fork already. Sending a PR to a fork is unsupported at the moment.",
                         parent.getFullName());
             } else {
                 log.info("Forking {}...", parent.getFullName());

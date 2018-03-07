@@ -153,9 +153,6 @@ public class GitHubUtil {
      * OkUrlFactory, which is required to specify the cache. In other words, we cannot flush the cache.
      *
      * Instead, we wait for 60 seconds if the list retrieved is not the list we want.
-     *
-     *
-     * TODO: Did updating the GitHub api fix this?
      */
     public PagedIterable<GHRepository> getGHRepositories(Map<String, String> parentToPath,
                                                          GHMyself currentUser) throws InterruptedException {
