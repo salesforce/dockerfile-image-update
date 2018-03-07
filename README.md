@@ -54,7 +54,10 @@ In environment variables, please provide:
  * `git_api_url` : This is the Endpoint URL of the GitHub API. In general GitHub, this is `https://api.github.com/`; for Enterprise, this should be `https://hostname/api/v3`. (this variable is optional; you can provide it through the command line.)
 
 ### Precautions
-This tool may create a LOT of forks in your account. All pull requests created are through a fork on your own account.
+1. This tool may create a LOT of forks in your account. All pull requests created are through a fork on your own account.
+2. We currently do not operate on forked repositories due to limitations in forking a fork on GitHub.
+We should invest some time in doing this right. 
+
 
 ### How to use it
 Our recommendation is to run it as a docker container:
