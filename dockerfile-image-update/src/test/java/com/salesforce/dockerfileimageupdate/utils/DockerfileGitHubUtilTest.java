@@ -234,6 +234,7 @@ public class DockerfileGitHubUtilTest {
         Iterator<GHContent> treeIterator = mock(Iterator.class);
         GHContent content = mock(GHContent.class);
         when(content.isFile()).thenReturn(false, true);
+        when(content.isDirectory()).thenReturn(true, false);
         when(content.getPath()).thenReturn("path");
         when(content.read()).thenReturn(new InputStream() {
             @Override

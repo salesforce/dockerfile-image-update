@@ -114,9 +114,9 @@ public class DockerfileGitHubUtil {
 
     protected void modifyOnGithubRecursive(GHRepository repo, GHContent content,
                                            String branch, String img, String tag) throws IOException {
-        if (content.isFile()) {
+        if (content.isFile() && content.getDownloadUrl() != null) {
             modifyOnGithub(content, branch, img, tag, "");
-        } else {
+        } else if(content.isDirectory()) {
             for (GHContent newContent : repo.getDirectoryContent(content.getPath(), branch)) {
                 modifyOnGithubRecursive(repo, newContent, branch, img, tag);
             }
