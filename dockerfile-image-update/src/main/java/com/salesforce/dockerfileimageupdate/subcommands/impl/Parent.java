@@ -127,17 +127,17 @@ public class Parent implements ExecutableWithNamespace {
                 log.warn("Skipping {} because it's a fork already. Sending a PR to a fork is unsupported at the moment.",
                         parentRepoName);
             } else {
-                pathToDockerfilesInParentRepo.put(c.getOwner().getFullName(), c.getPath());
+                pathToDockerfilesInParentRepo.put(parentRepoName, c.getPath());
                 // fork the parent if not already forked
                 if (!parentReposForked.contains(parentRepoName)) {
                     log.info("Forking {}", parentRepoName);
-                    dockerfileGitHubUtil.closeOutdatedPullRequestAndForkParent(parent);
+                    dockerfileGitHubUtil.closeOutdatedPullRequestAndFork(parent);
                     parentReposForked.add(parentRepoName);
                 }
             }
         }
 
-        log.info("Path to Dockerfiles in repo '{}': {}", parentRepoName, pathToDockerfilesInParentRepo.toString());
+        log.info("Path to Dockerfiles in repo '{}': {}", parentRepoName, pathToDockerfilesInParentRepo);
 
         return pathToDockerfilesInParentRepo;
     }

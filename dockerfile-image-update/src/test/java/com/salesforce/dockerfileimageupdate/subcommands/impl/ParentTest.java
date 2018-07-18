@@ -105,7 +105,7 @@ public class ParentTest {
         parent.loadDockerfileGithubUtil(dockerfileGitHubUtil);
         Multimap<String, String> repoMap =  parent.forkRepositoriesFoundAndGetPathToDockerfiles(contentsWithImage);
 
-        verify(dockerfileGitHubUtil, times(3)).closeOutdatedPullRequestAndForkParent(any());
+        verify(dockerfileGitHubUtil, times(3)).closeOutdatedPullRequestAndFork(any());
         assertEquals(repoMap.size(), 3);
     }
 
@@ -131,7 +131,7 @@ public class ParentTest {
         parent.loadDockerfileGithubUtil(dockerfileGitHubUtil);
         Multimap<String, String> repoMap = parent.forkRepositoriesFoundAndGetPathToDockerfiles(contentsWithImage);
 
-        verify(dockerfileGitHubUtil, never()).closeOutdatedPullRequestAndForkParent(any());
+        verify(dockerfileGitHubUtil, never()).closeOutdatedPullRequestAndFork(any());
         assertEquals(repoMap.size(), 0);
     }
 
@@ -370,6 +370,6 @@ public class ParentTest {
         parent.loadDockerfileGithubUtil(dockerfileGitHubUtil);
         Multimap<String, String> pathToDockerfiles = parent.forkRepositoriesFoundAndGetPathToDockerfiles(contentsWithImage);
         assertTrue(pathToDockerfiles.isEmpty());
-        Mockito.verify(dockerfileGitHubUtil, times(0)).closeOutdatedPullRequestAndForkParent(any());
+        Mockito.verify(dockerfileGitHubUtil, times(0)).closeOutdatedPullRequestAndFork(any());
     }
 }

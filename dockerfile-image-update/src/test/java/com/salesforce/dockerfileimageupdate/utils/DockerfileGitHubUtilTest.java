@@ -69,7 +69,7 @@ public class DockerfileGitHubUtilTest {
 
         dockerfileGitHubUtil = new DockerfileGitHubUtil(gitHubUtil);
         GHPullRequest ghPullRequest = mockPullRequestAlreadyExists_True(parent, myself);
-        GHRepository returnRepo = dockerfileGitHubUtil.closeOutdatedPullRequestAndForkParent(parent);
+        GHRepository returnRepo = dockerfileGitHubUtil.closeOutdatedPullRequestAndFork(parent);
         verify(ghPullRequest, times(1)).close();
         verify(gitHubUtil, times(1)).createFork(parent);
         assertNotNull(returnRepo);
@@ -101,7 +101,7 @@ public class DockerfileGitHubUtilTest {
 
         dockerfileGitHubUtil = new DockerfileGitHubUtil(gitHubUtil);
         GHPullRequest ghPullRequest = mockPullRequestAlreadyExists_False(parent, myself);
-        GHRepository returnRepo = dockerfileGitHubUtil.closeOutdatedPullRequestAndForkParent(parent);
+        GHRepository returnRepo = dockerfileGitHubUtil.closeOutdatedPullRequestAndFork(parent);
         // No PR exists hence PullRequest.close() is not called
         verify(ghPullRequest, times(0)).close();
         verify(gitHubUtil, times(1)).createFork(parent);
@@ -136,7 +136,7 @@ public class DockerfileGitHubUtilTest {
 
         dockerfileGitHubUtil = new DockerfileGitHubUtil(gitHubUtil);
         mockPullRequestAlreadyExists_Error(parent);
-        GHRepository returnRepo = dockerfileGitHubUtil.closeOutdatedPullRequestAndForkParent(parent);
+        GHRepository returnRepo = dockerfileGitHubUtil.closeOutdatedPullRequestAndFork(parent);
         verify(gitHubUtil, times(1)).createFork(parent);
         verify(fork, times(1)).delete();
         assertNotNull(returnRepo);
@@ -167,7 +167,7 @@ public class DockerfileGitHubUtilTest {
         when(parent.listForks()).thenReturn(listOfForks);
 
         dockerfileGitHubUtil = new DockerfileGitHubUtil(gitHubUtil);
-        GHRepository returnRepo = dockerfileGitHubUtil.closeOutdatedPullRequestAndForkParent(parent);
+        GHRepository returnRepo = dockerfileGitHubUtil.closeOutdatedPullRequestAndFork(parent);
         assertNull(returnRepo);
     }
 

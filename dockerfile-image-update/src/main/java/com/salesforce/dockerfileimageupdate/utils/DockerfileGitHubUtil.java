@@ -32,7 +32,7 @@ public class DockerfileGitHubUtil {
 
     protected GitHubUtil getGitHubUtil() { return gitHubUtil; }
 
-    public GHRepository closeOutdatedPullRequestAndForkParent(GHRepository parent) throws IOException {
+    public GHRepository closeOutdatedPullRequestAndFork(GHRepository parent) throws IOException {
 
         for (GHRepository fork : parent.listForks()) {
             String forkOwner = fork.getOwnerName();
@@ -55,6 +55,7 @@ public class DockerfileGitHubUtil {
                 gitHubUtil.safeDeleteRepo(fork);
             }
         }
+        log.info("Forking repo: {}", parent);
         return gitHubUtil.createFork(parent);
     }
 

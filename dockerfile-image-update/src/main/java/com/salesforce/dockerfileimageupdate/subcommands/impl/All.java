@@ -112,13 +112,12 @@ public class All implements ExecutableWithNamespace {
                 log.warn("Skipping {} because it's a fork already. Sending a PR to a fork is unsupported at the moment.",
                         parentRepoName);
             } else {
-                pathToDockerfilesInParentRepo.put(c.getOwner().getFullName(), c.getPath());
-                imagesFoundInParentRepo.put(c.getOwner().getFullName(), image);
+                pathToDockerfilesInParentRepo.put(parentRepoName, c.getPath());
+                imagesFoundInParentRepo.put(parentRepoName, image);
 
                 // fork the parent if not already forked
                 if (!parentReposForked.contains(parentRepoName)) {
-                    log.info("Forking repo: {}", parentRepoName);
-                    dockerfileGitHubUtil.closeOutdatedPullRequestAndForkParent(parent);
+                    dockerfileGitHubUtil.closeOutdatedPullRequestAndFork(parent);
                     parentReposForked.add(parentRepoName);
                 }
             }
@@ -206,7 +205,7 @@ public class All implements ExecutableWithNamespace {
         Iterator<String> pathToDockerfileInParentRepoIterator = pathToDockerfilesInParentRepo.get(parentName).iterator();
         Iterator<String> imagesFoundInParentRepoIterator = imagesFoundInParentRepo.get(parentName).iterator();
 
-        while (pathToDockerfileInParentRepoIterator.hasNext() && imagesFoundInParentRepoIterator.hasNext()) {
+        while (pathToDockerfileInParentRepoIterator.hasNext()) {
             pathToDockerfile = pathToDockerfileInParentRepoIterator.next();
             image = imagesFoundInParentRepoIterator.next();
             tag = imageToTagMap.get(image);

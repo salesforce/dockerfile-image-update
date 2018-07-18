@@ -61,7 +61,7 @@ public class AllTest {
         all.loadDockerfileGithubUtil(dockerfileGitHubUtil);
         all.forkRepositoriesFound(ArrayListMultimap.create(), ArrayListMultimap.create(), contentsWithImage, "image");
 
-        Mockito.verify(dockerfileGitHubUtil, times(1)).closeOutdatedPullRequestAndForkParent(any());
+        Mockito.verify(dockerfileGitHubUtil, times(1)).closeOutdatedPullRequestAndFork(any());
     }
 
     @Test
@@ -343,7 +343,7 @@ public class AllTest {
         All all = new All();
         all.loadDockerfileGithubUtil(dockerfileGitHubUtil);
         all.forkRepositoriesFound(ArrayListMultimap.create(), ArrayListMultimap.create(), contentsWithImage, "image");
-        Mockito.verify(dockerfileGitHubUtil, times(0)).closeOutdatedPullRequestAndForkParent(any());
+        Mockito.verify(dockerfileGitHubUtil, times(0)).closeOutdatedPullRequestAndFork(any());
     }
 
     @Test
