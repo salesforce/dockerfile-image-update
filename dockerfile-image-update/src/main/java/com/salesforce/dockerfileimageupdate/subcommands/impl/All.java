@@ -50,7 +50,7 @@ public class All implements ExecutableWithNamespace {
             log.info("Repositories with image {} being forked.", image);
             imageToTagMap.put(image, imageToTag.getValue().getAsString());
             PagedSearchIterable<GHContent> contentsWithImage =
-                    this.dockerfileGitHubUtil.findFilesWithImage(image, ns.get("o"));
+                    this.dockerfileGitHubUtil.findFilesWithImage(image, ns.get(Constants.GIT_ORG));
             forkRepositoriesFound(pathToDockerfilesInParentRepo,
                     imagesFoundInParentRepo, contentsWithImage, image);
         }
@@ -61,13 +61,13 @@ public class All implements ExecutableWithNamespace {
         }
 
         log.info("Retrieving all the forks...");
-        PagedIterable<GHRepository> listOfcurrUserRepos =
+        PagedIterable<GHRepository> listOfCurrUserRepos =
                 dockerfileGitHubUtil.getGHRepositories(pathToDockerfilesInParentRepo, currentUser);
 
         List<IOException> exceptions = new ArrayList<>();
         List<String> skippedRepos = new ArrayList<>();
 
-        for (GHRepository currUserRepo : listOfcurrUserRepos) {
+        for (GHRepository currUserRepo : listOfCurrUserRepos) {
             try {
                 changeDockerfiles(ns, pathToDockerfilesInParentRepo, imagesFoundInParentRepo, imageToTagMap, currUserRepo,
                         skippedRepos);
@@ -82,7 +82,7 @@ public class All implements ExecutableWithNamespace {
         }
 
         if (!skippedRepos.isEmpty()) {
-            log.info("List of repos skipped: {}", skippedRepos.toArray());
+            log.info("List of repos skipped: {}", skippedRepos);
         }
     }
 
@@ -124,8 +124,8 @@ public class All implements ExecutableWithNamespace {
             }
         }
 
-        log.info("Path to Dockerfiles in repo '{}': {}", parentRepoName, pathToDockerfilesInParentRepo.toString());
-        log.info("All images found in repo '{}': {}", parentRepoName, imagesFoundInParentRepo.toString());
+        log.info("Path to Dockerfiles in repo '{}': {}", parentRepoName, pathToDockerfilesInParentRepo);
+        log.info("All images found in repo '{}': {}", parentRepoName, imagesFoundInParentRepo);
     }
 
     protected Set<Map.Entry<String, JsonElement>> parseStoreToImagesMap(String storeName)
@@ -194,7 +194,7 @@ public class All implements ExecutableWithNamespace {
 
         log.info("Fixing Dockerfiles in {}...", forkedRepo.getFullName());
         String parentName = parent.getFullName();
-        String branch = (ns.get("b") == null) ? forkedRepo.getDefaultBranch() : ns.get("b");
+        String branch = (ns.get(Constants.GIT_BRANCH) == null) ? forkedRepo.getDefaultBranch() : ns.get(Constants.GIT_BRANCH);
 
         String pathToDockerfile;
         String image;
@@ -212,9 +212,9 @@ public class All implements ExecutableWithNamespace {
             tag = imageToTagMap.get(image);
             log.info("pathToDockerfile: {} , image: {}, tag: {}", pathToDockerfile, image, tag);
             content = dockerfileGitHubUtil.tryRetrievingContent(forkedRepo, pathToDockerfile, branch);
-            log.info("content: {}", content);
             if (content != null) {
-                dockerfileGitHubUtil.modifyOnGithub(content, branch, image, tag, ns.get("c"));
+                dockerfileGitHubUtil.modifyOnGithub(content, branch, image, tag,
+                        ns.get(Constants.GIT_ADDITIONAL_COMMIT_MESSAGE));
                 isContentModified = true;
                 isRepoSkipped = false;
             } else {
@@ -229,7 +229,7 @@ public class All implements ExecutableWithNamespace {
         }
 
         if (isContentModified) {
-            dockerfileGitHubUtil.createPullReq(parent, branch, forkedRepo, ns.get("m"));
+            dockerfileGitHubUtil.createPullReq(parent, branch, forkedRepo, ns.get(Constants.GIT_PR_TITLE));
         }
     }
 }

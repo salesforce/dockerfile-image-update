@@ -43,8 +43,7 @@ public class Parent implements ExecutableWithNamespace {
         this.dockerfileGitHubUtil.updateStore(ns.get(Constants.STORE), img, tag);
 
         log.info("Finding Dockerfiles with the given image...");
-        log.info("org: {}", (String) ns.get("o"));
-        PagedSearchIterable<GHContent> contentsWithImage = getGHContents(ns.get("o"), img);
+        PagedSearchIterable<GHContent> contentsWithImage = getGHContents(ns.get(Constants.GIT_ORG), img);
         if (contentsWithImage == null) return;
 
         Multimap<String, String> pathToDockerfilesInParentRepo = forkRepositoriesFoundAndGetPathToDockerfiles(contentsWithImage);
@@ -54,13 +53,13 @@ public class Parent implements ExecutableWithNamespace {
             throw new IOException("Could not retrieve authenticated user.");
         }
 
-        PagedIterable<GHRepository> listOfcurrUserRepos =
+        PagedIterable<GHRepository> listOfCurrUserRepos =
                 dockerfileGitHubUtil.getGHRepositories(pathToDockerfilesInParentRepo, currentUser);
 
         List<IOException> exceptions = new ArrayList<>();
         List<String> skippedRepos = new ArrayList<>();
 
-        for (GHRepository currUserRepo : listOfcurrUserRepos) {
+        for (GHRepository currUserRepo : listOfCurrUserRepos) {
             try {
                 changeDockerfiles(ns, pathToDockerfilesInParentRepo, currUserRepo, skippedRepos);
             } catch (IOException e) {
@@ -73,7 +72,7 @@ public class Parent implements ExecutableWithNamespace {
         }
 
         if (!skippedRepos.isEmpty()) {
-            log.info("List of repos skipped: {}", skippedRepos.toArray());
+            log.info("List of repos skipped: {}", skippedRepos);
         }
     }
 
@@ -180,7 +179,7 @@ public class Parent implements ExecutableWithNamespace {
         }
         log.info("Fixing Dockerfiles in {}", forkedRepo.getFullName());
         String parentName = parent.getFullName();
-        String branch = (ns.get("b") == null) ? forkedRepo.getDefaultBranch() : ns.get("b");
+        String branch = (ns.get(Constants.GIT_BRANCH) == null) ? forkedRepo.getDefaultBranch() : ns.get(Constants.GIT_BRANCH);
 
         // loop through all the Dockerfiles in the same repo
         boolean isContentModified = false;
@@ -189,7 +188,8 @@ public class Parent implements ExecutableWithNamespace {
             GHContent content = dockerfileGitHubUtil.tryRetrievingContent(forkedRepo, pathToDockerfile, branch);
             log.info("content: {}", content);
             if (content != null) {
-                dockerfileGitHubUtil.modifyOnGithub(content, branch, ns.get(Constants.IMG), ns.get(Constants.TAG), ns.get("c"));
+                dockerfileGitHubUtil.modifyOnGithub(content, branch, ns.get(Constants.IMG), ns.get(Constants.TAG),
+                        ns.get(Constants.GIT_ADDITIONAL_COMMIT_MESSAGE));
                 isContentModified = true;
                 isRepoSkipped = false;
             } else {
@@ -204,7 +204,7 @@ public class Parent implements ExecutableWithNamespace {
         }
 
         if (isContentModified) {
-            dockerfileGitHubUtil.createPullReq(parent, branch, forkedRepo, ns.get("m"));
+            dockerfileGitHubUtil.createPullReq(parent, branch, forkedRepo, ns.get(Constants.GIT_PR_TITLE));
         }
     }
 }

@@ -40,13 +40,16 @@ public class DockerfileGitHubUtil {
             String myselfLogin = myself.getLogin();
             if (forkOwner.equals(myselfLogin)) {
                 GHPullRequest pr = getPullRequestWithPullReqIdentifier(parent);
-                log.info("pr: {}", pr);
                 // Only reason we close the existing PR, delete fork and re-fork, is because there is no way to
                 // determine if the existing fork is compatible with it's parent.
                 if (pr != null) {
                     // close the pull-request since the fork is out of date
                     log.info("closing existing pr: {}", pr.getUrl());
-                    pr.close();
+                    try {
+                        pr.close();
+                    } catch (IOException e) {
+                        log.info("Issues closing the pull request '{}'. Moving ahead...", pr.getUrl());
+                    }
                 }
                 // delete fork if one already exists before re-forking
                 gitHubUtil.safeDeleteRepo(fork);
@@ -73,7 +76,7 @@ public class DockerfileGitHubUtil {
             throw new IOException("Invalid image name.");
         }
         search.q("\"FROM " + query + "\"");
-        log.info("Searching for {}", query);
+        log.debug("Searching for {}", query);
         PagedSearchIterable<GHContent> files = search.list();
         int totalCount = files.getTotalCount();
         log.info("Number of files found for {}:{}", query, totalCount);
