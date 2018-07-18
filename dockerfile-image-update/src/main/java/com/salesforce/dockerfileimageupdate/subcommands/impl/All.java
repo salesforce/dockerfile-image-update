@@ -55,8 +55,6 @@ public class All implements ExecutableWithNamespace {
                     imagesFoundInParentRepo, contentsWithImage, image);
         }
 
-        log.info("imageToTagMap: {}", imageToTagMap.toString());
-
         GHMyself currentUser = this.dockerfileGitHubUtil.getMyself();
         if (currentUser == null) {
             throw new IOException("Could not retrieve authenticated user.");
@@ -68,9 +66,7 @@ public class All implements ExecutableWithNamespace {
 
         List<IOException> exceptions = new ArrayList<>();
         List<String> skippedRepos = new ArrayList<>();
-//        log.info("all imageToTagMap: {}", imageToTagMap.toString());
-//        log.info("all imagesFoundInParentRepo: {}", imagesFoundInParentRepo.toString());
-//        log.info("all pathToDockerfilesInParentRepo: {}", pathToDockerfilesInParentRepo.toString());
+
         for (GHRepository currUserRepo : listOfcurrUserRepos) {
             try {
                 changeDockerfiles(ns, pathToDockerfilesInParentRepo, imagesFoundInParentRepo, imageToTagMap, currUserRepo,

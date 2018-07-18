@@ -62,7 +62,6 @@ public class Parent implements ExecutableWithNamespace {
 
         for (GHRepository currUserRepo : listOfcurrUserRepos) {
             try {
-                log.info("userRepo: {}", currUserRepo.getFullName());
                 changeDockerfiles(ns, pathToDockerfilesInParentRepo, currUserRepo, skippedRepos);
             } catch (IOException e) {
                 exceptions.add(e);
@@ -95,7 +94,6 @@ public class Parent implements ExecutableWithNamespace {
         }
 
         int numOfContentsFound = contentsWithImage.getTotalCount();
-        log.info("numOfContentsFound: {}", numOfContentsFound);
         if (numOfContentsFound <= 0) {
             log.info("Could not find any repositories with given image.");
             return null;

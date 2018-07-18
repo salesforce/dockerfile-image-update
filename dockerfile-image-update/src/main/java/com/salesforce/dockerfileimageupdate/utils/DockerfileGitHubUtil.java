@@ -146,9 +146,7 @@ public class DockerfileGitHubUtil {
                                     BufferedReader reader) throws IOException {
         StringBuilder strB = new StringBuilder();
         boolean modified = rewriteDockerfile(img, tag, reader, strB);
-        log.info("content: {}", content.getPath());
         if (modified) {
-            log.info("modified: {}", content.getPath());
             content.update(strB.toString(),
                     "Fixed Dockerfile base image in /" + content.getPath() + ".\n" + customMessage, branch);
         }
@@ -158,8 +156,6 @@ public class DockerfileGitHubUtil {
         String line;
         boolean modified = false;
         while ( (line = reader.readLine()) != null ) {
-
-
             /* Once true, should stay true. */
             modified = changeIfDockerfileBaseImageLine(img, tag, strB, line) || modified;
         }
