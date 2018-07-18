@@ -22,7 +22,7 @@ import java.io.IOException;
 @SubCommand(help="updates one specific repository with given tag",
         requiredParams = {Constants.GIT_REPO, Constants.IMG, Constants.FORCE_TAG}, optionalParams = {"s", Constants.STORE})
 public class Child implements ExecutableWithNamespace {
-    private final static Logger log = LoggerFactory.getLogger(Child.class);
+    private static final Logger log = LoggerFactory.getLogger(Child.class);
 
     @Override
     public void execute(final Namespace ns, final DockerfileGitHubUtil dockerfileGitHubUtil)
@@ -36,7 +36,7 @@ public class Child implements ExecutableWithNamespace {
 
         log.info("Retrieving repository and creating fork...");
         GHRepository repo = dockerfileGitHubUtil.getRepo(ns.get(Constants.GIT_REPO));
-        GHRepository fork = dockerfileGitHubUtil.checkFromParentAndFork(repo);
+        GHRepository fork = dockerfileGitHubUtil.closeOutdatedPullRequestAndForkParent(repo);
 
         if (branch == null) {
             branch = repo.getDefaultBranch();
