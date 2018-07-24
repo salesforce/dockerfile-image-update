@@ -294,6 +294,8 @@ public class DockerfileGitHubUtilTest {
         Iterator<GHContent> treeIterator = mock(Iterator.class);
         GHContent content = mock(GHContent.class);
         when(content.isFile()).thenReturn(false, true);
+        when(content.getDownloadUrl()).thenReturn(null,  " ");
+        when(content.isDirectory()).thenReturn(true, false);
         when(content.getPath()).thenReturn("path");
         when(content.read()).thenReturn(new InputStream() {
             @Override
@@ -314,7 +316,8 @@ public class DockerfileGitHubUtilTest {
         dockerfileGitHubUtil.modifyOnGithubRecursive(repo, content, branch, img, tag);
 
         verify(content, times(6)).isFile();
-
+        verify(content, times(2)).isDirectory();
+        verify(content, times(5)).getDownloadUrl();
     }
 
     @Test
