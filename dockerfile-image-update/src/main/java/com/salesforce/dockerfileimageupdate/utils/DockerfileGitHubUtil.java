@@ -114,9 +114,8 @@ public class DockerfileGitHubUtil {
 
     protected void modifyOnGithubRecursive(GHRepository repo, GHContent content,
                                            String branch, String img, String tag) throws IOException {
-        /* Download url is used here to identify submodules as in listing directory content API of git provides
-         * type for submodule as file, and hence leads to NPE as download url of submodule is null.
-         * Also in child sub command, we should not iterate over the contents of submodule as it is a different repo.
+        /* If we have a submodule; we want to skip.
+           Content is submodule when the type is file, but content.getDownloadUrl() is null.
          */
         if (content.isFile() && content.getDownloadUrl() != null) {
             modifyOnGithub(content, branch, img, tag, "");
@@ -124,6 +123,9 @@ public class DockerfileGitHubUtil {
             for (GHContent newContent : repo.getDirectoryContent(content.getPath(), branch)) {
                 modifyOnGithubRecursive(repo, newContent, branch, img, tag);
             }
+        } else {
+            // The only other case is if we have a file, but content.getDownloadUrl() is null
+            log.info("Skipping submodule {}", content.getName());
         }
     }
 
