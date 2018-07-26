@@ -199,6 +199,7 @@ public class DockerfileGitHubUtil {
             log.info("Image tag store cannot be null. Skipping store update...");
             return;
         }
+        log.info("Updating store: {} with image: {} tag: {}...", store, img, tag);
         GHRepository storeRepo;
         try {
             GHMyself myself = gitHubUtil.getMyself();
