@@ -56,10 +56,10 @@ public class CommandLine {
         ArgumentParser parser = ArgumentParsers.newArgumentParser("dockerfile-image-update", true)
                 .description("Image Updates through Pull Request Automator");
 
-        parser.addArgument("-o", "--org")
+        parser.addArgument("-o", "--" + Constants.GIT_ORG)
                 .help("search within specific organization (default: all of github)");
         /* Currently, because of argument passing reasons, you can only specify one branch. */
-        parser.addArgument("-b", "--branch")
+        parser.addArgument("-b", "--" + Constants.GIT_BRANCH)
                 .help("make pull requests for given branch name (default: master)");
         parser.addArgument("-g", "--" + Constants.GIT_API)
                 .help("link to github api; overrides environment variable");
