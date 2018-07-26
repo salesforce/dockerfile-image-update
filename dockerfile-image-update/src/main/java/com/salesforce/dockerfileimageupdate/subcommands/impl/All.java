@@ -211,13 +211,13 @@ public class All implements ExecutableWithNamespace {
             tag = imageToTagMap.get(image);
             log.info("pathToDockerfile: {} , image: {}, tag: {}", pathToDockerfile, image, tag);
             content = dockerfileGitHubUtil.tryRetrievingContent(forkedRepo, pathToDockerfile, branch);
-            if (content != null) {
+            if (content == null) {
+                log.info("No Dockerfile found at path: '{}'", pathToDockerfile);
+            } else {
                 dockerfileGitHubUtil.modifyOnGithub(content, branch, image, tag,
                         ns.get(Constants.GIT_ADDITIONAL_COMMIT_MESSAGE));
                 isContentModified = true;
                 isRepoSkipped = false;
-            } else {
-                log.info("No Dockerfile found at path: '{}'", pathToDockerfile);
             }
         }
 

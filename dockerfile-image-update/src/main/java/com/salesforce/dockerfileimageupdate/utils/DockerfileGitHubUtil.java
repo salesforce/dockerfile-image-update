@@ -80,7 +80,7 @@ public class DockerfileGitHubUtil {
         log.debug("Searching for {}", query);
         PagedSearchIterable<GHContent> files = search.list();
         int totalCount = files.getTotalCount();
-        log.info("Number of files found for {}:{}", query, totalCount);
+        log.debug("Number of files found for {}:{}", query, totalCount);
         return files;
     }
 

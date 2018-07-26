@@ -186,14 +186,13 @@ public class Parent implements ExecutableWithNamespace {
         boolean isRepoSkipped = true;
         for (String pathToDockerfile : pathToDockerfilesInParentRepo.get(parentName)) {
             GHContent content = dockerfileGitHubUtil.tryRetrievingContent(forkedRepo, pathToDockerfile, branch);
-            log.info("content: {}", content);
-            if (content != null) {
+            if (content == null) {
+                log.info("No Dockerfile found at path: '{}'", pathToDockerfile);
+            } else {
                 dockerfileGitHubUtil.modifyOnGithub(content, branch, ns.get(Constants.IMG), ns.get(Constants.TAG),
                         ns.get(Constants.GIT_ADDITIONAL_COMMIT_MESSAGE));
                 isContentModified = true;
                 isRepoSkipped = false;
-            } else {
-                log.info("No Dockerfile found at path: '{}'", pathToDockerfile);
             }
         }
 
