@@ -27,7 +27,7 @@ public class Child implements ExecutableWithNamespace {
     @Override
     public void execute(final Namespace ns, final DockerfileGitHubUtil dockerfileGitHubUtil)
             throws IOException, InterruptedException {
-        String branch = ns.get("b");
+        String branch = ns.get(Constants.GIT_BRANCH);
         String img = ns.get(Constants.IMG);
         String forceTag = ns.get(Constants.FORCE_TAG);
 

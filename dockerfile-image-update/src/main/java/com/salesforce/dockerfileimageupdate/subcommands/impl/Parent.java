@@ -44,7 +44,7 @@ public class Parent implements ExecutableWithNamespace {
         this.dockerfileGitHubUtil.updateStore(ns.get(Constants.STORE), img, tag);
 
         log.info("Finding Dockerfiles with the given image...");
-        PagedSearchIterable<GHContent> contentsWithImage = getGHContents(ns.get("o"), img);
+        PagedSearchIterable<GHContent> contentsWithImage = getGHContents(ns.get(Constants.GIT_ORG), img);
         if (contentsWithImage == null) return;
 
         forkRepositoriesFound(parentToPath, contentsWithImage);
@@ -163,7 +163,7 @@ public class Parent implements ExecutableWithNamespace {
         log.info("Fixing Dockerfiles in {}...", initialRepo.getFullName());
         String currBranch;
         String parentName = parent.getFullName();
-        String branch = ns.get("b");
+        String branch = ns.get(Constants.GIT_BRANCH);
         if (branch == null) {
             currBranch = retrievedRepo.getDefaultBranch();
         } else {
