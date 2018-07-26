@@ -57,7 +57,7 @@ In environment variables, please provide:
 1. This tool may create a LOT of forks in your account. All pull requests created are through a fork on your own account.
 2. We currently do not operate on forked repositories due to limitations in forking a fork on GitHub.
 We should invest some time in doing this right. See [issue #21](https://github.com/salesforce/dockerfile-image-update/issues/22) 
-
+3. Submodules are separate repositories and get their own pull requests.
 
 ### How to use it
 Our recommendation is to run it as a docker container:

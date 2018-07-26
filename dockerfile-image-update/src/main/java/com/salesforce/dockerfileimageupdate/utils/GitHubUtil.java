@@ -8,6 +8,7 @@
 
 package com.salesforce.dockerfileimageupdate.utils;
 
+import com.google.common.collect.Multimap;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
@@ -17,7 +18,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -25,7 +25,7 @@ import java.util.concurrent.TimeUnit;
  * Created by minho-park on 7/1/16.
  */
 public class GitHubUtil {
-    private final static Logger log = LoggerFactory.getLogger(GitHubUtil.class);
+    private static final Logger log = LoggerFactory.getLogger(GitHubUtil.class);
 
     private final GitHub github;
 
@@ -98,6 +98,7 @@ public class GitHubUtil {
             JsonElement root = new JsonParser().parse(e.getMessage());
             JsonArray errorJson = root.getAsJsonObject().get("errors").getAsJsonArray();
             String error = errorJson.get(0).getAsJsonObject().get("message").getAsString();
+            log.info("error: {}", error);
             if (error.startsWith("A pull request already exists")) {
                 log.info("NOTE: {} New commits may have been added to the pull request.", error);
                 return 0;
@@ -154,7 +155,7 @@ public class GitHubUtil {
      *
      * Instead, we wait for 60 seconds if the list retrieved is not the list we want.
      */
-    public PagedIterable<GHRepository> getGHRepositories(Map<String, String> parentToPath,
+    public PagedIterable<GHRepository> getGHRepositories(Multimap<String, String> pathToDockerfileInParentRepo,
                                                          GHMyself currentUser) throws InterruptedException {
         PagedIterable<GHRepository> listOfRepos;
         Set<String> repoNamesSet = new HashSet<>();
@@ -164,8 +165,9 @@ public class GitHubUtil {
                 repoNamesSet.add(repo.getName());
             }
             boolean listOfReposHasRecentForks = true;
-            for (String s : parentToPath.keySet()) {
+            for (String s : pathToDockerfileInParentRepo.keySet()) {
                 String forkName = s.substring(s.lastIndexOf('/') + 1);
+                log.info(forkName);
                 if (!repoNamesSet.contains(forkName)) {
                     listOfReposHasRecentForks = false;
                 }
@@ -177,6 +179,7 @@ public class GitHubUtil {
                 Thread.sleep(TimeUnit.MINUTES.toMillis(1));
             }
         }
+
         return listOfRepos;
     }
 }
