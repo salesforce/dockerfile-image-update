@@ -8,6 +8,8 @@
 
 package com.salesforce.dockerfileimageupdate.subcommands.impl;
 
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.Multimap;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
@@ -20,6 +22,7 @@ import org.kohsuke.github.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -29,7 +32,7 @@ import java.util.*;
 @SubCommand(help="updates all repositories' Dockerfiles",
         requiredParams = {Constants.STORE})
 public class All implements ExecutableWithNamespace {
-    private final static Logger log = LoggerFactory.getLogger(All.class);
+    private static final Logger log = LoggerFactory.getLogger(All.class);
 
     private DockerfileGitHubUtil dockerfileGitHubUtil;
 
@@ -38,8 +41,8 @@ public class All implements ExecutableWithNamespace {
         loadDockerfileGithubUtil(dockerfileGitHubUtil);
 
         Map<String, String> imageToTagMap = new HashMap<>();
-        Map<String, String> parentToImage = new HashMap<>();
-        Map<String, String> parentToPath = new HashMap<>();
+        Multimap<String, String> imagesFoundInParentRepo = ArrayListMultimap.create();
+        Multimap<String, String> pathToDockerfilesInParentRepo = ArrayListMultimap.create();
 
         Set<Map.Entry<String, JsonElement>> imageToTagStore = parseStoreToImagesMap(ns.get(Constants.STORE));
         for (Map.Entry<String, JsonElement> imageToTag : imageToTagStore) {
@@ -47,8 +50,9 @@ public class All implements ExecutableWithNamespace {
             log.info("Repositories with image {} being forked.", image);
             imageToTagMap.put(image, imageToTag.getValue().getAsString());
             PagedSearchIterable<GHContent> contentsWithImage =
-                    this.dockerfileGitHubUtil.findFilesWithImage(image, ns.get("o"));
-            forkRepositoriesFound(parentToPath, parentToImage, contentsWithImage, image);
+                    this.dockerfileGitHubUtil.findFilesWithImage(image, ns.get(Constants.GIT_ORG));
+            forkRepositoriesFound(pathToDockerfilesInParentRepo,
+                    imagesFoundInParentRepo, contentsWithImage, image);
         }
 
         GHMyself currentUser = this.dockerfileGitHubUtil.getMyself();
@@ -57,21 +61,28 @@ public class All implements ExecutableWithNamespace {
         }
 
         log.info("Retrieving all the forks...");
-        PagedIterable<GHRepository> repos = dockerfileGitHubUtil.getGHRepositories(parentToPath, currentUser);
+        PagedIterable<GHRepository> listOfCurrUserRepos =
+                dockerfileGitHubUtil.getGHRepositories(pathToDockerfilesInParentRepo, currentUser);
 
-        String message = ns.get("m");
         List<IOException> exceptions = new ArrayList<>();
-        for (GHRepository repo : repos) {
+        List<String> skippedRepos = new ArrayList<>();
+
+        for (GHRepository currUserRepo : listOfCurrUserRepos) {
             try {
-                changeDockerfiles(parentToPath, parentToImage, imageToTagMap, repo, message, ns.get("c"));
+                changeDockerfiles(ns, pathToDockerfilesInParentRepo, imagesFoundInParentRepo, imageToTagMap, currUserRepo,
+                        skippedRepos);
             } catch (IOException e) {
                 exceptions.add(e);
             }
         }
 
-        if (exceptions.size() > 0) {
+        if (!exceptions.isEmpty()) {
             log.info("There were {} errors with changing Dockerfiles.", exceptions.size());
             throw exceptions.get(0);
+        }
+
+        if (!skippedRepos.isEmpty()) {
+            log.info("List of repos skipped: {}", skippedRepos);
         }
     }
 
@@ -79,10 +90,14 @@ public class All implements ExecutableWithNamespace {
         dockerfileGitHubUtil = _dockerfileGitHubUtil;
     }
 
-    protected void forkRepositoriesFound(Map<String, String> parentToPath,
-                                         Map<String, String> parentToImage,
-                                         PagedSearchIterable<GHContent> contentsWithImage, String image) throws IOException {
+    protected void forkRepositoriesFound(Multimap<String, String> pathToDockerfilesInParentRepo,
+                                         Multimap<String, String> imagesFoundInParentRepo,
+                                         PagedSearchIterable<GHContent> contentsWithImage,
+                                         String image) throws IOException {
         log.info("Forking {} repositories...", contentsWithImage.getTotalCount());
+        List<String> parentReposForked = new ArrayList<>();
+        GHRepository parent;
+        String parentRepoName = null;
         for (GHContent c : contentsWithImage) {
             /* Kohsuke's GitHub API library, when retrieving the forked repository, looks at the name of the parent to
              * retrieve. The issue with that is: GitHub, when forking two or more repositories with the same name,
@@ -91,12 +106,25 @@ public class All implements ExecutableWithNamespace {
              * repositories that were automatically fixed by GitHub. Instead, we save the names of the parent repos
              * in the map above, find the list of repositories under the authorized user, and iterate through that list.
              */
-            GHRepository parent = c.getOwner();
-            log.info("Forking {}...", parent.getFullName());
-            parentToPath.put(c.getOwner().getFullName(), c.getPath());
-            parentToImage.put(c.getOwner().getFullName(), image);
-            dockerfileGitHubUtil.checkFromParentAndFork(parent);
+            parent = c.getOwner();
+            parentRepoName = parent.getFullName();
+            if (parent.isFork()) {
+                log.warn("Skipping {} because it's a fork already. Sending a PR to a fork is unsupported at the moment.",
+                        parentRepoName);
+            } else {
+                pathToDockerfilesInParentRepo.put(parentRepoName, c.getPath());
+                imagesFoundInParentRepo.put(parentRepoName, image);
+
+                // fork the parent if not already forked
+                if (!parentReposForked.contains(parentRepoName)) {
+                    dockerfileGitHubUtil.closeOutdatedPullRequestAndFork(parent);
+                    parentReposForked.add(parentRepoName);
+                }
+            }
         }
+
+        log.info("Path to Dockerfiles in repo '{}': {}", parentRepoName, pathToDockerfilesInParentRepo);
+        log.info("All images found in repo '{}': {}", parentRepoName, imagesFoundInParentRepo);
     }
 
     protected Set<Map.Entry<String, JsonElement>> parseStoreToImagesMap(String storeName)
@@ -109,7 +137,7 @@ public class All implements ExecutableWithNamespace {
                 store.getDefaultBranch());
 
         if (storeContent == null) {
-            return null;
+            return Collections.emptySet();
         }
 
         JsonElement json;
@@ -118,7 +146,7 @@ public class All implements ExecutableWithNamespace {
                 json = new JsonParser().parse(streamR);
             } catch (JsonParseException e) {
                 log.warn("Not a JSON format store.");
-                return null;
+                return Collections.emptySet();
             }
         }
 
@@ -126,35 +154,81 @@ public class All implements ExecutableWithNamespace {
         return imagesJson.getAsJsonObject().entrySet();
     }
 
-    protected void changeDockerfiles(Map<String, String> parentToPath,
-                                     Map<String, String> parentToImage,
+    protected void changeDockerfiles(Namespace ns,
+                                     Multimap<String, String> pathToDockerfilesInParentRepo,
+                                     Multimap<String, String> imagesFoundInParentRepo,
                                      Map<String, String> imageToTagMap,
-                                     GHRepository initialRepo, String message, String commitMessage) throws IOException, InterruptedException {
+                                     GHRepository currUserRepo,
+                                     List<String> skippedRepos) throws IOException, InterruptedException {
         /* The Github API does not provide the parent if retrieved through a list. If we want to access its parent,
          * we need to retrieve it once again.
          */
-        GHRepository retrievedRepo;
-        if (initialRepo.isFork()) {
-            retrievedRepo = dockerfileGitHubUtil.getRepo(initialRepo.getFullName());
+        GHRepository forkedRepo;
+        if (currUserRepo.isFork()) {
+            try {
+                forkedRepo = dockerfileGitHubUtil.getRepo(currUserRepo.getFullName());
+            } catch (FileNotFoundException e) {
+                /* The edge case here: If a different command calls getGHRepositories, and then this command calls
+                 * it again within 60 seconds, it will still have the same list of repositories (because of caching).
+                 * However, between the previous and current call, if some of those repositories are deleted, the call
+                 * above may cause a FileNotFoundException. This clause prevents that exception from stopping our call;
+                 * we do not need to stop because getGHRepositories checks that we have all the repositories we need.
+                 *
+                 * The integration test calls the testParent -> testAllCommand -> testIdempotency, and the
+                 * testIdempotency was failing because of this edge condition.
+                 */
+
+                log.warn("This repository does not exist. The list of repositories must be outdated, but the list" +
+                        "contains the repositories we need, so we ignore this error.");
+                return;
+            }
         } else {
             return;
         }
-        GHRepository parent = retrievedRepo.getParent();
+        GHRepository parent = forkedRepo.getParent();
 
-        if (parent == null || !parentToPath.containsKey(parent.getFullName())) {
+        if (parent == null || !pathToDockerfilesInParentRepo.containsKey(parent.getFullName())) {
             return;
         }
-        log.info("Fixing Dockerfiles in {}...", initialRepo.getFullName());
+
+        log.info("Fixing Dockerfiles in {}...", forkedRepo.getFullName());
         String parentName = parent.getFullName();
-        String image = parentToImage.get(parentName);
-        String tag = imageToTagMap.get(image);
-        String branch = retrievedRepo.getDefaultBranch();
-        GHContent content = dockerfileGitHubUtil.tryRetrievingContent(retrievedRepo, parentToPath.get(parentName),
-                branch);
-        dockerfileGitHubUtil.modifyOnGithub(content, branch, image, tag, commitMessage);
-        dockerfileGitHubUtil.createPullReq(parent, branch, retrievedRepo, message);
+        String branch = (ns.get(Constants.GIT_BRANCH) == null) ? forkedRepo.getDefaultBranch() : ns.get(Constants.GIT_BRANCH);
+
+        String pathToDockerfile;
+        String image;
+        String tag;
+        GHContent content;
+        boolean isContentModified = false;
+        boolean isRepoSkipped = true;
+
+        Iterator<String> pathToDockerfileInParentRepoIterator = pathToDockerfilesInParentRepo.get(parentName).iterator();
+        Iterator<String> imagesFoundInParentRepoIterator = imagesFoundInParentRepo.get(parentName).iterator();
+
+        while (pathToDockerfileInParentRepoIterator.hasNext()) {
+            pathToDockerfile = pathToDockerfileInParentRepoIterator.next();
+            image = imagesFoundInParentRepoIterator.next();
+            tag = imageToTagMap.get(image);
+            log.info("pathToDockerfile: {} , image: {}, tag: {}", pathToDockerfile, image, tag);
+            content = dockerfileGitHubUtil.tryRetrievingContent(forkedRepo, pathToDockerfile, branch);
+            if (content == null) {
+                log.info("No Dockerfile found at path: '{}'", pathToDockerfile);
+            } else {
+                dockerfileGitHubUtil.modifyOnGithub(content, branch, image, tag,
+                        ns.get(Constants.GIT_ADDITIONAL_COMMIT_MESSAGE));
+                isContentModified = true;
+                isRepoSkipped = false;
+            }
+        }
+
+        if (isRepoSkipped) {
+            log.info("Skipping repo '{}' because contents of it's fork could not be retrieved. Moving ahead...",
+                    parentName);
+            skippedRepos.add(forkedRepo.getFullName());
+        }
+
+        if (isContentModified) {
+            dockerfileGitHubUtil.createPullReq(parent, branch, forkedRepo, ns.get(Constants.GIT_PR_TITLE));
+        }
     }
-
-
-
 }

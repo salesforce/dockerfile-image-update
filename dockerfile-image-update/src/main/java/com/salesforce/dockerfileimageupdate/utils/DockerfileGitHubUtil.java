@@ -8,6 +8,7 @@
 
 package com.salesforce.dockerfileimageupdate.utils;
 
+import com.google.common.collect.Multimap;
 import com.google.gson.*;
 import com.salesforce.dockerfileimageupdate.subcommands.impl.Child;
 import org.kohsuke.github.*;
@@ -17,13 +18,12 @@ import org.slf4j.LoggerFactory;
 import java.io.*;
 import java.nio.file.Paths;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Created by minho.park on 7/22/16.
  */
 public class DockerfileGitHubUtil {
-    private final static Logger log = LoggerFactory.getLogger(Child.class);
+    private static final Logger log = LoggerFactory.getLogger(Child.class);
     private final GitHubUtil gitHubUtil;
 
     public DockerfileGitHubUtil(GitHubUtil gitHubUtil) {
@@ -32,22 +32,31 @@ public class DockerfileGitHubUtil {
 
     protected GitHubUtil getGitHubUtil() { return gitHubUtil; }
 
-    public GHRepository checkFromParentAndFork(GHRepository parent) throws IOException {
-        gitHubUtil.createFork(parent);
+    public GHRepository closeOutdatedPullRequestAndFork(GHRepository parent) throws IOException {
 
         for (GHRepository fork : parent.listForks()) {
             String forkOwner = fork.getOwnerName();
             GHMyself myself = gitHubUtil.getMyself();
             String myselfLogin = myself.getLogin();
             if (forkOwner.equals(myselfLogin)) {
-                if (!pullRequestAlreadyExists(parent)) {
-                    gitHubUtil.safeDeleteRepo(fork);
-                    return gitHubUtil.createFork(parent);
+                GHPullRequest pr = getPullRequestWithPullReqIdentifier(parent);
+                // Only reason we close the existing PR, delete fork and re-fork, is because there is no way to
+                // determine if the existing fork is compatible with it's parent.
+                if (pr != null) {
+                    // close the pull-request since the fork is out of date
+                    log.info("closing existing pr: {}", pr.getUrl());
+                    try {
+                        pr.close();
+                    } catch (IOException e) {
+                        log.info("Issues closing the pull request '{}'. Moving ahead...", pr.getUrl());
+                    }
                 }
-                return fork;
+                // delete fork if one already exists before re-forking
+                gitHubUtil.safeDeleteRepo(fork);
             }
         }
-        return null;
+        log.info("Forking repo: {}", parent);
+        return gitHubUtil.createFork(parent);
     }
 
     public GHMyself getMyself() throws IOException {
@@ -71,7 +80,7 @@ public class DockerfileGitHubUtil {
         log.debug("Searching for {}", query);
         PagedSearchIterable<GHContent> files = search.list();
         int totalCount = files.getTotalCount();
-        log.debug("Number of files found for {}: {}", query, totalCount);
+        log.debug("Number of files found for {}:{}", query, totalCount);
         return files;
     }
 
@@ -86,9 +95,9 @@ public class DockerfileGitHubUtil {
      *
      * Instead, we wait for 60 seconds if the list retrieved is not the list we want.
      */
-    public PagedIterable<GHRepository> getGHRepositories(Map<String, String> parentToPath,
+    public PagedIterable<GHRepository> getGHRepositories(Multimap<String, String> pathToDockerfileInParentRepo,
                                                             GHMyself currentUser) throws InterruptedException {
-        return gitHubUtil.getGHRepositories(parentToPath, currentUser);
+        return gitHubUtil.getGHRepositories(pathToDockerfileInParentRepo, currentUser);
     }
 
     public void modifyAllOnGithub(GHRepository repo, String branch,
@@ -132,7 +141,6 @@ public class DockerfileGitHubUtil {
     public GHContent tryRetrievingContent(GHRepository repo, String path, String branch) throws InterruptedException {
         return gitHubUtil.tryRetrievingContent(repo, path, branch);
     }
-
 
     public void modifyOnGithub(GHContent content,
                                String branch, String img, String tag, String customMessage) throws IOException {
@@ -188,9 +196,9 @@ public class DockerfileGitHubUtil {
     /* The store link should be a repository name on Github. */
     public void updateStore(String store, String img, String tag) throws IOException {
         if (store == null) {
+            log.info("Image tag store cannot be null. Skipping store update...");
             return;
         }
-        log.info("Updating store...");
         GHRepository storeRepo;
         try {
             GHMyself myself = gitHubUtil.getMyself();
@@ -207,7 +215,6 @@ public class DockerfileGitHubUtil {
             repo.getFileContent(path);
         } catch (IOException e) {
             repo.createContent("", "initializing store", path);
-
         }
 
         String latestCommit = repo.getBranches().get(repo.getDefaultBranch()).getSHA1();
@@ -267,7 +274,7 @@ public class DockerfileGitHubUtil {
         }
     }
 
-    private boolean pullRequestAlreadyExists(GHRepository parent) throws IOException {
+    private GHPullRequest getPullRequestWithPullReqIdentifier(GHRepository parent) throws IOException {
         List<GHPullRequest> pullRequests;
         GHUser myself;
         try {
@@ -275,15 +282,15 @@ public class DockerfileGitHubUtil {
             myself = gitHubUtil.getMyself();
         } catch (IOException e) {
             log.warn("Error occurred while retrieving pull requests for {}", parent.getFullName());
-            return false;
+            return null;
         }
 
         for (GHPullRequest pullRequest : pullRequests) {
             GHUser user = pullRequest.getHead().getUser();
             if (myself.equals(user) && pullRequest.getBody().equals(Constants.PULL_REQ_ID)) {
-                return true;
+                return pullRequest;
             }
         }
-        return false;
+        return null;
     }
 }

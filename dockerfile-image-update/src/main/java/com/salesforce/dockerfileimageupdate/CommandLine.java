@@ -32,7 +32,7 @@ import java.util.stream.Collectors;
  * Created by minho-park on 6/29/2016.
  */
 public class CommandLine {
-    private final static Logger log = LoggerFactory.getLogger(CommandLine.class);
+    private static final Logger log = LoggerFactory.getLogger(CommandLine.class);
 
     /* Should never actually be instantiated in code */
     private CommandLine () { }
