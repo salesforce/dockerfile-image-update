@@ -47,7 +47,7 @@ public class All implements ExecutableWithNamespace {
             log.info("Repositories with image {} being forked.", image);
             imageToTagMap.put(image, imageToTag.getValue().getAsString());
             PagedSearchIterable<GHContent> contentsWithImage =
-                    this.dockerfileGitHubUtil.findFilesWithImage(image, ns.get("o"));
+                    this.dockerfileGitHubUtil.findFilesWithImage(image, ns.get(Constants.GIT_ORG));
             forkRepositoriesFound(parentToPath, parentToImage, contentsWithImage, image);
         }
 
