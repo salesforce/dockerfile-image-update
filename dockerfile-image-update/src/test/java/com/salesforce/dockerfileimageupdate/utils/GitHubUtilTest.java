@@ -8,14 +8,12 @@
 
 package com.salesforce.dockerfileimageupdate.utils;
 
-import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
 import org.kohsuke.github.*;
-import org.mockito.Mockito;
-import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
-import java.util.Map;
 
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.*;
@@ -141,11 +139,12 @@ public class GitHubUtilTest {
     /* There is a timeout because if this part of the code is broken, it might enter 60 seconds of sleep. */
     @Test(timeOut = 1000)
     public void testGetGHRepositories() throws Exception{
-        Map<String, String> parentToPath = ImmutableMap.of(
-                "test1", "test",
-                "test2", "test",
-                "test3", "test",
-                "test4", "test");
+
+        Multimap<String, String> parentToPath = HashMultimap.create();
+        parentToPath.put("test1", "test");
+        parentToPath.put("test2", "correct");
+        parentToPath.put("test3", "test");
+        parentToPath.put("test4", "test");
 
         GHMyself currentUser = mock(GHMyself.class);
         PagedIterable<GHRepository> listOfRepos = mock(PagedIterable.class);
