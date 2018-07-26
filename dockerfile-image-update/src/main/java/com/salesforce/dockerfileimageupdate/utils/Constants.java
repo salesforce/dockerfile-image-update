@@ -31,8 +31,6 @@ public class Constants {
     public static final String BASE_IMAGE_INST = "FROM";
     public static final String PULL_REQ_ID = "f9ed6ea5-6e74-4338-a629-50c5c6807a6b";
     public static final String STORE_JSON_FILE = "store.json";
-    public static final String GIT_ORG = "o";
-    public static final String GIT_BRANCH = "b";
     public static final String GIT_AUTO_MERGE = "f";
     public static final String GIT_PR_TITLE = "m";
     public static final String GIT_ADDITIONAL_COMMIT_MESSAGE = "c";
