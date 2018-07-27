@@ -118,7 +118,7 @@ public class AllCommandTest {
     @AfterClass
     public void cleanUp() throws Exception {
         addVersionStoreRepo(github, createdRepos, STORE_NAME);
-        cleanAllRepos(createdRepos);
+        cleanAllRepos(createdRepos, false);
     }
 
 }

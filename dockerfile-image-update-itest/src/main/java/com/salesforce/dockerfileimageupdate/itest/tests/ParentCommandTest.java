@@ -145,6 +145,6 @@ public class ParentCommandTest {
     @AfterClass
     public void cleanUp() throws Exception {
         addVersionStoreRepo(github, createdRepos, STORE_NAME);
-        TestCommon.cleanAllRepos(createdRepos);
+        TestCommon.cleanAllRepos(createdRepos, false);
     }
 }

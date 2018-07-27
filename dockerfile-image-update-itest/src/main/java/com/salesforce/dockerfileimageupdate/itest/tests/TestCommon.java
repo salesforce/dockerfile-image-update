@@ -12,6 +12,7 @@ import com.salesforce.dockerfileimageupdate.utils.GitHubUtil;
 import org.kohsuke.github.GHOrganization;
 import org.kohsuke.github.GHRepository;
 import org.kohsuke.github.GitHub;
+import org.kohsuke.github.PagedIterable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,21 +58,21 @@ public class TestCommon {
         }
     }
 
-    public static void printCollectedExceptionsAndFail(List<Exception> exceptions) {
+    public static void printCollectedExceptionsAndFail(List<Exception> exceptions, boolean exitWithFail) {
         for (int i = 0; i < exceptions.size(); i++) {
             log.error("Hit exception {}/{} while cleaning up.", i+1, exceptions.size());
             log.error("", exceptions.get(i));
         }
-        if (exceptions.size() > 0) {
+        if (exitWithFail && exceptions.size() > 0) {
             throw new RuntimeException(exceptions.get(0));
         }
     }
 
-    public static void cleanAllRepos(List<GHRepository> createdRepos) throws Exception {
+    public static void cleanAllRepos(List<GHRepository> createdRepos, boolean exitWithFail) throws Exception {
         List<Exception> exceptions = new ArrayList<>();
         exceptions.addAll(checkAndDelete(createdRepos));
 
-        TestCommon.printCollectedExceptionsAndFail(exceptions);
+        TestCommon.printCollectedExceptionsAndFail(exceptions, false);
     }
 
     private static Exception checkAndDelete(GHRepository repo) {
@@ -87,11 +88,19 @@ public class TestCommon {
     private static List<Exception> checkAndDelete(List<GHRepository> repos) throws IOException {
         List<Exception> exceptions = new ArrayList<>();
         for (GHRepository repo : repos) {
-            for (GHRepository fork : repo.listForks()) {
-                Exception forkDeleteException = checkAndDelete(fork);
-                if (forkDeleteException != null) {
-                    exceptions.add(forkDeleteException);
+
+            PagedIterable<GHRepository> forks;
+            try {
+                forks = repo.listForks();
+                for (GHRepository fork : forks) {
+                    Exception forkDeleteException = checkAndDelete(fork);
+                    if (forkDeleteException != null) {
+                        exceptions.add(forkDeleteException);
+                    }
                 }
+            } catch (Exception getForksException) {
+                log.error("Could not get forks for repo: ", repo.getFullName());
+                exceptions.add(getForksException);
             }
             Exception repoDeleteException = checkAndDelete(repo);
             if (repoDeleteException != null) {

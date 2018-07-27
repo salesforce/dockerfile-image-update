@@ -14,7 +14,7 @@ services:
             # This allows us to get our test results back to workspace for the pipeline to pick up
             - ./test-results:/tmp/test-results
             # Place integration test into the component so that we don't have to ship integration tests inside the component
-            - ./dockerfile-image-update-itest/target/integration-test-1.0-SNAPSHOT.jar:/tmp/integration-test.jar
+            - ./dockerfile-image-update-itest/target/dockerfile-image-update-itest-1.0-SNAPSHOT.jar:/tmp/integration-test.jar
             # If you have a secret file, you can volume mount the file to gain access to it
             # export user_itest_secrets_file_secret=/path/to/secretFile in shell
             # For CI purposes, the secret file can be added to Jenkins Credential Store with the id user_itest_secrets_file

@@ -150,18 +150,31 @@ java -jar dockerfile-image-update-1.0-SNAPSHOT.jar <COMMAND> <PARAMETERS>
 ```
 
 ### Creating a new feature
-Under dockerfile-image-update/src/main/java/com/salesforce/dva/dockerfileimageupdate/subcommands/impl, create a new class `YOUR_FEATURE.java`. Make sure it implements `ExecutableWithNamespace` and has the `SubCommand` annotation with a `help`, `requiredParams`, and `optionalParams`. Then, under the `execute` method, code what you want this tool to do.
+Under [dockerfile-image-update/src/main/java/com/salesforce/dva/dockerfileimageupdate/subcommands/impl](https://github.com/salesforce/dockerfile-image-update/tree/master/dockerfile-image-update/src/main/java/com/salesforce/dockerfileimageupdate/subcommands/impl), 
+create a new class `YOUR_FEATURE.java`. Make sure it implements `ExecutableWithNamespace` and has the `SubCommand` 
+annotation with a `help`, `requiredParams`, and `optionalParams`. Then, under the `execute` method, code what you want this tool to do.
 
 ### Running unit tests
 Run unit tests by running `mvn test`. 
  
 ### Running integration tests
 Before you run the integration tests (locally):
- * Make sure that you have access to the github orgs specified in TestCommon.ORGS. You likely will need to change it to three
-   orgs where you have permissions to create repositories. 
- * Make sure you have `git_api_url=https://api.github.com` in `/dockerfile-image-update-itest/itest.env`.
- * Make sure you have a secret file which contains the `git_api_token`. This needs access to CRUD repositories and
-   github statuses. 
- * Export the following environment variable: `export user_itest_secrets_file_secret=/path/to/secretFile`
- * Run integration tests by running `make itest-local-changes`.
-
+ 1. Make sure that you have access to the github orgs specified in [TestCommon.ORGS](https://github.com/salesforce/dockerfile-image-update/blob/master/dockerfile-image-update-itest/src/main/java/com/salesforce/dockerfileimageupdate/itest/tests/TestCommon.java#L33). You likely will need to change it to three
+    orgs where you have permissions to create repositories. 
+ 2. Make sure you have `git_api_url=https://api.github.com` in `/dockerfile-image-update-itest/itest.env`, 
+    or set it to your internal GitHub Enterprise.
+ 3. Make sure you have a secret file which contains the `git_api_token`. 
+    The token needs to have `delete_repo, repo` permissions. 
+    You can generate your token by going to [personal access tokens](https://github.com/settings/tokens/new) in GitHub. 
+    Once you have your token place it in a file: 
+    ```
+    echo git_api_token=[copy personal access token here] > ${HOME}/.dfiu-itest-token
+    ```   
+ 4. Export the following environment variable to point to the file: 
+    ```
+    export user_itest_secrets_file_secret=${HOME}/.dfiu-itest-token
+    ```
+ 5. Run integration tests by running 
+    ```
+    make itest-local-changes
+    ```
