@@ -404,6 +404,47 @@ public class DockerfileGitHubUtilTest {
         assertEquals(strB.toString(), "hello\nFROM image:newtag\nthis is a test\n\n\n\nworld\n");
     }
 
+    @Test
+    public void testFindImagesAndFix_doNotDeletePostTagData() throws Exception {
+        gitHubUtil = mock(GitHubUtil.class);
+
+        BufferedReader reader = mock(BufferedReader.class);
+        GHContent content = mock(GHContent.class);
+        when(content.getPath()).thenReturn("path");
+        when(content.update(anyString(), anyString(), anyString())).thenReturn(null);
+
+        when(reader.readLine()).thenReturn("hello", "FROM image:tag as builder",
+                "this is a test", null);
+
+        dockerfileGitHubUtil = new DockerfileGitHubUtil(gitHubUtil);
+
+        StringBuilder strB = new StringBuilder();
+        boolean modified = dockerfileGitHubUtil.rewriteDockerfile("image", "newtag", reader, strB);
+
+        assertTrue(modified, "Expect the dockerfile to have been modified");
+        assertEquals(strB.toString(), "hello\nFROM image:newtag as builder\nthis is a test\n");
+    }
+
+    @Test
+    public void testFindImagesAndFix_notModifiedPostData() throws Exception {
+        gitHubUtil = mock(GitHubUtil.class);
+
+        BufferedReader reader = mock(BufferedReader.class);
+        GHContent content = mock(GHContent.class);
+        when(content.getPath()).thenReturn("path");
+        when(content.update(anyString(), anyString(), anyString())).thenReturn(null);
+
+        when(reader.readLine()).thenReturn("hello", "FROM image:tag as builder",
+                "this is a test", null);
+
+        dockerfileGitHubUtil = new DockerfileGitHubUtil(gitHubUtil);
+
+        StringBuilder strB = new StringBuilder();
+        boolean modified = dockerfileGitHubUtil.rewriteDockerfile("image", "tag", reader, strB);
+
+        assertFalse(modified, "Expected the dockerfile to not have changed.");
+    }
+
     @DataProvider
     public Object[][] inputlines() throws Exception {
         return new Object[][]{
