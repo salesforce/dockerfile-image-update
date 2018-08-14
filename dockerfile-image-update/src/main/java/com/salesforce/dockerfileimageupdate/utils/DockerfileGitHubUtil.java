@@ -10,7 +10,6 @@ package com.salesforce.dockerfileimageupdate.utils;
 
 import com.google.common.collect.Multimap;
 import com.google.gson.*;
-import com.salesforce.dockerfileimageupdate.subcommands.impl.Child;
 import org.kohsuke.github.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,7 +22,7 @@ import java.util.List;
  * Created by minho.park on 7/22/16.
  */
 public class DockerfileGitHubUtil {
-    private static final Logger log = LoggerFactory.getLogger(Child.class);
+    private static final Logger log = LoggerFactory.getLogger(DockerfileGitHubUtil.class);
     private final GitHubUtil gitHubUtil;
 
     public DockerfileGitHubUtil(GitHubUtil gitHubUtil) {
@@ -183,8 +182,16 @@ public class DockerfileGitHubUtil {
         boolean isExactImage = trimmedLine.endsWith(img) || lineWithoutTag.endsWith(img);
 
         if (line.contains(Constants.BASE_IMAGE_INST) && isExactImage) {
-            strB.append(Constants.BASE_IMAGE_INST).append(" ").append(img).append(":").append(tag).append("\n");
-            if (!line.substring(line.lastIndexOf(':') + 1).equals(tag)) {
+            int tagLength = line.substring(indexOfTag + 1).indexOf(' ');
+            String originalTag = line.substring(indexOfTag + 1);
+
+            strB.append(Constants.BASE_IMAGE_INST).append(" ").append(img).append(":").append(tag);
+            if (tagLength > 0) {
+                strB.append(line.substring(tagLength + indexOfTag + 1));
+                originalTag = originalTag.substring(0, tagLength);
+            }
+            strB.append('\n');
+            if (!originalTag.equals(tag)) {
                 modified = true;
             }
         } else {
