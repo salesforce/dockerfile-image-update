@@ -8,6 +8,7 @@
 
 package com.salesforce.dockerfileimageupdate.utils;
 
+import com.google.common.base.CharMatcher;
 import com.google.common.collect.Multimap;
 import com.google.gson.*;
 import org.kohsuke.github.*;
@@ -17,6 +18,8 @@ import org.slf4j.LoggerFactory;
 import java.io.*;
 import java.nio.file.Paths;
 import java.util.List;
+
+import static java.lang.Character.SPACE_SEPARATOR;
 
 /**
  * Created by minho.park on 7/22/16.
@@ -171,6 +174,24 @@ public class DockerfileGitHubUtil {
         return modified;
     }
 
+    protected int getEndOfTagLength(String tag) {
+        // TODO: There are probably more cases, but are unlikely
+        int smallestIdx = -1;
+        int spaceIdx = tag.indexOf(' ');
+        if (spaceIdx > -1) {
+            smallestIdx = spaceIdx;
+        }
+        int tabIdx = tag.indexOf('\t');
+        if (tabIdx > -1) {
+            smallestIdx = Math.min(tabIdx, smallestIdx);
+        }
+        int commentIdx = tag.indexOf('#');
+        if (commentIdx > -1) {
+            smallestIdx = Math.min(commentIdx, smallestIdx);
+        }
+        return smallestIdx;
+    }
+
     protected boolean changeIfDockerfileBaseImageLine(String img, String tag, StringBuilder strB, String line) {
         String trimmedLine = line.trim();
         int indexOfTag = line.lastIndexOf(':');
@@ -182,7 +203,7 @@ public class DockerfileGitHubUtil {
         boolean isExactImage = trimmedLine.endsWith(img) || lineWithoutTag.endsWith(img);
 
         if (line.contains(Constants.BASE_IMAGE_INST) && isExactImage) {
-            int tagLength = line.substring(indexOfTag + 1).indexOf(' ');
+            int tagLength = getEndOfTagLength(line.substring(indexOfTag + 1));
             String originalTag = line.substring(indexOfTag + 1);
 
             strB.append(Constants.BASE_IMAGE_INST).append(" ").append(img).append(":").append(tag);
