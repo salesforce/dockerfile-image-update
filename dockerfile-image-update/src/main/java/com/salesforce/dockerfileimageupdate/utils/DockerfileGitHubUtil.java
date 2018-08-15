@@ -8,7 +8,6 @@
 
 package com.salesforce.dockerfileimageupdate.utils;
 
-import com.google.common.base.CharMatcher;
 import com.google.common.collect.Multimap;
 import com.google.gson.*;
 import org.kohsuke.github.*;
@@ -18,8 +17,6 @@ import org.slf4j.LoggerFactory;
 import java.io.*;
 import java.nio.file.Paths;
 import java.util.List;
-
-import static java.lang.Character.SPACE_SEPARATOR;
 
 /**
  * Created by minho.park on 7/22/16.
