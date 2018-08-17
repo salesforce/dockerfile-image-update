@@ -407,10 +407,12 @@ public class DockerfileGitHubUtilTest {
     @DataProvider
     public Object[][] postTagData() {
         return new Object[][] {
-                { "tag as builder", "newtag", "newtag as builder"},
-                { "tag#as builder", "newtag", "newtag#as builder"},
-                { "tag # comment", "newtag", "newtag # comment"},
-                { "tag\t# comment", "newtag", "newtag\t# comment"},
+                { ":tag as builder", "newtag", ":newtag as builder"},
+                { ":tag#as builder", "newtag", ":newtag#as builder"},
+                { ":tag # comment", "newtag", ":newtag # comment"},
+                { ":tag\t# comment", "newtag", ":newtag\t# comment"},
+                { ":", "newtag", ":newtag"},
+                { ":test # :comment", "newtag", ":newtag # :comment"}
         };
     }
 
@@ -424,7 +426,7 @@ public class DockerfileGitHubUtilTest {
         when(content.getPath()).thenReturn("path");
         when(content.update(anyString(), anyString(), anyString())).thenReturn(null);
 
-        when(reader.readLine()).thenReturn("hello", "FROM image:" + postTagData,
+        when(reader.readLine()).thenReturn("hello", "FROM image" + postTagData,
                 "this is a test", null);
 
         dockerfileGitHubUtil = new DockerfileGitHubUtil(gitHubUtil);
@@ -433,7 +435,26 @@ public class DockerfileGitHubUtilTest {
         boolean modified = dockerfileGitHubUtil.rewriteDockerfile("image", updatedTag, reader, strB);
 
         assertTrue(modified, "Expect the dockerfile to have been modified");
-        assertEquals(strB.toString(), String.format("hello\nFROM image:%s\nthis is a test\n", expectedReplacedData));
+        assertEquals(strB.toString(), String.format("hello\nFROM image%s\nthis is a test\n", expectedReplacedData));
+    }
+
+    @DataProvider
+    public Object[][] getEndOfTagLength() {
+        return new Object[][] {
+                { "tag as builder", 3},
+                { "tag#as builder", 3},
+                { "tag # comment", 3},
+                { "tag\t# comment", 3},
+                { "tag#\tcomment", 3},
+                { "", -1}
+        };
+    }
+
+    @Test(dataProvider = "getEndOfTagLength")
+    public void testGetEndOfTagLength(String tag, Integer expectedLen) {
+        gitHubUtil = mock(GitHubUtil.class);
+        dockerfileGitHubUtil = new DockerfileGitHubUtil(gitHubUtil);
+        assertEquals(dockerfileGitHubUtil.getEndOfTagLength(tag), expectedLen.intValue());
     }
 
     @Test
