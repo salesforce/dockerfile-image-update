@@ -8,9 +8,9 @@
 
 package com.salesforce.dockerfileimageupdate.subcommands.impl;
 
-import com.salesforce.dockerfileimageupdate.utils.Constants;
 import com.salesforce.dockerfileimageupdate.SubCommand;
 import com.salesforce.dockerfileimageupdate.subcommands.ExecutableWithNamespace;
+import com.salesforce.dockerfileimageupdate.utils.Constants;
 import com.salesforce.dockerfileimageupdate.utils.DockerfileGitHubUtil;
 import net.sourceforge.argparse4j.inf.Namespace;
 import org.kohsuke.github.GHRepository;

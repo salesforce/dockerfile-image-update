@@ -10,10 +10,10 @@ package com.salesforce.dockerfileimageupdate;
 
 
 import com.google.common.reflect.ClassPath;
-import com.salesforce.dockerfileimageupdate.utils.GitHubUtil;
 import com.salesforce.dockerfileimageupdate.subcommands.ExecutableWithNamespace;
 import com.salesforce.dockerfileimageupdate.utils.Constants;
 import com.salesforce.dockerfileimageupdate.utils.DockerfileGitHubUtil;
+import com.salesforce.dockerfileimageupdate.utils.GitHubUtil;
 import net.sourceforge.argparse4j.ArgumentParsers;
 import net.sourceforge.argparse4j.impl.Arguments;
 import net.sourceforge.argparse4j.inf.*;
