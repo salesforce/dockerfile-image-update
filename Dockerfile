@@ -1,4 +1,4 @@
-FROM openjdk:8
+FROM openjdk:8-alpine
 
 LABEL version="0.1"
 
