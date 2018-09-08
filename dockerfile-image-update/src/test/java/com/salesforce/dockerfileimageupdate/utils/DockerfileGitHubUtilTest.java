@@ -440,25 +440,6 @@ public class DockerfileGitHubUtilTest {
         assertEquals(strB.toString(), String.format("hello\n%s\nthis is a test\n", expectedReplacedData));
     }
 
-    @DataProvider
-    public Object[][] getEndOfTagLength() {
-        return new Object[][] {
-                { "tag as builder", 3},
-                { "tag#as builder", 3},
-                { "tag # comment", 3},
-                { "tag\t# comment", 3},
-                { "tag#\tcomment", 3},
-                { "", -1}
-        };
-    }
-
-    @Test(dataProvider = "getEndOfTagLength")
-    public void testGetEndOfTagLength(String tag, Integer expectedLen) {
-        gitHubUtil = mock(GitHubUtil.class);
-        dockerfileGitHubUtil = new DockerfileGitHubUtil(gitHubUtil);
-        assertEquals(dockerfileGitHubUtil.getEndOfTagLength(tag), expectedLen.intValue());
-    }
-
     @Test
     public void testFindImagesAndFix_notModifiedPostData() throws Exception {
         gitHubUtil = mock(GitHubUtil.class);

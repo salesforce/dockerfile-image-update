@@ -173,28 +173,6 @@ public class DockerfileGitHubUtil {
         return modified;
     }
 
-    protected int getEndOfTagLength(String tag) {
-        // TODO: There are probably more cases, but are unlikely
-        int smallestIdx = Integer.MAX_VALUE;
-        int spaceIdx = tag.indexOf(' ');
-        if (spaceIdx > -1) {
-            smallestIdx = spaceIdx;
-        }
-        int tabIdx = tag.indexOf('\t');
-        if (tabIdx > -1) {
-            smallestIdx = Math.min(tabIdx, smallestIdx);
-        }
-        int commentIdx = tag.indexOf('#');
-        if (commentIdx > -1) {
-            smallestIdx = Math.min(commentIdx, smallestIdx);
-        }
-        // Avoid returning MAX_VALUE if none of these chars a present
-        if (spaceIdx + tabIdx + commentIdx == -3) {
-            return -1;
-        }
-        return smallestIdx;
-    }
-
     protected boolean changeIfDockerfileBaseImageLine(String imageToFind, String tag, StringBuilder stringBuilder, String line) {
         String trimmedLine = line.trim();
         List<String> lineParts = getLineParts(trimmedLine);
