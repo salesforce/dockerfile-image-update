@@ -413,6 +413,7 @@ public class DockerfileGitHubUtilTest {
                 { ":tag#as builder", "newtag", "FROM image:newtag #as builder"},
                 { ":tag # comment", "newtag", "FROM image:newtag # comment"},
                 { ":tag\t# comment", "newtag", "FROM image:newtag # comment"},
+                { ":tag\t# comment # # # ", "newtag", "FROM image:newtag # comment # # # "},
                 { ":", "newtag", "FROM image:newtag"},
                 { ":test # :comment", "newtag", "FROM image:newtag # :comment"}
         };
@@ -529,6 +530,7 @@ public class DockerfileGitHubUtilTest {
                 {"FROM    dockerimage:3      #   some   comment", Arrays.asList("FROM", "dockerimage:3", "#   some   comment")},
                 {"FROM    dockerimage:3#   some   comment", Arrays.asList("FROM", "dockerimage:3", "#   some   comment")},
                 {"FROM dockerimage", Arrays.asList("FROM", "dockerimage")},
+                {"FROM dockerimage # # # # # # # #  ", Arrays.asList("FROM", "dockerimage", "# # # # # # # #  ")},
                 {"RUN something", Arrays.asList("RUN", "something")},
                 {"", Collections.singletonList("")},
         };

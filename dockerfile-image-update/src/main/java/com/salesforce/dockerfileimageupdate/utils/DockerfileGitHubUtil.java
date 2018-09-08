@@ -10,6 +10,7 @@ package com.salesforce.dockerfileimageupdate.utils;
 
 import com.google.common.collect.Multimap;
 import com.google.gson.*;
+import org.apache.commons.lang3.StringUtils;
 import org.kohsuke.github.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -175,22 +176,21 @@ public class DockerfileGitHubUtil {
 
     /**
      * This method will read a line and see if the line contains a FROM instruction with the specified
-     * <code>imageToFind</code>. If the image does not have the given <code>tag</code> then <code>stringBuilder</code>
-     * will get a modified version of the line with the new <code>tag</code>. We return <code>true</code> in this
+     * {@code imageToFind}. If the image does not have the given {@code tag} then {@code stringBuilder}
+     * will get a modified version of the line with the new {@code tag}. We return {@code true} in this
      * instance.
      *
-     * If the inbound <code>line</code> does not qualify for changes or if the tag is already correct, the
-     * <code>stringBuilder</code> will get <code>line</code> added to it. We return <code>false</code> in this instance.
+     * If the inbound {@code line} does not qualify for changes or if the tag is already correct, the
+     * {@code stringBuilder} will get {@code line} added to it. We return {@code false} in this instance.
      *
      * @param imageToFind the Docker image that may require a tag update
      * @param tag the Docker tag that we'd like the image to have
      * @param stringBuilder the stringBuilder to accumulate the output lines for the pull request
      * @param line the inbound line from the Dockerfile
-     * @return Whether we've modified the <code>line</code> that goes into <code>stringBuilder</code>
+     * @return Whether we've modified the {@code line} that goes into {@code stringBuilder}
      */
     protected boolean changeIfDockerfileBaseImageLine(String imageToFind, String tag, StringBuilder stringBuilder, String line) {
-        String trimmedLine = line.trim();
-        List<String> lineParts = getLineParts(trimmedLine);
+        List<String> lineParts = getLineParts(line);
         boolean modified = false;
         String outputLine = line;
         // Only check lines which contain a FROM instruction
@@ -225,13 +225,17 @@ public class DockerfileGitHubUtil {
      * @return split array of Strings
      */
     protected static List<String> getLineParts(String lineToSplit) {
-        String[] splitForComments = lineToSplit.split("#");
-        String[] splitForWhitespace = splitForComments[0].split("\\s+");
+        String lineWithoutComment = lineToSplit;
+        int commentIndex = lineToSplit.indexOf("#");
+        String commentString = "";
+        if (commentIndex >= 0) {
+            commentString = lineToSplit.substring(commentIndex);
+            lineWithoutComment = lineToSplit.substring(0, commentIndex);
+        }
+        String[] splitForWhitespace = lineWithoutComment.trim().split("\\s+");
         List<String> lineParts = new ArrayList<>(Arrays.asList(splitForWhitespace));
-        for (int i = 0; i < splitForComments.length; i++) {
-            if (i != 0) {
-                lineParts.add(String.format("#%s", splitForComments[i]));
-            }
+        if (StringUtils.isNotEmpty(commentString)) {
+            lineParts.add(commentString);
         }
         return lineParts;
     }
