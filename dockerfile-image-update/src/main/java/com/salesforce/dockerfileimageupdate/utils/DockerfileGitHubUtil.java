@@ -173,6 +173,21 @@ public class DockerfileGitHubUtil {
         return modified;
     }
 
+    /**
+     * This method will read a line and see if the line contains a FROM instruction with the specified
+     * <code>imageToFind</code>. If the image does not have the given <code>tag</code> then <code>stringBuilder</code>
+     * will get a modified version of the line with the new <code>tag</code>. We return <code>true</code> in this
+     * instance.
+     *
+     * If the inbound <code>line</code> does not qualify for changes or if the tag is already correct, the
+     * <code>stringBuilder</code> will get <code>line</code> added to it. We return <code>false</code> in this instance.
+     *
+     * @param imageToFind the Docker image that may require a tag update
+     * @param tag the Docker tag that we'd like the image to have
+     * @param stringBuilder the stringBuilder to accumulate the output lines for the pull request
+     * @param line the inbound line from the Dockerfile
+     * @return Whether we've modified the <code>line</code> that goes into <code>stringBuilder</code>
+     */
     protected boolean changeIfDockerfileBaseImageLine(String imageToFind, String tag, StringBuilder stringBuilder, String line) {
         String trimmedLine = line.trim();
         List<String> lineParts = getLineParts(trimmedLine);
@@ -181,7 +196,8 @@ public class DockerfileGitHubUtil {
         // Only check lines which contain a FROM instruction
         if (lineParts.size() >= 2 && lineParts.get(0).equals(Constants.FROM_INSTRUCTION)) {
             String originalTag = "";
-            String dockerFileImage = lineParts.get(1);
+            int imageLinePart = 1;
+            String dockerFileImage = lineParts.get(imageLinePart);
             String[] imageAndTag = dockerFileImage.split(":");
             String originalImage = imageAndTag[0];
 
@@ -190,11 +206,10 @@ public class DockerfileGitHubUtil {
                     originalTag = imageAndTag[1];
                 }
                 if (!originalTag.equals(tag)) {
-                    lineParts.set(1, originalImage + ":" + tag);
+                    lineParts.set(imageLinePart, originalImage + ":" + tag);
                     outputLine = String.join(" ", lineParts);
                     modified = true;
                 }
-
             }
         }
         stringBuilder.append(outputLine).append("\n");
