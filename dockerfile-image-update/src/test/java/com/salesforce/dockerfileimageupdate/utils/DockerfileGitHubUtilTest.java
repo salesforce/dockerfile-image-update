@@ -18,6 +18,8 @@ import org.testng.annotations.Test;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
@@ -407,12 +409,12 @@ public class DockerfileGitHubUtilTest {
     @DataProvider
     public Object[][] postTagData() {
         return new Object[][] {
-                { ":tag as builder", "newtag", ":newtag as builder"},
-                { ":tag#as builder", "newtag", ":newtag#as builder"},
-                { ":tag # comment", "newtag", ":newtag # comment"},
-                { ":tag\t# comment", "newtag", ":newtag\t# comment"},
-                { ":", "newtag", ":newtag"},
-                { ":test # :comment", "newtag", ":newtag # :comment"}
+                { ":tag as builder", "newtag", "FROM image:newtag as builder"},
+                { ":tag#as builder", "newtag", "FROM image:newtag #as builder"},
+                { ":tag # comment", "newtag", "FROM image:newtag # comment"},
+                { ":tag\t# comment", "newtag", "FROM image:newtag # comment"},
+                { ":", "newtag", "FROM image:newtag"},
+                { ":test # :comment", "newtag", "FROM image:newtag # :comment"}
         };
     }
 
@@ -435,7 +437,7 @@ public class DockerfileGitHubUtilTest {
         boolean modified = dockerfileGitHubUtil.rewriteDockerfile("image", updatedTag, reader, strB);
 
         assertTrue(modified, "Expect the dockerfile to have been modified");
-        assertEquals(strB.toString(), String.format("hello\nFROM image%s\nthis is a test\n", expectedReplacedData));
+        assertEquals(strB.toString(), String.format("hello\n%s\nthis is a test\n", expectedReplacedData));
     }
 
     @DataProvider
@@ -523,6 +525,37 @@ public class DockerfileGitHubUtilTest {
         dockerfileGitHubUtil.changeIfDockerfileBaseImageLine(img, tag, stringBuilder, "world");
         dockerfileGitHubUtil.changeIfDockerfileBaseImageLine(img, tag, stringBuilder, "this is a test");
         assertEquals(stringBuilder.toString(), "hello\nFROM image:7357\nworld\nthis is a test\n");
+    }
+
+    @Test
+    public void testDockerfileWithNoTag() {
+        gitHubUtil = mock(GitHubUtil.class);
+        dockerfileGitHubUtil = new DockerfileGitHubUtil(gitHubUtil);
+        StringBuilder stringBuilder = new StringBuilder();
+        String img = "image";
+        String tag = "7357";
+        dockerfileGitHubUtil.changeIfDockerfileBaseImageLine(img, tag, stringBuilder, "hello");
+        dockerfileGitHubUtil.changeIfDockerfileBaseImageLine(img, tag, stringBuilder, "FROM image");
+        dockerfileGitHubUtil.changeIfDockerfileBaseImageLine(img, tag, stringBuilder, "world");
+        dockerfileGitHubUtil.changeIfDockerfileBaseImageLine(img, tag, stringBuilder, "this is a test");
+        assertEquals(stringBuilder.toString(), "hello\nFROM image:7357\nworld\nthis is a test\n");
+    }
+
+    @DataProvider
+    public Object[][] linesToSplitData() throws Exception {
+        return new Object[][]{
+                {"FROM dockerimage:3 # some comment", Arrays.asList("FROM", "dockerimage:3", "# some comment")},
+                {"FROM    dockerimage:3      #   some   comment", Arrays.asList("FROM", "dockerimage:3", "#   some   comment")},
+                {"FROM    dockerimage:3#   some   comment", Arrays.asList("FROM", "dockerimage:3", "#   some   comment")},
+                {"FROM dockerimage", Arrays.asList("FROM", "dockerimage")},
+                {"RUN something", Arrays.asList("RUN", "something")},
+                {"", Collections.singletonList("")},
+        };
+    }
+
+    @Test(dataProvider = "linesToSplitData")
+    public void testLineToSplit(String input, List<String> expectedOutput) {
+        assertEquals(DockerfileGitHubUtil.getLineParts(input), expectedOutput);
     }
 
     @DataProvider

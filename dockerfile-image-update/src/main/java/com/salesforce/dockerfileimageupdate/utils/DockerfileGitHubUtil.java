@@ -16,6 +16,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -193,33 +195,52 @@ public class DockerfileGitHubUtil {
         return smallestIdx;
     }
 
-    protected boolean changeIfDockerfileBaseImageLine(String img, String tag, StringBuilder strB, String line) {
+    protected boolean changeIfDockerfileBaseImageLine(String imageToFind, String tag, StringBuilder stringBuilder, String line) {
         String trimmedLine = line.trim();
-        int indexOfTag = line.indexOf(':');
-        if (indexOfTag < 0) {
-            indexOfTag = 0;
-        }
-        String lineWithoutTag = line.substring(0, indexOfTag);
+        List<String> lineParts = getLineParts(trimmedLine);
         boolean modified = false;
-        boolean isExactImage = trimmedLine.endsWith(img) || lineWithoutTag.endsWith(img);
+        String outputLine = line;
+        // Only check lines which contain a FROM instruction
+        if (lineParts.size() >= 2 && lineParts.get(0).equals(Constants.FROM_INSTRUCTION)) {
+            String originalTag = "";
+            String dockerFileImage = lineParts.get(1);
+            String[] imageAndTag = dockerFileImage.split(":");
+            String originalImage = imageAndTag[0];
 
-        if (line.contains(Constants.BASE_IMAGE_INST) && isExactImage) {
-            int tagLength = getEndOfTagLength(line.substring(indexOfTag + 1));
-            String originalTag = line.substring(indexOfTag + 1);
+            if (originalImage.endsWith(imageToFind)) {
+                if (imageAndTag.length > 1) {
+                    originalTag = imageAndTag[1];
+                }
+                if (!originalTag.equals(tag)) {
+                    lineParts.set(1, originalImage + ":" + tag);
+                    outputLine = String.join(" ", lineParts);
+                    modified = true;
+                }
 
-            strB.append(Constants.BASE_IMAGE_INST).append(" ").append(img).append(":").append(tag);
-            if (tagLength > 0) {
-                strB.append(line.substring(tagLength + indexOfTag + 1));
-                originalTag = originalTag.substring(0, tagLength);
             }
-            strB.append('\n');
-            if (!originalTag.equals(tag)) {
-                modified = true;
-            }
-        } else {
-            strB.append(line).append("\n");
         }
+        stringBuilder.append(outputLine).append("\n");
         return modified;
+    }
+
+    /**
+     * This method gets the parts of a line split by whitespace. Comments will be the last part and will maintain
+     * whitespace after the #
+     * e.g.
+     * "FROM dockerimage:3 # some comment" == ["FROM", "dockerimage:3", "# some comment"]
+     * @param lineToSplit the line to split
+     * @return split array of Strings
+     */
+    protected static List<String> getLineParts(String lineToSplit) {
+        String[] splitForComments = lineToSplit.split("#");
+        String[] splitForWhitespace = splitForComments[0].split("\\s+");
+        List<String> lineParts = new ArrayList<>(Arrays.asList(splitForWhitespace));
+        for (int i = 0; i < splitForComments.length; i++) {
+            if (i != 0) {
+                lineParts.add(String.format("#%s", splitForComments[i]));
+            }
+        }
+        return lineParts;
     }
 
     /* The store link should be a repository name on Github. */
