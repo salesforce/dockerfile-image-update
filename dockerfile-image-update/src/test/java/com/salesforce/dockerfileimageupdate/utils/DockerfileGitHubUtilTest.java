@@ -36,10 +36,10 @@ public class DockerfileGitHubUtilTest {
     @Mock
     GitHubUtil gitHubUtil;
 
-    DockerfileGitHubUtil dockerfileGitHubUtil;
+    private DockerfileGitHubUtil dockerfileGitHubUtil;
 
     @Test
-    public void testGetGithubUtil() throws Exception {
+    public void testGetGithubUtil() {
         gitHubUtil = mock(GitHubUtil.class);
         dockerfileGitHubUtil = new DockerfileGitHubUtil(gitHubUtil);
         assertEquals(dockerfileGitHubUtil.getGitHubUtil(), gitHubUtil);
@@ -524,7 +524,7 @@ public class DockerfileGitHubUtilTest {
     }
 
     @DataProvider
-    public Object[][] linesToSplitData() throws Exception {
+    public Object[][] linesToSplitData() {
         return new Object[][]{
                 {"FROM dockerimage:3 # some comment", Arrays.asList("FROM", "dockerimage:3", "# some comment")},
                 {"FROM    dockerimage:3      #   some   comment", Arrays.asList("FROM", "dockerimage:3", "#   some   comment")},

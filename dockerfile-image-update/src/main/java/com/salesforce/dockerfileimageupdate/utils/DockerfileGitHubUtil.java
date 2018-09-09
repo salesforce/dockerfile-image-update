@@ -10,6 +10,7 @@ package com.salesforce.dockerfileimageupdate.utils;
 
 import com.google.common.collect.Multimap;
 import com.google.gson.*;
+import com.salesforce.dockerfileimageupdate.model.FromInstruction;
 import org.apache.commons.lang3.StringUtils;
 import org.kohsuke.github.*;
 import org.slf4j.Logger;
@@ -190,27 +191,18 @@ public class DockerfileGitHubUtil {
      * @return Whether we've modified the {@code line} that goes into {@code stringBuilder}
      */
     protected boolean changeIfDockerfileBaseImageLine(String imageToFind, String tag, StringBuilder stringBuilder, String line) {
-        List<String> lineParts = getLineParts(line);
         boolean modified = false;
         String outputLine = line;
-        // Only check lines which contain a FROM instruction
-        if (lineParts.size() >= 2 && lineParts.get(0).equals(Constants.FROM_INSTRUCTION)) {
-            String originalTag = "";
-            int imageLinePart = 1;
-            String dockerFileImage = lineParts.get(imageLinePart);
-            String[] imageAndTag = dockerFileImage.split(":");
-            String originalImage = imageAndTag[0];
 
-            if (originalImage.endsWith(imageToFind)) {
-                if (imageAndTag.length > 1) {
-                    originalTag = imageAndTag[1];
-                }
-                if (!originalTag.equals(tag)) {
-                    lineParts.set(imageLinePart, originalImage + ":" + tag);
-                    outputLine = String.join(" ", lineParts);
-                    modified = true;
-                }
+        // Only check/modify lines which contain a FROM instruction
+        if (FromInstruction.isFromInstruction(line)) {
+            FromInstruction fromInstruction = new FromInstruction(line);
+            if (fromInstruction.hasBaseImage(imageToFind) &&
+                    fromInstruction.hasADifferentTag(tag)) {
+                fromInstruction = fromInstruction.getFromInstructionWithNewTag(tag);
+                modified = true;
             }
+            outputLine = fromInstruction.toString();
         }
         stringBuilder.append(outputLine).append("\n");
         return modified;

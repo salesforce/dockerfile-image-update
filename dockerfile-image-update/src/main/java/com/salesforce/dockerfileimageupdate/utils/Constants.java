@@ -10,14 +10,13 @@ package com.salesforce.dockerfileimageupdate.utils;
 
 
 /**
- *
  * @author minho-park
- *
  */
 public class Constants {
 
     /* Should never be instantiated. */
-    private Constants () { }
+    private Constants() {
+    }
 
     public static final String COMMAND = "command";
     public static final String GIT_REPO = "<GIT_REPO>";
@@ -28,7 +27,6 @@ public class Constants {
     public static final String GIT_API = "ghapi";
     public static final String GIT_ORG = "org";
     public static final String GIT_BRANCH = "branch";
-    public static final String FROM_INSTRUCTION = "FROM";
     public static final String PULL_REQ_ID = "f9ed6ea5-6e74-4338-a629-50c5c6807a6b";
     public static final String STORE_JSON_FILE = "store.json";
     public static final String GIT_AUTO_MERGE = "f";
