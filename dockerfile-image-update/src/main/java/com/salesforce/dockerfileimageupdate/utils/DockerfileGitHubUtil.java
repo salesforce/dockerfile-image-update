@@ -208,30 +208,6 @@ public class DockerfileGitHubUtil {
         return modified;
     }
 
-    /**
-     * This method gets the parts of a line split by whitespace. Comments will be the last part and will maintain
-     * whitespace after the #
-     * e.g.
-     * "FROM dockerimage:3 # some comment" == ["FROM", "dockerimage:3", "# some comment"]
-     * @param lineToSplit the line to split
-     * @return split array of Strings
-     */
-    protected static List<String> getLineParts(String lineToSplit) {
-        String lineWithoutComment = lineToSplit;
-        int commentIndex = lineToSplit.indexOf("#");
-        String commentString = "";
-        if (commentIndex >= 0) {
-            commentString = lineToSplit.substring(commentIndex);
-            lineWithoutComment = lineToSplit.substring(0, commentIndex);
-        }
-        String[] splitForWhitespace = lineWithoutComment.trim().split("\\s+");
-        List<String> lineParts = new ArrayList<>(Arrays.asList(splitForWhitespace));
-        if (StringUtils.isNotEmpty(commentString)) {
-            lineParts.add(commentString);
-        }
-        return lineParts;
-    }
-
     /* The store link should be a repository name on Github. */
     public void updateStore(String store, String img, String tag) throws IOException {
         if (store == null) {

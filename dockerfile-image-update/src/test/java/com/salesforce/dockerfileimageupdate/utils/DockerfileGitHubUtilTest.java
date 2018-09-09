@@ -524,24 +524,6 @@ public class DockerfileGitHubUtilTest {
     }
 
     @DataProvider
-    public Object[][] linesToSplitData() {
-        return new Object[][]{
-                {"FROM dockerimage:3 # some comment", Arrays.asList("FROM", "dockerimage:3", "# some comment")},
-                {"FROM    dockerimage:3      #   some   comment", Arrays.asList("FROM", "dockerimage:3", "#   some   comment")},
-                {"FROM    dockerimage:3#   some   comment", Arrays.asList("FROM", "dockerimage:3", "#   some   comment")},
-                {"FROM dockerimage", Arrays.asList("FROM", "dockerimage")},
-                {"FROM dockerimage # # # # # # # #  ", Arrays.asList("FROM", "dockerimage", "# # # # # # # #  ")},
-                {"RUN something", Arrays.asList("RUN", "something")},
-                {"", Collections.singletonList("")},
-        };
-    }
-
-    @Test(dataProvider = "linesToSplitData")
-    public void testLineToSplit(String input, List<String> expectedOutput) {
-        assertEquals(DockerfileGitHubUtil.getLineParts(input), expectedOutput);
-    }
-
-    @DataProvider
     public Object[][] inputStores() throws Exception {
         return new Object[][] {
                 {"{\n  \"images\": {\n" +
