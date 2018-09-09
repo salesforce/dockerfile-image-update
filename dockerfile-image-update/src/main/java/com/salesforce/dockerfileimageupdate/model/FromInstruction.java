@@ -77,6 +77,13 @@ public class FromInstruction {
         }
     }
 
+    /**
+     * Internal API to get a new FromInstruction from an existing object
+     * @param baseImageName baseImageName to add
+     * @param tag tag to add
+     * @param additionalParts additionalParts to add
+     * @param comments comments to add
+     */
     private FromInstruction(String baseImageName, String tag, List<String> additionalParts, String comments) {
         this.baseImageName = baseImageName;
         this.tag = tag;
@@ -84,6 +91,11 @@ public class FromInstruction {
         this.comments = comments;
     }
 
+    /**
+     * Get a new {@code FromInstruction} the same as this but with the {@code tag} set as {@code newTag}
+     * @param newTag
+     * @return
+     */
     public FromInstruction getFromInstructionWithNewTag(String newTag) {
         return new FromInstruction(baseImageName, newTag, additionalParts, comments);
     }
@@ -100,6 +112,9 @@ public class FromInstruction {
         return false;
     }
 
+    /**
+     * @return a String representation of a FROM instruction line in Dockerfile. No new line at the end
+     */
     @Override
     public String toString() {
         StringBuilder stringBuilder = new StringBuilder(NAME);
@@ -125,6 +140,12 @@ public class FromInstruction {
         return baseImageName;
     }
 
+    /**
+     * Check to see if the {@code baseImageName} in this object is the {@code imageToFind} without
+     * the other details (e.g. registry)
+     * @param imageToFind the image name to search for
+     * @return is {@code baseImageName} the same as {@code imageToFind} without extra things like registry
+     */
     public boolean hasBaseImage(String imageToFind) {
         return baseImageName != null &&
                 imageToFind != null &&
