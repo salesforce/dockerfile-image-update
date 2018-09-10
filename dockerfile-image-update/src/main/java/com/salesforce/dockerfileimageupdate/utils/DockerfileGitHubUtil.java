@@ -10,12 +10,16 @@ package com.salesforce.dockerfileimageupdate.utils;
 
 import com.google.common.collect.Multimap;
 import com.google.gson.*;
+import com.salesforce.dockerfileimageupdate.model.FromInstruction;
+import org.apache.commons.lang3.StringUtils;
 import org.kohsuke.github.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -171,54 +175,36 @@ public class DockerfileGitHubUtil {
         return modified;
     }
 
-    protected int getEndOfTagLength(String tag) {
-        // TODO: There are probably more cases, but are unlikely
-        int smallestIdx = Integer.MAX_VALUE;
-        int spaceIdx = tag.indexOf(' ');
-        if (spaceIdx > -1) {
-            smallestIdx = spaceIdx;
-        }
-        int tabIdx = tag.indexOf('\t');
-        if (tabIdx > -1) {
-            smallestIdx = Math.min(tabIdx, smallestIdx);
-        }
-        int commentIdx = tag.indexOf('#');
-        if (commentIdx > -1) {
-            smallestIdx = Math.min(commentIdx, smallestIdx);
-        }
-        // Avoid returning MAX_VALUE if none of these chars a present
-        if (spaceIdx + tabIdx + commentIdx == -3) {
-            return -1;
-        }
-        return smallestIdx;
-    }
-
-    protected boolean changeIfDockerfileBaseImageLine(String img, String tag, StringBuilder strB, String line) {
-        String trimmedLine = line.trim();
-        int indexOfTag = line.indexOf(':');
-        if (indexOfTag < 0) {
-            indexOfTag = 0;
-        }
-        String lineWithoutTag = line.substring(0, indexOfTag);
+    /**
+     * This method will read a line and see if the line contains a FROM instruction with the specified
+     * {@code imageToFind}. If the image does not have the given {@code tag} then {@code stringBuilder}
+     * will get a modified version of the line with the new {@code tag}. We return {@code true} in this
+     * instance.
+     *
+     * If the inbound {@code line} does not qualify for changes or if the tag is already correct, the
+     * {@code stringBuilder} will get {@code line} added to it. We return {@code false} in this instance.
+     *
+     * @param imageToFind the Docker image that may require a tag update
+     * @param tag the Docker tag that we'd like the image to have
+     * @param stringBuilder the stringBuilder to accumulate the output lines for the pull request
+     * @param line the inbound line from the Dockerfile
+     * @return Whether we've modified the {@code line} that goes into {@code stringBuilder}
+     */
+    protected boolean changeIfDockerfileBaseImageLine(String imageToFind, String tag, StringBuilder stringBuilder, String line) {
         boolean modified = false;
-        boolean isExactImage = trimmedLine.endsWith(img) || lineWithoutTag.endsWith(img);
+        String outputLine = line;
 
-        if (line.contains(Constants.BASE_IMAGE_INST) && isExactImage) {
-            int tagLength = getEndOfTagLength(line.substring(indexOfTag + 1));
-            String originalTag = line.substring(indexOfTag + 1);
-
-            strB.append(Constants.BASE_IMAGE_INST).append(" ").append(img).append(":").append(tag);
-            if (tagLength > 0) {
-                strB.append(line.substring(tagLength + indexOfTag + 1));
-                originalTag = originalTag.substring(0, tagLength);
-            }
-            strB.append('\n');
-            if (!originalTag.equals(tag)) {
+        // Only check/modify lines which contain a FROM instruction
+        if (FromInstruction.isFromInstruction(line)) {
+            FromInstruction fromInstruction = new FromInstruction(line);
+            if (fromInstruction.hasBaseImage(imageToFind) &&
+                    fromInstruction.hasADifferentTag(tag)) {
+                fromInstruction = fromInstruction.getFromInstructionWithNewTag(tag);
                 modified = true;
             }
-        } else {
-            strB.append(line).append("\n");
+            outputLine = fromInstruction.toString();
         }
+        stringBuilder.append(outputLine).append("\n");
         return modified;
     }
 

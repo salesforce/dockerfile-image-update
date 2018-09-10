@@ -18,6 +18,8 @@ import org.testng.annotations.Test;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
@@ -34,10 +36,10 @@ public class DockerfileGitHubUtilTest {
     @Mock
     GitHubUtil gitHubUtil;
 
-    DockerfileGitHubUtil dockerfileGitHubUtil;
+    private DockerfileGitHubUtil dockerfileGitHubUtil;
 
     @Test
-    public void testGetGithubUtil() throws Exception {
+    public void testGetGithubUtil() {
         gitHubUtil = mock(GitHubUtil.class);
         dockerfileGitHubUtil = new DockerfileGitHubUtil(gitHubUtil);
         assertEquals(dockerfileGitHubUtil.getGitHubUtil(), gitHubUtil);
@@ -407,12 +409,13 @@ public class DockerfileGitHubUtilTest {
     @DataProvider
     public Object[][] postTagData() {
         return new Object[][] {
-                { ":tag as builder", "newtag", ":newtag as builder"},
-                { ":tag#as builder", "newtag", ":newtag#as builder"},
-                { ":tag # comment", "newtag", ":newtag # comment"},
-                { ":tag\t# comment", "newtag", ":newtag\t# comment"},
-                { ":", "newtag", ":newtag"},
-                { ":test # :comment", "newtag", ":newtag # :comment"}
+                { ":tag as builder", "newtag", "FROM image:newtag as builder"},
+                { ":tag#as builder", "newtag", "FROM image:newtag #as builder"},
+                { ":tag # comment", "newtag", "FROM image:newtag # comment"},
+                { ":tag\t# comment", "newtag", "FROM image:newtag # comment"},
+                { ":tag\t# comment # # # ", "newtag", "FROM image:newtag # comment # # # "},
+                { ":", "newtag", "FROM image:newtag"},
+                { ":test # :comment", "newtag", "FROM image:newtag # :comment"}
         };
     }
 
@@ -435,26 +438,7 @@ public class DockerfileGitHubUtilTest {
         boolean modified = dockerfileGitHubUtil.rewriteDockerfile("image", updatedTag, reader, strB);
 
         assertTrue(modified, "Expect the dockerfile to have been modified");
-        assertEquals(strB.toString(), String.format("hello\nFROM image%s\nthis is a test\n", expectedReplacedData));
-    }
-
-    @DataProvider
-    public Object[][] getEndOfTagLength() {
-        return new Object[][] {
-                { "tag as builder", 3},
-                { "tag#as builder", 3},
-                { "tag # comment", 3},
-                { "tag\t# comment", 3},
-                { "tag#\tcomment", 3},
-                { "", -1}
-        };
-    }
-
-    @Test(dataProvider = "getEndOfTagLength")
-    public void testGetEndOfTagLength(String tag, Integer expectedLen) {
-        gitHubUtil = mock(GitHubUtil.class);
-        dockerfileGitHubUtil = new DockerfileGitHubUtil(gitHubUtil);
-        assertEquals(dockerfileGitHubUtil.getEndOfTagLength(tag), expectedLen.intValue());
+        assertEquals(strB.toString(), String.format("hello\n%s\nthis is a test\n", expectedReplacedData));
     }
 
     @Test
@@ -520,6 +504,20 @@ public class DockerfileGitHubUtilTest {
         String tag = "7357";
         dockerfileGitHubUtil.changeIfDockerfileBaseImageLine(img, tag, stringBuilder, "hello");
         dockerfileGitHubUtil.changeIfDockerfileBaseImageLine(img, tag, stringBuilder, "FROM image:blah");
+        dockerfileGitHubUtil.changeIfDockerfileBaseImageLine(img, tag, stringBuilder, "world");
+        dockerfileGitHubUtil.changeIfDockerfileBaseImageLine(img, tag, stringBuilder, "this is a test");
+        assertEquals(stringBuilder.toString(), "hello\nFROM image:7357\nworld\nthis is a test\n");
+    }
+
+    @Test
+    public void testDockerfileWithNoTag() {
+        gitHubUtil = mock(GitHubUtil.class);
+        dockerfileGitHubUtil = new DockerfileGitHubUtil(gitHubUtil);
+        StringBuilder stringBuilder = new StringBuilder();
+        String img = "image";
+        String tag = "7357";
+        dockerfileGitHubUtil.changeIfDockerfileBaseImageLine(img, tag, stringBuilder, "hello");
+        dockerfileGitHubUtil.changeIfDockerfileBaseImageLine(img, tag, stringBuilder, "FROM image");
         dockerfileGitHubUtil.changeIfDockerfileBaseImageLine(img, tag, stringBuilder, "world");
         dockerfileGitHubUtil.changeIfDockerfileBaseImageLine(img, tag, stringBuilder, "this is a test");
         assertEquals(stringBuilder.toString(), "hello\nFROM image:7357\nworld\nthis is a test\n");
