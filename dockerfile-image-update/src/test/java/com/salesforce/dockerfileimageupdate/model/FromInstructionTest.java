@@ -11,14 +11,14 @@ public class FromInstructionTest {
     @DataProvider
     public Object[][] inputFormInstructionData() {
         return new Object[][]{
-                {"FROM dockerimage:3 # some comment", "FROM dockerimage:3 # some comment"},
-                {"FROM dockerimage:3 AS test", "FROM dockerimage:3 AS test"},
-                {"FROM dockerimage:3 \tAS \ttest # some comment", "FROM dockerimage:3 AS test # some comment"},
-                {"FROM    dockerimage:3#   some   comment", "FROM dockerimage:3 #   some   comment"},
-                {"        FROM       dockerimage   ", "FROM dockerimage"},
-                {"\t FROM \t dockerimage:4 \t #comment", "FROM dockerimage:4 #comment"},
-                {"FROM dockerimage:4:4:4 #comment", "FROM dockerimage:4 #comment"},
-                {"FROM dockerimage:4 #comment me # # ", "FROM dockerimage:4 #comment me # # "}
+                {"FROM dockerimage:3 # some comment",               "FROM dockerimage:3 # some comment"},
+                {"FROM dockerimage:3 AS test",                      "FROM dockerimage:3 AS test"},
+                {"FROM dockerimage:3 \tAS \ttest # some comment",   "FROM dockerimage:3 AS test # some comment"},
+                {"FROM    dockerimage:3#   some   comment",         "FROM dockerimage:3 #   some   comment"},
+                {"        FROM       dockerimage   ",               "FROM dockerimage"},
+                {"\t FROM \t dockerimage:4 \t #comment",            "FROM dockerimage:4 #comment"},
+                {"FROM dockerimage:4:4:4 #comment",                 "FROM dockerimage:4 #comment"},
+                {"FROM dockerimage:4 #comment me # # ",             "FROM dockerimage:4 #comment me # # "}
         };
     }
 
@@ -30,13 +30,15 @@ public class FromInstructionTest {
     @DataProvider
     public Object[][] isFromInstructionData() {
         return new Object[][]{
-                {"FROM dockerimage:3 # some comment", true},
+                {"FROM dockerimage:3 # some comment",       true},
                 {"FROM    dockerimage:3#   some   comment", true},
-                {"        FROM       dockerimage   ", true},
-                {"RUN something", false},
-                {"", false},
-                {"      ", false},
-                {null, false},
+                {"#FROM dockerimage:3",                     false},
+                {"# FROM dockerimage:3",                    false},
+                {"        FROM       dockerimage   ",       true},
+                {"RUN something",                           false},
+                {"",                                        false},
+                {"      ",                                  false},
+                {null,                                      false},
         };
     }
 
@@ -48,13 +50,13 @@ public class FromInstructionTest {
     @DataProvider
     public Object[][] baseImageNameData() {
         return new Object[][] {
-                {"FROM image:tag", "image"},
-                {"FROM image:tag\t", "image"},
-                {" \t FROM \t image:\t# comment", "image"},
-                {"FROM image:", "image"},
-                {"FROM image", "image"},
-                {"FROM", null},
-                {"FROM image:test # :comment", "image"}
+                {"FROM image:tag",                  "image"},
+                {"FROM image:tag\t",                "image"},
+                {" \t FROM \t image:\t# comment",   "image"},
+                {"FROM image:",                     "image"},
+                {"FROM image",                      "image"},
+                {"FROM",                            null},
+                {"FROM image:test # :comment",      "image"}
         };
     }
 
@@ -66,11 +68,11 @@ public class FromInstructionTest {
     @DataProvider
     public Object[][] hasBaseImageData() {
         return new Object[][] {
-                {"FROM image", "image", true},
+                {"FROM image", "image",                   true},
                 {"FROM registry.com/some/image", "image", true},
-                {"FROM image", null, false},
-                {"FROM", "something", false},
-                {"FROM", null, false}
+                {"FROM image", null,                      false},
+                {"FROM", "something",                     false},
+                {"FROM", null,                            false}
         };
     }
 
@@ -82,14 +84,14 @@ public class FromInstructionTest {
     @DataProvider
     public Object[][] tagData() {
         return new Object[][] {
-                {"FROM image:some-tag", "some-tag"},
+                {"FROM image:some-tag",                       "some-tag"},
                 {"FROM image:some-tag:with:weird:other:tags", "some-tag"},
-                {"FROM image", null},
-                {"FROM image:", null},
-                {"FROM image@some-digest", null},
-                {"FROM image# some comment", null},
-                {"FROM image:\tsome-tag # comment", null},
-                {"FROM image: some-tag # comment", null}
+                {"FROM image",                                null},
+                {"FROM image:",                               null},
+                {"FROM image@some-digest",                    null},
+                {"FROM image# some comment",                  null},
+                {"FROM image:\tsome-tag # comment",           null},
+                {"FROM image: some-tag # comment",            null}
         };
     }
 
@@ -101,10 +103,10 @@ public class FromInstructionTest {
     @DataProvider
     public Object[][] hasTagData() {
         return new Object[][] {
-                {"FROM no tag", false},
-                {"FROM image", false},
-                {"FROM image:", false},
-                {"FROM image:tag#as builder", true}
+                {"FROM no tag",                 false},
+                {"FROM image",                  false},
+                {"FROM image:",                 false},
+                {"FROM image:tag#as builder",   true}
         };
     }
 
@@ -116,14 +118,14 @@ public class FromInstructionTest {
     @DataProvider
     public Object[][] instructionWithNewTagData() {
         return new Object[][] {
-                {"FROM image:some-tag", "some-tag"},
-                {"FROM image:some-tag:with:weird:other:tags", "some-tag"},
-                {"FROM image", null},
-                {"FROM image:", null},
-                {"FROM image@some-digest", null},
-                {"FROM image# some comment", null},
-                {"FROM image:\tsome-tag # comment", null},
-                {"FROM image: some-tag # comment", null}
+                {"FROM image:some-tag",                         "some-tag"},
+                {"FROM image:some-tag:with:weird:other:tags",   "some-tag"},
+                {"FROM image",                                  null},
+                {"FROM image:",                                 null},
+                {"FROM image@some-digest",                      null},
+                {"FROM image# some comment",                    null},
+                {"FROM image:\tsome-tag # comment",             null},
+                {"FROM image: some-tag # comment",              null}
         };
     }
 
@@ -140,14 +142,14 @@ public class FromInstructionTest {
     @DataProvider
     public Object[][] hasADifferentTagData() {
         return new Object[][] {
-                {"FROM image:tag", "another", true},
-                {"FROM image:tag", "tag", false},
-                {"FROM image:tag", "", true},
-                {"FROM image:tag", null, true},
-                {"FROM image", null, false},
-                {"FROM image:", null, false},
-                {"FROM image: # comment", null, false},
-                {"FROM image: # comment", "tag", true}
+                {"FROM image:tag",          "another",  true},
+                {"FROM image:tag",          "tag",      false},
+                {"FROM image:tag",          "",         true},
+                {"FROM image:tag",          null,       true},
+                {"FROM image",              null,       false},
+                {"FROM image:",             null,       false},
+                {"FROM image: # comment",   null,       false},
+                {"FROM image: # comment",   "tag",      true}
         };
     }
 
@@ -159,15 +161,15 @@ public class FromInstructionTest {
     @DataProvider
     public Object[][] additionalPartsData() {
         return new Object[][] {
-                {"FROM image:tag as builder", ImmutableList.of("as", "builder")},
-                {"FROM image:tag as builder of things", ImmutableList.of("as", "builder", "of", "things")},
-                {"FROM image:tag#as builder", ImmutableList.of()},
-                {"FROM image:tag\t# comment", ImmutableList.of()},
-                {"FROM image:tag    \t# comment", ImmutableList.of()},
-                {"FROM image:tag  some\tother \t thing  \t# comment", ImmutableList.of("some", "other", "thing")},
-                {"FROM image:\t# comment # # # ", ImmutableList.of()},
-                {"FROM image:", ImmutableList.of()},
-                {"FROM", ImmutableList.of()}
+                {"FROM image:tag as builder",                           ImmutableList.of("as", "builder")},
+                {"FROM image:tag as builder of things",                 ImmutableList.of("as", "builder", "of", "things")},
+                {"FROM image:tag#as builder",                           ImmutableList.of()},
+                {"FROM image:tag\t# comment",                           ImmutableList.of()},
+                {"FROM image:tag    \t# comment",                       ImmutableList.of()},
+                {"FROM image:tag  some\tother \t thing  \t# comment",   ImmutableList.of("some", "other", "thing")},
+                {"FROM image:\t# comment # # # ",                       ImmutableList.of()},
+                {"FROM image:",                                         ImmutableList.of()},
+                {"FROM",                                                ImmutableList.of()}
         };
     }
 
@@ -179,13 +181,13 @@ public class FromInstructionTest {
     @DataProvider
     public Object[][] commentData() {
         return new Object[][] {
-                {"FROM image:tag as builder", null},
-                {"FROM image:tag#as builder", "#as builder"},
-                {"FROM image:tag # comment", "# comment"},
-                {"FROM image:tag\t# comment", "# comment"},
-                {"FROM image:\t# comment # # # ", "# comment # # # "},
-                {"FROM image:", null},
-                {"FROM image:test # :comment", "# :comment"}
+                {"FROM image:tag as builder",       null},
+                {"FROM image:tag#as builder",       "#as builder"},
+                {"FROM image:tag # comment",        "# comment"},
+                {"FROM image:tag\t# comment",       "# comment"},
+                {"FROM image:\t# comment # # # ",   "# comment # # # "},
+                {"FROM image:",                     null},
+                {"FROM image:test # :comment",      "# :comment"}
         };
     }
 
@@ -197,8 +199,8 @@ public class FromInstructionTest {
     @DataProvider
     public Object[][] hasCommentsData() {
         return new Object[][] {
-                {"FROM no comment", false},
-                {"FROM image:tag#as builder", true}
+                {"FROM no comment",             false},
+                {"FROM image:tag#as builder",   true}
         };
     }
 
@@ -212,6 +214,7 @@ public class FromInstructionTest {
         return new Object[][]{
                 {""},
                 {"RUN something"},
+                {"# FROM someimage"},
                 {":tag # comment"},
                 {null}
         };
