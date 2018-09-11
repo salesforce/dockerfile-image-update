@@ -161,7 +161,7 @@ public class DockerfileGitHubUtil {
         boolean modified = rewriteDockerfile(img, tag, reader, strB);
         if (modified) {
             content.update(strB.toString(),
-                    "Fixed Dockerfile base image in /" + content.getPath() + ".\n" + customMessage, branch);
+                    "Fix Dockerfile base image in /" + content.getPath() + "\n\n" + customMessage, branch);
         }
     }
 
