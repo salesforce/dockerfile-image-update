@@ -11,15 +11,12 @@ package com.salesforce.dockerfileimageupdate.utils;
 import com.google.common.collect.Multimap;
 import com.google.gson.*;
 import com.salesforce.dockerfileimageupdate.model.FromInstruction;
-import org.apache.commons.lang3.StringUtils;
 import org.kohsuke.github.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
