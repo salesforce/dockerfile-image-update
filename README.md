@@ -21,6 +21,7 @@ Docker builds images using a declared Dockerfile. Within the Dockerfile, there i
     * [Creating a New Feature](#creating-a-new-feature)
     * [Running Unit Tests](#running-unit-tests)
     * [Running Integration Tests](#running-integration-tests)
+ * [Blogs / Slides](#blogs--slides)
  
 User Guide
 ==========
@@ -178,3 +179,10 @@ Before you run the integration tests (locally):
     ```
     make itest-local-changes
     ```
+
+Blogs / Slides
+==============
+
+* [2018-03-13 Salesforce Engineering Blog - Open Sourcing Dockerfile Image Update](https://engineering.salesforce.com/open-sourcing-dockerfile-image-update-6400121c1a75)
+* [2018 SRECon 18 - Auto-Cascading Security Updates Through Docker Images](https://www.slideshare.net/AndreyFalko1/srecon18americas-lightning-talk-autocascading-security-updates-through-docker-images?qid=c659b92a-aa60-4ef1-942a-de7b4fb66ad2&v=&b=&from_search=1)
+* [2018-10-22 - Lyft Engineering Blog - The Challenges Behind Rolling Out Security Updates To Your Docker Images](https://eng.lyft.com/the-challenges-behind-rolling-out-security-updates-to-your-docker-images-86106de47ece)
