@@ -21,7 +21,7 @@ Docker builds images using a declared Dockerfile. Within the Dockerfile, there i
     * [Creating a New Feature](#creating-a-new-feature)
     * [Running Unit Tests](#running-unit-tests)
     * [Running Integration Tests](#running-integration-tests)
- * [Blogs / Slides](#blogs-slides)
+ * [Blogs / Slides](#blogs--slides)
  
 User Guide
 ==========
