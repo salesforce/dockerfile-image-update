@@ -14,15 +14,13 @@ import com.google.common.collect.Multimap;
 import com.salesforce.dockerfileimageupdate.utils.Constants;
 import com.salesforce.dockerfileimageupdate.utils.DockerfileGitHubUtil;
 import net.sourceforge.argparse4j.inf.Namespace;
-import org.kohsuke.github.GHContent;
-import org.kohsuke.github.GHRepository;
-import org.kohsuke.github.PagedIterator;
-import org.kohsuke.github.PagedSearchIterable;
+import org.kohsuke.github.*;
 import org.mockito.Mockito;
 import org.testng.annotations.Test;
 
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Map;
 
 import static org.mockito.Matchers.any;
@@ -371,5 +369,43 @@ public class ParentTest {
         Multimap<String, String> pathToDockerfiles = parent.forkRepositoriesFoundAndGetPathToDockerfiles(contentsWithImage);
         assertTrue(pathToDockerfiles.isEmpty());
         Mockito.verify(dockerfileGitHubUtil, times(0)).closeOutdatedPullRequestAndFork(any());
+    }
+
+    @Test
+    public void checkPullRequestNotMadeForArchived() throws Exception {
+        final String repoName = "mock repo";
+        Map<String, Object> nsMap = ImmutableMap.of(Constants.IMG,
+                "image", Constants.TAG,
+                "tag", Constants.STORE,
+                "store");
+        Namespace ns = new Namespace(nsMap);
+
+        GHRepository parentRepo = mock(GHRepository.class);
+        GHRepository forkRepo = mock(GHRepository.class);
+        DockerfileGitHubUtil dockerfileGitHubUtil = mock(DockerfileGitHubUtil.class);
+        GHContent content = mock(GHContent.class);
+        GHMyself myself = mock(GHMyself.class);
+
+        when(parentRepo.isArchived()).thenReturn(true);
+
+        when(parentRepo.getFullName()).thenReturn(repoName);
+        when(forkRepo.getFullName()).thenReturn(repoName);
+        when(content.getOwner()).thenReturn(parentRepo);
+        when(dockerfileGitHubUtil.getRepo(eq(repoName))).thenReturn(forkRepo);
+        when(forkRepo.isFork()).thenReturn(true);
+        when(forkRepo.getParent()).thenReturn(parentRepo);
+        when(dockerfileGitHubUtil.getMyself()).thenReturn(myself);
+
+        Multimap<String, String> pathToDockerfilesInParentRepo = HashMultimap.create();
+        pathToDockerfilesInParentRepo.put(repoName, null);
+
+        Parent parent = new Parent();
+        parent.loadDockerfileGithubUtil(dockerfileGitHubUtil);
+        parent.changeDockerfiles(ns, pathToDockerfilesInParentRepo, forkRepo, Collections.emptyList());
+
+        Mockito.verify(dockerfileGitHubUtil, Mockito.never())
+                .createPullReq(Mockito.any(), anyString(), Mockito.any(), anyString());
+        //Make sure we at least call the isArchived.
+        Mockito.verify(parentRepo, Mockito.times(1)).isArchived();
     }
 }

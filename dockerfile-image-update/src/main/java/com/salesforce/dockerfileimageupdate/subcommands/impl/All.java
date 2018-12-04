@@ -187,7 +187,7 @@ public class All implements ExecutableWithNamespace {
         }
         GHRepository parent = forkedRepo.getParent();
 
-        if (parent == null || !pathToDockerfilesInParentRepo.containsKey(parent.getFullName())) {
+        if (parent == null || !pathToDockerfilesInParentRepo.containsKey(parent.getFullName()) || parent.isArchived()) {
             return;
         }
 
