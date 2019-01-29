@@ -406,6 +406,6 @@ public class ParentTest {
         Mockito.verify(dockerfileGitHubUtil, Mockito.never())
                 .createPullReq(Mockito.any(), anyString(), Mockito.any(), anyString());
         //Make sure we at least call the isArchived.
-        Mockito.verify(parentRepo, Mockito.times(1)).isArchived();
+        Mockito.verify(parentRepo, Mockito.times(2)).isArchived();
     }
 }
