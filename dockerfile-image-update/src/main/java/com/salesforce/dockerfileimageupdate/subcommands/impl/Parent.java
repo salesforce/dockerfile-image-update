@@ -175,6 +175,9 @@ public class Parent implements ExecutableWithNamespace {
         GHRepository parent = forkedRepo.getParent();
 
         if (parent == null || !pathToDockerfilesInParentRepo.containsKey(parent.getFullName()) || parent.isArchived()) {
+            if (parent != null && parent.isArchived()) {
+                log.info("Skipping archived repo: {}", parent.getFullName());
+            }
             return;
         }
         log.info("Fixing Dockerfiles in {}", forkedRepo.getFullName());
