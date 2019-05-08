@@ -95,7 +95,7 @@ public class All implements ExecutableWithNamespace {
                                          PagedSearchIterable<GHContent> contentsWithImage,
                                          String image) throws IOException {
         log.info("Forking {} repositories...", contentsWithImage.getTotalCount());
-        List<String> parentReposForked = new ArrayList<>();
+        List<String> parentReposAlreadyChecked = new ArrayList<>();
         GHRepository parent;
         String parentRepoName = null;
         for (GHContent c : contentsWithImage) {
@@ -115,10 +115,14 @@ public class All implements ExecutableWithNamespace {
                 pathToDockerfilesInParentRepo.put(parentRepoName, c.getPath());
                 imagesFoundInParentRepo.put(parentRepoName, image);
 
-                // fork the parent if not already forked
-                if (!parentReposForked.contains(parentRepoName)) {
-                    dockerfileGitHubUtil.closeOutdatedPullRequestAndFork(parent);
-                    parentReposForked.add(parentRepoName);
+                // fork the parent if not already forked or we couldn't fork
+                if (!parentReposAlreadyChecked.contains(parentRepoName)) {
+                    GHRepository fork = dockerfileGitHubUtil.closeOutdatedPullRequestAndFork(parent);
+                    if (fork == null) {
+                        log.info("Could not fork {}", parentRepoName);
+                        pathToDockerfilesInParentRepo.remove(parentRepoName, c.getPath());
+                    }
+                    parentReposAlreadyChecked.add(parentRepoName);
                 }
             }
         }

@@ -16,6 +16,7 @@ import org.mockito.Mockito;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.Map;
 
@@ -51,6 +52,7 @@ public class ChildTest {
         Namespace ns = new Namespace(inputMap);
         DockerfileGitHubUtil dockerfileGitHubUtil = Mockito.mock(DockerfileGitHubUtil.class);
         Mockito.when(dockerfileGitHubUtil.getRepo(Mockito.any())).thenReturn(new GHRepository());
+        Mockito.when(dockerfileGitHubUtil.closeOutdatedPullRequestAndFork(Mockito.any())).thenReturn(new GHRepository());
         doNothing().when(dockerfileGitHubUtil).modifyAllOnGithub(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
         doNothing().when(dockerfileGitHubUtil).updateStore(anyString(), anyString(), anyString());
         doNothing().when(dockerfileGitHubUtil).createPullReq(Mockito.any(), anyString(), Mockito.any(), anyString());
@@ -59,5 +61,22 @@ public class ChildTest {
 
         Mockito.verify(dockerfileGitHubUtil, atLeastOnce())
                 .createPullReq(Mockito.any(), anyString(), Mockito.any(), anyString());
+    }
+
+    @Test
+    public void testCreateForkFailureCase_CreatePullReqIsSkipped() throws IOException, InterruptedException {
+        Child child = new Child();
+        Map<String, Object> nsMap = ImmutableMap.of(
+                GIT_REPO, "test",
+                IMG, "test",
+                FORCE_TAG, "test",
+                STORE, "test");
+        Namespace ns = new Namespace(nsMap);
+        DockerfileGitHubUtil dockerfileGitHubUtil = Mockito.mock(DockerfileGitHubUtil.class);
+        Mockito.when(dockerfileGitHubUtil.getRepo(Mockito.any())).thenReturn(new GHRepository());
+        Mockito.when(dockerfileGitHubUtil.closeOutdatedPullRequestAndFork(Mockito.any())).thenReturn(null);
+        child.execute(ns, dockerfileGitHubUtil);
+        Mockito.verify(dockerfileGitHubUtil, Mockito.never()).createPullReq(Mockito.any(), Mockito.any(), Mockito.any(),
+                Mockito.any());
     }
 }

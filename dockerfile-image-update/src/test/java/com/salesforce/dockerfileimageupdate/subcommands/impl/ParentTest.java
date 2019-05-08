@@ -99,6 +99,8 @@ public class ParentTest {
         when(contentsWithImageIterator.next()).thenReturn(content1, content2, content3, null);
         when(contentsWithImage.iterator()).thenReturn(contentsWithImageIterator);
 
+        when(dockerfileGitHubUtil.closeOutdatedPullRequestAndFork(Mockito.any())).thenReturn(new GHRepository());
+
         Parent parent = new Parent();
         parent.loadDockerfileGithubUtil(dockerfileGitHubUtil);
         Multimap<String, String> repoMap =  parent.forkRepositoriesFoundAndGetPathToDockerfiles(contentsWithImage);
