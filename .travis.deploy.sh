@@ -18,5 +18,5 @@ cp .travis.settings.xml ${HOME}/.m2/settings.xml
 mvn releaser:release
 
 # Push latest docker image
-docker login -u="${DOCKER_USER}" -p="${DOCKER_PASSWORD}"
+echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
 docker push salesforce/dockerfile-image-update
