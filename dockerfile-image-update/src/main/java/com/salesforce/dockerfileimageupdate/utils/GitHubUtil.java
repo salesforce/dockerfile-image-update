@@ -64,7 +64,7 @@ public class GitHubUtil {
     /* Create a fork. Does not check if the fork is already there, because the fork will not be created if a fork
      * already exists.
      */
-    public GHRepository createFork(GHRepository repo) throws IOException {
+    public GHRepository createFork(GHRepository repo) {
         try {
             return repo.fork();
         } catch (IOException e) {
@@ -169,6 +169,7 @@ public class GitHubUtil {
                 String forkName = s.substring(s.lastIndexOf('/') + 1);
                 log.info(forkName);
                 if (!repoNamesSet.contains(forkName)) {
+                    log.debug("Forking is still in progress for {}" , forkName);
                     listOfReposHasRecentForks = false;
                 }
             }
