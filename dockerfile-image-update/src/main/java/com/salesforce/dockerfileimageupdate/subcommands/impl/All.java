@@ -95,7 +95,7 @@ public class All implements ExecutableWithNamespace {
                                          PagedSearchIterable<GHContent> contentsWithImage,
                                          String image) throws IOException {
         log.info("Forking {} repositories...", contentsWithImage.getTotalCount());
-        List<String> parentReposAlreadyChecked = new ArrayList<>();
+        List<String> parentReposForked = new ArrayList<>();
         GHRepository parent;
         String parentRepoName = null;
         for (GHContent c : contentsWithImage) {
@@ -112,17 +112,17 @@ public class All implements ExecutableWithNamespace {
                 log.warn("Skipping {} because it's a fork already. Sending a PR to a fork is unsupported at the moment.",
                         parentRepoName);
             } else {
-                pathToDockerfilesInParentRepo.put(parentRepoName, c.getPath());
-                imagesFoundInParentRepo.put(parentRepoName, image);
-
-                // fork the parent if not already forked or we couldn't fork
-                if (!parentReposAlreadyChecked.contains(parentRepoName)) {
+                // fork the parent if not already forked
+                if (parentReposForked.contains(parentRepoName) == false) {
                     GHRepository fork = dockerfileGitHubUtil.closeOutdatedPullRequestAndFork(parent);
                     if (fork == null) {
                         log.info("Could not fork {}", parentRepoName);
-                        pathToDockerfilesInParentRepo.remove(parentRepoName, c.getPath());
+                    } else {
+                        // Add repos to pathToDockerfilesInParentRepo and imagesFoundInParentRepo only if we forked it successfully.
+                        pathToDockerfilesInParentRepo.put(parentRepoName, c.getPath());
+                        imagesFoundInParentRepo.put(parentRepoName, image);
+                        parentReposForked.add(parentRepoName);
                     }
-                    parentReposAlreadyChecked.add(parentRepoName);
                 }
             }
         }

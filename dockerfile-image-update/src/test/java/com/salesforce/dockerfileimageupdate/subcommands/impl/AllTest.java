@@ -25,10 +25,9 @@ import java.util.ArrayList;
 import java.util.Map;
 import java.util.Set;
 
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
+import static org.mockito.Matchers.*;
 import static org.mockito.Mockito.*;
+import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 
 /**
@@ -61,7 +60,59 @@ public class AllTest {
         all.loadDockerfileGithubUtil(dockerfileGitHubUtil);
         all.forkRepositoriesFound(ArrayListMultimap.create(), ArrayListMultimap.create(), contentsWithImage, "image");
 
-        Mockito.verify(dockerfileGitHubUtil, times(1)).closeOutdatedPullRequestAndFork(any());
+        Mockito.verify(dockerfileGitHubUtil, times(3)).closeOutdatedPullRequestAndFork(any());
+    }
+
+    @Test
+    public void testForkRepositoriesFound_unableToforkRepo() throws Exception {
+        /**
+         * Suppose we have multiple dockerfiles that need to updated in a repo and we fail to fork such repo,
+         * we should not add those repos to pathToDockerfilesInParentRepo.
+         */
+        DockerfileGitHubUtil dockerfileGitHubUtil = mock(DockerfileGitHubUtil.class);
+
+        GHRepository contentRepo1 = mock(GHRepository.class);
+        when(contentRepo1.getFullName()).thenReturn("1");
+
+        GHRepository contentRepo2 = mock(GHRepository.class);
+        // Say we have multiple dockerfiles to be updated in repo "1"
+        when(contentRepo2.getFullName()).thenReturn("1");
+
+        GHRepository contentRepo3 = mock(GHRepository.class);
+        when(contentRepo3.getFullName()).thenReturn("2");
+
+        GHContent content1 = mock(GHContent.class);
+        when(content1.getOwner()).thenReturn(contentRepo1);
+        when(content1.getPath()).thenReturn("1"); // path to 1st dockerfile in repo "1"
+
+        GHContent content2 = mock(GHContent.class);
+        when(content2.getOwner()).thenReturn(contentRepo2);
+        when(content2.getPath()).thenReturn("2"); // path to 2st dockerfile in repo "1"
+
+        GHContent content3 = mock(GHContent.class);
+        when(content3.getOwner()).thenReturn(contentRepo3);
+        when(content3.getPath()).thenReturn("3");
+
+        PagedSearchIterable<GHContent> contentsWithImage = mock(PagedSearchIterable.class);
+
+        PagedIterator<GHContent> contentsWithImageIterator = mock(PagedIterator.class);
+        when(contentsWithImageIterator.hasNext()).thenReturn(true, true, true, false);
+        when(contentsWithImageIterator.next()).thenReturn(content1, content2, content3, null);
+        when(contentsWithImage.iterator()).thenReturn(contentsWithImageIterator);
+        when(dockerfileGitHubUtil.closeOutdatedPullRequestAndFork(contentRepo1)).thenReturn(null); // repo1 is unforkable
+        when(dockerfileGitHubUtil.closeOutdatedPullRequestAndFork(contentRepo2)).thenReturn(null); // repo1 is unforkable
+        when(dockerfileGitHubUtil.closeOutdatedPullRequestAndFork(contentRepo3)).thenReturn(new GHRepository());
+
+        All all = new All();
+        all.loadDockerfileGithubUtil(dockerfileGitHubUtil);
+        Multimap<String, String> pathToDockerfilesInParentRepo = ArrayListMultimap.create();
+        Multimap<String, String> imagesFoundInParentRepo = ArrayListMultimap.create();
+        all.forkRepositoriesFound(pathToDockerfilesInParentRepo, imagesFoundInParentRepo, contentsWithImage, "image");
+
+        // Since repo "1" is unforkable, we only added repo "2" to pathToDockerfilesInParentRepo
+        assertEquals(pathToDockerfilesInParentRepo.size(), 1);
+        assertEquals(imagesFoundInParentRepo.size(), 1);
+        Mockito.verify(dockerfileGitHubUtil, times(3)).closeOutdatedPullRequestAndFork(any());
     }
 
     @Test

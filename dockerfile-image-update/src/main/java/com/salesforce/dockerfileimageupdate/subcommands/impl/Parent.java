@@ -110,7 +110,7 @@ public class Parent implements ExecutableWithNamespace {
     protected Multimap<String, String> forkRepositoriesFoundAndGetPathToDockerfiles(PagedSearchIterable<GHContent> contentsWithImage) throws IOException {
         log.info("Forking repositories...");
         Multimap<String, String> pathToDockerfilesInParentRepo = HashMultimap.create();
-        List<String> parentReposAlreadyChecked = new ArrayList<>();
+        List<String> parentReposForked = new ArrayList<>();
         GHRepository parent;
         String parentRepoName = null;
         for (GHContent c : contentsWithImage) {
@@ -127,16 +127,17 @@ public class Parent implements ExecutableWithNamespace {
                 log.warn("Skipping {} because it's a fork already. Sending a PR to a fork is unsupported at the moment.",
                         parentRepoName);
             } else {
-                pathToDockerfilesInParentRepo.put(parentRepoName, c.getPath());
-                // fork the parent if not already forked or we couldn't fork
-                if (!parentReposAlreadyChecked.contains(parentRepoName)) {
+                // fork the parent if not already forked
+                if (parentReposForked.contains(parentRepoName) == false) {
                     log.info("Forking {}", parentRepoName);
                     GHRepository fork = dockerfileGitHubUtil.closeOutdatedPullRequestAndFork(parent);
                     if (fork == null) {
                         log.info("Could not fork {}", parentRepoName);
-                        pathToDockerfilesInParentRepo.remove(parentRepoName, c.getPath());
+                    } else {
+                        // Add repos to pathToDockerfilesInParentRepo only if we forked it successfully.
+                        pathToDockerfilesInParentRepo.put(parentRepoName, c.getPath());
+                        parentReposForked.add(parentRepoName);
                     }
-                    parentReposAlreadyChecked.add(parentRepoName);
                 }
             }
         }
