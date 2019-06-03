@@ -128,15 +128,15 @@ public class Parent implements ExecutableWithNamespace {
                         parentRepoName);
             } else {
                 // fork the parent if not already forked
-                if (!parentReposForked.contains(parentRepoName)) {
+                if (parentReposForked.contains(parentRepoName) == false) {
                     log.info("Forking {}", parentRepoName);
                     GHRepository fork = dockerfileGitHubUtil.closeOutdatedPullRequestAndFork(parent);
-                    if (fork != null) {
+                    if (fork == null) {
+                        log.info("Could not fork {}", parentRepoName);
+                    } else {
                         // Add repos to pathToDockerfilesInParentRepo only if we forked it successfully.
                         pathToDockerfilesInParentRepo.put(parentRepoName, c.getPath());
                         parentReposForked.add(parentRepoName);
-                    } else {
-                        log.info("Could not fork {}", parentRepoName);
                     }
                 }
             }
