@@ -72,13 +72,13 @@ public class All implements ExecutableWithNamespace {
                 changeDockerfiles(ns, pathToDockerfilesInParentRepo, imagesFoundInParentRepo, imageToTagMap, currUserRepo,
                         skippedRepos);
             } catch (IOException e) {
+                log.error(String.format("Error changing Dockerfile for %s", currUserRepo.getName()), e);
                 exceptions.add(e);
             }
         }
 
         if (!exceptions.isEmpty()) {
-            log.info("There were {} errors with changing Dockerfiles.", exceptions.size());
-            throw exceptions.get(0);
+            throw new IOException(String.format("There were %s errors with changing Dockerfiles.", exceptions.size()));
         }
 
         if (!skippedRepos.isEmpty()) {
