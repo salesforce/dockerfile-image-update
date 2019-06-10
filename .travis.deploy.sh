@@ -22,3 +22,13 @@ set +x
 echo "${DOCKER_PASSWORD}" | docker login -u "${DOCKER_USERNAME}" --password-stdin
 set -x
 docker push salesforce/dockerfile-image-update
+
+# Tag / push image locked to Maven version of the command-line module
+MVN_VERSION=$(cat ./dockerfile-image-update/target/classes/version.txt)
+docker tag salesforce/dockerfile-image-update salesforce/dockerfile-image-update:${MVN_VERSION}
+docker push salesforce/dockerfile-image-update:${MVN_VERSION}
+
+# Tag / push image locked to git short hash
+SHORT_HASH=$(git rev-parse --short HEAD)
+docker tag salesforce/dockerfile-image-update salesforce/dockerfile-image-update:${SHORT_HASH}
+docker push salesforce/dockerfile-image-update:${SHORT_HASH}
