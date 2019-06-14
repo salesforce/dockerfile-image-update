@@ -63,12 +63,12 @@ public class Parent implements ExecutableWithNamespace {
             try {
                 changeDockerfiles(ns, pathToDockerfilesInParentRepo, currUserRepo, skippedRepos);
             } catch (IOException e) {
+                log.error(String.format("Error changing Dockerfile for %s", currUserRepo.getName()), e);
                 exceptions.add(e);
             }
         }
         if (!exceptions.isEmpty()) {
-            log.info("There were {} errors with changing Dockerfiles.", exceptions.size());
-            throw exceptions.get(0);
+            throw new IOException(String.format("There were %s errors with changing Dockerfiles.", exceptions.size()));
         }
 
         if (!skippedRepos.isEmpty()) {
@@ -142,7 +142,7 @@ public class Parent implements ExecutableWithNamespace {
             }
         }
 
-        log.info("Path to Dockerfiles in repo '{}': {}", parentRepoName, pathToDockerfilesInParentRepo);
+        log.info("Path to Dockerfiles in repos: {}", pathToDockerfilesInParentRepo);
 
         return pathToDockerfilesInParentRepo;
     }

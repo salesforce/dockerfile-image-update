@@ -167,7 +167,7 @@ public class GitHubUtil {
             boolean listOfReposHasRecentForks = true;
             for (String s : pathToDockerfileInParentRepo.keySet()) {
                 String forkName = s.substring(s.lastIndexOf('/') + 1);
-                log.info(forkName);
+                log.info(String.format("Verifying that %s has been forked", forkName));
                 if (!repoNamesSet.contains(forkName)) {
                     log.debug("Forking is still in progress for {}" , forkName);
                     listOfReposHasRecentForks = false;
