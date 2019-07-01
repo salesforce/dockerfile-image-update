@@ -14,11 +14,13 @@ import org.kohsuke.github.*;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.*;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNull;
+import static org.testng.Assert.*;
 
 /**
  * Created by minho.park on 8/2/16.
@@ -138,7 +140,7 @@ public class GitHubUtilTest {
 
     /* There is a timeout because if this part of the code is broken, it might enter 60 seconds of sleep. */
     @Test(timeOut = 1000)
-    public void testGetGHRepositories() throws Exception{
+    public void testGetGHRepositories() throws Exception {
 
         Multimap<String, String> parentToPath = HashMultimap.create();
         parentToPath.put("test1", "test");
@@ -169,7 +171,45 @@ public class GitHubUtilTest {
 
         GitHub github = mock(GitHub.class);
         GitHubUtil gitHubUtil = new GitHubUtil(github);
-        PagedIterable<GHRepository> returnList = gitHubUtil.getGHRepositories(parentToPath, currentUser);
-        assertEquals(returnList, listOfRepos);
+        List<GHRepository> actualList = gitHubUtil.getGHRepositories(parentToPath, currentUser);
+        List<GHRepository> expectedList = new ArrayList<>();
+        expectedList.add(repo1);
+        expectedList.add(repo2);
+        expectedList.add(repo3);
+        expectedList.add(repo4);
+        assertTrue(actualList.size() == expectedList.size());
+        assertTrue(actualList.containsAll(expectedList));
+        assertTrue(expectedList.containsAll(actualList));
+    }
+
+    @Test
+    public void testGetReposForUserAtCurrentInstant() throws Exception {
+        GHMyself currentUser = mock(GHMyself.class);
+        PagedIterable<GHRepository> listOfRepos = mock(PagedIterable.class);
+
+        GHRepository repo1 = mock(GHRepository.class);
+        when(repo1.getName()).thenReturn("test1");
+        GHRepository repo2 = mock(GHRepository.class);
+        when(repo2.getName()).thenReturn("test2");
+        GHRepository repo3 = mock(GHRepository.class);
+        when(repo3.getName()).thenReturn("test3");
+        GHRepository repo4 = mock(GHRepository.class);
+        when(repo4.getName()).thenReturn("test4");
+
+        PagedIterator<GHRepository> listOfReposIterator = mock(PagedIterator.class);
+        when(listOfReposIterator.hasNext()).thenReturn(true, true, true, true, false);
+        when(listOfReposIterator.next()).thenReturn(repo1, repo2, repo3, repo4, null);
+        when(listOfRepos.iterator()).thenReturn(listOfReposIterator);
+
+        when(currentUser.listRepositories(100, GHMyself.RepositoryListFilter.OWNER)).thenReturn(listOfRepos);
+
+        GitHub github = mock(GitHub.class);
+        GitHubUtil gitHubUtil = new GitHubUtil(github);
+        Map<String, GHRepository> repoByName = gitHubUtil.getReposForUserAtCurrentInstant(currentUser);
+        assertTrue(repoByName.size() == 4);
+        assertTrue(repoByName.containsKey("test1") && repoByName.get("test1") == repo1);
+        assertTrue(repoByName.containsKey("test2") && repoByName.get("test2") == repo2);
+        assertTrue(repoByName.containsKey("test3") && repoByName.get("test3") == repo3);
+        assertTrue(repoByName.containsKey("test4") && repoByName.get("test4") == repo4);
     }
 }
