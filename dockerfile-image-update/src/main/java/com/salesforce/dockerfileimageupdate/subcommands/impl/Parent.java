@@ -53,7 +53,7 @@ public class Parent implements ExecutableWithNamespace {
             throw new IOException("Could not retrieve authenticated user.");
         }
 
-        PagedIterable<GHRepository> listOfCurrUserRepos =
+        List<GHRepository> listOfCurrUserRepos =
                 dockerfileGitHubUtil.getGHRepositories(pathToDockerfilesInParentRepo, currentUser);
 
         List<IOException> exceptions = new ArrayList<>();
