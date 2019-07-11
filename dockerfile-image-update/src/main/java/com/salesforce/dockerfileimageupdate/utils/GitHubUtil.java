@@ -181,8 +181,8 @@ public class GitHubUtil {
     }
 
     /**
-     * Returns a <code>java.util.Map</code> of GitHub repositories owned by a user. Returned map contains repository names
-     * mapped to their corresponding GitHub repository objects.
+     * Returns a <code>java.util.Map</code> of GitHub repositories owned by a user. Returned Map's keys are the repository
+     * names and values are their corresponding GitHub repository objects.
      * @param user
      * @return
      */

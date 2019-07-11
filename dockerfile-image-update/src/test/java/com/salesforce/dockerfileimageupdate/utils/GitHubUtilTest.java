@@ -212,4 +212,12 @@ public class GitHubUtilTest {
         assertTrue(repoByName.containsKey("test3") && repoByName.get("test3") == repo3);
         assertTrue(repoByName.containsKey("test4") && repoByName.get("test4") == repo4);
     }
+
+    @Test
+    public void testGetReposForUserAtCurrentInstantWithNullUser() throws Exception {
+        GitHub github = mock(GitHub.class);
+        GitHubUtil gitHubUtil = new GitHubUtil(github);
+        Map<String, GHRepository> repoByName = gitHubUtil.getReposForUserAtCurrentInstant(null);
+        assertTrue(repoByName.size() == 0);
+    }
 }
