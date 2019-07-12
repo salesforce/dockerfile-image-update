@@ -17,8 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -155,20 +154,18 @@ public class GitHubUtil {
      *
      * Instead, we wait for 60 seconds if the list retrieved is not the list we want.
      */
-    public PagedIterable<GHRepository> getGHRepositories(Multimap<String, String> pathToDockerfileInParentRepo,
-                                                         GHMyself currentUser) throws InterruptedException {
-        PagedIterable<GHRepository> listOfRepos;
-        Set<String> repoNamesSet = new HashSet<>();
+    public List<GHRepository> getGHRepositories(Multimap<String, String> pathToDockerfileInParentRepo,
+                                                 GHMyself currentUser) throws InterruptedException {
+        List<GHRepository> listOfRepos = new ArrayList<>();
         while (true) {
-            listOfRepos = currentUser.listRepositories(100, GHMyself.RepositoryListFilter.OWNER);
-            for (GHRepository repo : listOfRepos) {
-                repoNamesSet.add(repo.getName());
-            }
+            Map<String, GHRepository> repoByName = getReposForUserAtCurrentInstant(currentUser);
             boolean listOfReposHasRecentForks = true;
             for (String s : pathToDockerfileInParentRepo.keySet()) {
                 String forkName = s.substring(s.lastIndexOf('/') + 1);
                 log.info(String.format("Verifying that %s has been forked", forkName));
-                if (!repoNamesSet.contains(forkName)) {
+                if (repoByName.containsKey(forkName)) {
+                    listOfRepos.add(repoByName.get(forkName));
+                } else {
                     log.debug("Forking is still in progress for {}" , forkName);
                     listOfReposHasRecentForks = false;
                 }
@@ -180,7 +177,24 @@ public class GitHubUtil {
                 Thread.sleep(TimeUnit.MINUTES.toMillis(1));
             }
         }
-
         return listOfRepos;
+    }
+
+    /**
+     * Returns a <code>java.util.Map</code> of GitHub repositories owned by a user. Returned Map's keys are the repository
+     * names and values are their corresponding GitHub repository objects.
+     * @param user
+     * @return
+     */
+    public Map<String, GHRepository> getReposForUserAtCurrentInstant(GHMyself user) {
+        Map<String, GHRepository> repoByName = new HashMap<>();
+        if (user == null) {
+            return repoByName;
+        }
+        PagedIterable<GHRepository> reposIterator = user.listRepositories(100, GHMyself.RepositoryListFilter.OWNER);
+        for (GHRepository repo: reposIterator) {
+            repoByName.put(repo.getName(), repo);
+        }
+        return repoByName;
     }
 }

@@ -61,7 +61,7 @@ public class All implements ExecutableWithNamespace {
         }
 
         log.info("Retrieving all the forks...");
-        PagedIterable<GHRepository> listOfCurrUserRepos =
+        List<GHRepository> listOfCurrUserRepos =
                 dockerfileGitHubUtil.getGHRepositories(pathToDockerfilesInParentRepo, currentUser);
 
         List<IOException> exceptions = new ArrayList<>();

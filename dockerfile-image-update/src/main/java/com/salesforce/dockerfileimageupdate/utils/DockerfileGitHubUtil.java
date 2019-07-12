@@ -95,7 +95,7 @@ public class DockerfileGitHubUtil {
      *
      * Instead, we wait for 60 seconds if the list retrieved is not the list we want.
      */
-    public PagedIterable<GHRepository> getGHRepositories(Multimap<String, String> pathToDockerfileInParentRepo,
+    public List<GHRepository> getGHRepositories(Multimap<String, String> pathToDockerfileInParentRepo,
                                                             GHMyself currentUser) throws InterruptedException {
         return gitHubUtil.getGHRepositories(pathToDockerfileInParentRepo, currentUser);
     }
