@@ -175,6 +175,7 @@ public class Parent implements ExecutableWithNamespace {
                 return;
             }
         } else {
+            log.info("Skipping repo {} as it is not a fork.", currUserRepo.getFullName());
             return;
         }
         GHRepository parent = forkedRepo.getParent();
