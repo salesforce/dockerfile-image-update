@@ -1,0 +1,32 @@
+name: 'Multi-Module Maven Build / Deploy'
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'dockerfile-image-update-') == false
+    steps:
+      - name: checkout
+        uses: actions/checkout@master
+        with:
+          ref: ${{ github.ref }}
+      - name: docker build
+        run: make mvn-build get-main-project-target-dir
+      - name: integration test
+        env:
+          ITEST_GH_TOKEN: ${{ secrets.ITEST_GH_TOKEN }}
+        run: make integration-test
+  master-deploy:
+    needs: build-test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master'
+    steps:
+      - name: deploy
+        uses: actions/checkout@master
+        with:
+          ref: ${{ github.ref }}

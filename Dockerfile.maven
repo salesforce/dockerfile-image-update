@@ -1,0 +1,5 @@
+FROM maven:3.6-jdk-11 AS build
+
+COPY . .
+RUN mvn --version
+RUN mvn --quiet --batch-mode install
