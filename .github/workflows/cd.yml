@@ -20,7 +20,7 @@ jobs:
       - name: build integration test jar
         uses: docker://maven:3.6-jdk-11
         with:
-          args: 'install --projects dockerfile-image-update-itest --also-make -DskipTests'
+          args: 'mvn install --projects dockerfile-image-update-itest --also-make -DskipTests'
       - name: integration test
         env:
           ITEST_GH_TOKEN: ${{ secrets.ITEST_GH_TOKEN }}
@@ -42,7 +42,7 @@ jobs:
       - name: build integration test jar
         uses: docker://maven:3.6-jdk-11
         with:
-          args: 'install --projects dockerfile-image-update-itest --also-make -DskipTests'
+          args: 'mvn install --projects dockerfile-image-update-itest --also-make -DskipTests'
       - name: integration test
         env:
           ITEST_GH_TOKEN: ${{ secrets.ITEST_GH_TOKEN }}
