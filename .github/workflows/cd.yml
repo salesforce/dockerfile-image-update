@@ -21,6 +21,14 @@ jobs:
         env:
           ITEST_GH_TOKEN: ${{ secrets.ITEST_GH_TOKEN }}
         run: make integration-test
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          file: ./target/site/jacoco/jacoco.xml
+          flags: unittests
+          # yml: ./codecov.yml
+          fail_ci_if_error: true
   master-deploy:
     needs: build-test
     runs-on: ubuntu-latest
