@@ -9,7 +9,7 @@ on:
 jobs:
   build-test:
     runs-on: ubuntu-latest
-    if: !startsWith('dockerfile-image-update-', github.ref)
+    if: ! startsWith(github.ref, 'dockerfile-image-update-')
     steps:
       - name: checkout
         uses: actions/checkout@master
