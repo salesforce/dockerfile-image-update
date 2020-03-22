@@ -1,0 +1,29 @@
+name: 'Multi-Module Maven Build / Deploy'
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    if: github.ref != 'refs/heads/master' && ! startsWith('dockerfile-image-update-', github.ref)
+    steps:
+      - name: checkout
+        uses: actions/checkout@master
+        with:
+          ref: ${{ github.ref }}
+      - name: docker build
+        run: docker build -t salesforce/dockerfile-image-update .
+  deploy:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master'
+    steps:
+      - name: checkout
+        uses: actions/checkout@master
+        with:
+          ref: ${{ github.ref }}
+      - name: docker build
+        run: docker build -t salesforce/dockerfile-image-update .
