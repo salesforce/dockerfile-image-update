@@ -17,6 +17,14 @@ jobs:
           ref: ${{ github.ref }}
       - name: docker build
         run: docker build -t salesforce/dockerfile-image-update .
+      - name: integration test
+        run: |
+          echo git_api_token=${ITEST_GH_TOKEN} > `pwd`/itest.env
+          export user_itest_secrets_file_secret=`pwd`/itest.env
+          docker-compose up #--abort-on-container-exit TODO: remove this once itests can be made not to flap see issue #21
+          rm itest.env
+        env:
+          ITEST_GH_TOKEN: ${{ secrets.ITEST_GH_TOKEN }}
   deploy:
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/master'
@@ -27,3 +35,11 @@ jobs:
           ref: ${{ github.ref }}
       - name: docker build
         run: docker build -t salesforce/dockerfile-image-update .
+      - name: integration test
+        run: |
+          echo git_api_token=${ITEST_GH_TOKEN} > `pwd`/itest.env
+          export user_itest_secrets_file_secret=`pwd`/itest.env
+          docker-compose up #--abort-on-container-exit TODO: remove this once itests can be made not to flap see issue #21
+          rm itest.env
+        env:
+          ITEST_GH_TOKEN: ${{ secrets.ITEST_GH_TOKEN }}
