@@ -16,11 +16,15 @@ jobs:
         with:
           ref: ${{ github.ref }}
       - name: docker build
-        run: make mvn-build
+        run: make mvn-build get-main-project-target-dir
       - name: integration test
         env:
           ITEST_GH_TOKEN: ${{ secrets.ITEST_GH_TOKEN }}
         run: make integration-test
+      - name: Coveralls
+        uses: coverallsapp/github-action@master
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
   master-test-deploy:
     needs: build-test
     runs-on: ubuntu-latest

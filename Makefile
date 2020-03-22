@@ -19,3 +19,6 @@ integration-test:
 	@-echo git_api_token=${ITEST_GH_TOKEN} > $(CURDIR)/itest.env
 	user_itest_secrets_file_secret=$(CURDIR)/itest.env docker-compose up
 	rm itest.env
+
+get-main-project-target-dir:
+	docker run --rm -v $(CURDIR):/tmp/project local-maven-build /bin/bash -c "cp -R ${DFIU_TARGET} /tmp/project/${DFIU_TARGET}"
