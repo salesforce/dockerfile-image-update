@@ -17,16 +17,24 @@ jobs:
           ref: ${{ github.ref }}
       - name: docker build
         run: make mvn-build get-main-project-target-dir
+  integration-test:
+    needs: build-test
+    runs-on: ubuntu-latest
+    steps:
       - name: integration test
         env:
           ITEST_GH_TOKEN: ${{ secrets.ITEST_GH_TOKEN }}
         run: make integration-test
+  coverage:
+    needs: build-test
+    runs-on: ubuntu-latest
+    steps:
       - name: Coveralls
         uses: coverallsapp/github-action@master
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
   master-test-deploy:
-    needs: build-test
+    needs: integration-test
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/master'
     steps:
