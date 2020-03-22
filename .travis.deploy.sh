@@ -15,7 +15,7 @@ shred --remove codesigning.asc
 
 # Set up Maven settings and release
 cp .travis.settings.xml ${HOME}/.m2/settings.xml
-docker run -d --rm -v "$PWD":/usr/src/build -v "$HOME/.m2":/root/.m2  -v "$HOME/.ssh":/root/.ssh -v "$HOME/.gnupg":/root/.gnupg -v "$PWD/target:/usr/src/mymaven/target" -w /usr/src/build -e CI_DEPLOY_USER -e CI_DEPLOY_PASSWORD -e GPG_KEY_NAME -e GPG_PASSPHRASE maven:3.6-jdk-11 releaser:release
+docker run -d --rm -v "$PWD":/usr/src/build -v "$HOME/.m2":/root/.m2  -v "$HOME/.ssh":/root/.ssh -v "$HOME/.gnupg":/root/.gnupg -w /usr/src/build -e CI_DEPLOY_USER -e CI_DEPLOY_PASSWORD -e GPG_KEY_NAME -e GPG_PASSPHRASE maven:3.6-jdk-11 releaser:release
 
 # Push latest docker image
 set +x
