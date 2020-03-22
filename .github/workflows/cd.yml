@@ -21,11 +21,13 @@ jobs:
         env:
           ITEST_GH_TOKEN: ${{ secrets.ITEST_GH_TOKEN }}
         run: make integration-test
+      - name: check dir
+        run: ls -laR ${GITHUB_WORKSPACE}
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          file: ./dockerfile-image-update/target/site/jacoco/jacoco.xml
+          file: ${GITHUB_WORKSPACE}/dockerfile-image-update/target/site/jacoco/jacoco.xml
           # flags: unittests
           # yml: ./codecov.yml
           fail_ci_if_error: true
