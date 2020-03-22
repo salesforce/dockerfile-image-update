@@ -15,15 +15,7 @@ branches:
   except:
   - "/^dockerfile-image-update-.*$/"
 script:
-- make
+- make mvn-build
 cache:
   directories:
   - "~/.m2/repository"
-after_success:
-- mvn coveralls:report
-deploy:
-  provider: script
-  script: sh $TRAVIS_BUILD_DIR/.travis.deploy.sh
-  skip_cleanup: true
-  on:
-    branch: master

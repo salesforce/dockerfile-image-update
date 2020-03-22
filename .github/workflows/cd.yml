@@ -25,7 +25,7 @@ jobs:
         uses: codecov/codecov-action@v1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          file: ./target/site/jacoco/jacoco.xml
+          file: ./dockerfile-image-update/target/site/jacoco/jacoco.xml
           flags: unittests
           # yml: ./codecov.yml
           fail_ci_if_error: true
