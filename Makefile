@@ -21,4 +21,4 @@ integration-test:
 	rm itest.env
 
 get-main-project-target-dir:
-	docker run --rm -v $(CURDIR):/tmp/project local-maven-build /bin/bash -c "cp -R ${DFIU_TARGET} /tmp/project/${DFIU_TARGET}"
+	docker run --rm -v $(CURDIR):/tmp/project local-maven-build /bin/bash -c "cp -R ${DFIU_TARGET}/. /tmp/project/${DFIU_TARGET}/"
