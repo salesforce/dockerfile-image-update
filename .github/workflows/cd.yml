@@ -21,11 +21,7 @@ jobs:
         env:
           ITEST_GH_TOKEN: ${{ secrets.ITEST_GH_TOKEN }}
         run: make integration-test
-      - name: Coveralls
-        uses: coverallsapp/github-action@master
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-  master-test-deploy:
+  master-deploy:
     needs: build-test
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/master'
