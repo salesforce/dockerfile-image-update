@@ -21,7 +21,8 @@ jobs:
         env:
           ITEST_GH_TOKEN: ${{ secrets.ITEST_GH_TOKEN }}
         run: |
-          ls -la
+          ls -laR dockerfile-image-update-itest
+          pwd
           echo git_api_token=${ITEST_GH_TOKEN} > `pwd`/itest.env
           export user_itest_secrets_file_secret=`pwd`/itest.env
           docker-compose up #--abort-on-container-exit TODO: remove this once itests can be made not to flap see issue #21
