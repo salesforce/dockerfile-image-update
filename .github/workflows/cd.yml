@@ -7,7 +7,7 @@ on:
     branches:
       - master
 jobs:
-  test:
+  pr-branch-test:
     runs-on: ubuntu-latest
     if: github.ref != 'refs/heads/master' && ! startsWith('dockerfile-image-update-', github.ref)
     steps:
@@ -17,18 +17,19 @@ jobs:
           ref: ${{ github.ref }}
       - name: docker build
         run: docker build -t salesforce/dockerfile-image-update .
+      - name: build integration test jar
+        uses: docker://maven:3.6-jdk-11
+        with:
+          args: install -pl dockerfile-image-update-itest -am -DskipTests
       - name: integration test
         env:
           ITEST_GH_TOKEN: ${{ secrets.ITEST_GH_TOKEN }}
         run: |
-          # Potentially remove this extra compilation by restructuring build to 2 containers?
-          # maven build + container to go to Docker Hub (then we can just snag the itest jar from maven build container here)
-          docker run -d --rm -v "$PWD":/usr/src/build -v "$HOME/.m2":/root/.m2 -w /usr/src/build maven:3.6-jdk-11 install -pl dockerfile-image-update-itest -am -DskipTests
           echo git_api_token=${ITEST_GH_TOKEN} > `pwd`/itest.env
           export user_itest_secrets_file_secret=`pwd`/itest.env
           docker-compose up #--abort-on-container-exit TODO: remove this once itests can be made not to flap see issue #21
           rm itest.env
-  deploy:
+  master-test-deploy:
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/master'
     steps:
@@ -38,13 +39,14 @@ jobs:
           ref: ${{ github.ref }}
       - name: docker build
         run: docker build -t salesforce/dockerfile-image-update .
+      - name: build integration test jar
+        uses: docker://maven:3.6-jdk-11
+        with:
+          args: install -pl dockerfile-image-update-itest -am -DskipTests
       - name: integration test
         env:
           ITEST_GH_TOKEN: ${{ secrets.ITEST_GH_TOKEN }}
         run: |
-          # Potentially remove this extra compilation by restructuring build to 2 containers?
-          # maven build + container to go to Docker Hub (then we can just snag the itest jar from maven build container here)
-          docker run -d --rm -v "$PWD":/usr/src/build -v "$HOME/.m2":/root/.m2 -w /usr/src/build maven:3.6-jdk-11 install -pl dockerfile-image-update-itest -am -DskipTests
           echo git_api_token=${ITEST_GH_TOKEN} > `pwd`/itest.env
           export user_itest_secrets_file_secret=`pwd`/itest.env
           docker-compose up #--abort-on-container-exit TODO: remove this once itests can be made not to flap see issue #21
