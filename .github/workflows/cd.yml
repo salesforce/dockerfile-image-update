@@ -7,47 +7,26 @@ on:
     branches:
       - master
 jobs:
-  pr-branch-test:
+  build-test:
     runs-on: ubuntu-latest
-    if: github.ref != 'refs/heads/master' && ! startsWith('dockerfile-image-update-', github.ref)
+    if: ! startsWith('dockerfile-image-update-', github.ref)
     steps:
       - name: checkout
         uses: actions/checkout@master
         with:
           ref: ${{ github.ref }}
       - name: docker build
-        run: docker build -t salesforce/dockerfile-image-update .
-      - name: build integration test jar
-        uses: docker://maven:3.6-jdk-11
-        with:
-          args: 'mvn install --projects dockerfile-image-update-itest --also-make -DskipTests'
+        run: make mvn-build
       - name: integration test
         env:
           ITEST_GH_TOKEN: ${{ secrets.ITEST_GH_TOKEN }}
-        run: |
-          echo git_api_token=${ITEST_GH_TOKEN} > `pwd`/itest.env
-          export user_itest_secrets_file_secret=`pwd`/itest.env
-          docker-compose up #--abort-on-container-exit TODO: remove this once itests can be made not to flap see issue #21
-          rm itest.env
+        run: make integration-test
   master-test-deploy:
+    needs: build-test
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/master'
     steps:
-      - name: checkout
+      - name: deploy
         uses: actions/checkout@master
         with:
           ref: ${{ github.ref }}
-      - name: docker build
-        run: docker build -t salesforce/dockerfile-image-update .
-      - name: build integration test jar
-        uses: docker://maven:3.6-jdk-11
-        with:
-          args: 'mvn install --projects dockerfile-image-update-itest --also-make -DskipTests'
-      - name: integration test
-        env:
-          ITEST_GH_TOKEN: ${{ secrets.ITEST_GH_TOKEN }}
-        run: |
-          echo git_api_token=${ITEST_GH_TOKEN} > `pwd`/itest.env
-          export user_itest_secrets_file_secret=`pwd`/itest.env
-          docker-compose up #--abort-on-container-exit TODO: remove this once itests can be made not to flap see issue #21
-          rm itest.env
