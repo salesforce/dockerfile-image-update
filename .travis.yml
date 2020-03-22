@@ -15,7 +15,6 @@ branches:
   except:
   - "/^dockerfile-image-update-.*$/"
 script:
-- mvn --quiet --batch-mode verify
 - docker build -t salesforce/dockerfile-image-update .
 - echo git_api_token=${ITEST_GH_TOKEN} > `pwd`/itest.env
 - export user_itest_secrets_file_secret=`pwd`/itest.env
