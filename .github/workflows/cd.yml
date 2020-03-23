@@ -16,7 +16,7 @@ jobs:
         with:
           ref: ${{ github.ref }}
       - name: docker build
-        run: make mvn-build get-main-project-dirs
+        run: make mvn-docker-build get-main-project-dirs
       - name: Upload main module
         uses: actions/upload-artifact@v1
         with:
