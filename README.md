@@ -1,6 +1,7 @@
-[![Build Status](https://travis-ci.org/salesforce/dockerfile-image-update.svg?branch=master)](https://travis-ci.org/salesforce/dockerfile-image-update)
-[![Coverage Status](https://coveralls.io/repos/github/salesforce/dockerfile-image-update/badge.svg?branch=master&service=github)](https://coveralls.io/github/salesforce/dockerfile-image-update?branch=master)
+![Multi-Module Maven Build / Deploy](https://github.com/salesforce/dockerfile-image-update/workflows/Multi-Module%20Maven%20Build%20/%20Deploy/badge.svg)
+[![codecov](https://codecov.io/gh/salesforce/dockerfile-image-update/branch/master/graph/badge.svg)](https://codecov.io/gh/salesforce/dockerfile-image-update)
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.salesforce.dockerfile-image-update/dockerfile-image-update/badge.svg?maxAge=3600)](https://maven-badges.herokuapp.com/maven-central/com.salesforce.dockerfile-image-update/dockerfile-image-update)
+[![Docker Image Version (latest semver)](https://img.shields.io/docker/v/salesforce/dockerfile-image-update?label=Docker%20version&sort=semver)](https://hub.docker.com/r/salesforce/dockerfile-image-update/tags)
 [![Dependabot Status](https://api.dependabot.com/badges/status?host=github&repo=salesforce/dockerfile-image-update)](https://dependabot.com)
 
 # Dockerfile Image Updater

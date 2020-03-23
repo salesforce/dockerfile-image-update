@@ -16,17 +16,76 @@ jobs:
         with:
           ref: ${{ github.ref }}
       - name: docker build
-        run: make mvn-build get-main-project-target-dir
+        run: make mvn-docker-build get-main-project-dirs
+      - name: Upload main module
+        uses: actions/upload-artifact@v1
+        with:
+          name: dockerfile-image-update
+          path: dockerfile-image-update
+      - name: Upload itest module
+        uses: actions/upload-artifact@v1
+        with:
+          name: dockerfile-image-update-itest
+          path: dockerfile-image-update-itest
+  integration-test:
+    runs-on: ubuntu-latest
+    needs: build-test
+    steps:
+      - name: checkout
+        uses: actions/checkout@master
+        with:
+          ref: ${{ github.ref }}
+      - name: Download itest dir
+        uses: actions/download-artifact@v1
+        with:
+          name: dockerfile-image-update-itest
       - name: integration test
         env:
           ITEST_GH_TOKEN: ${{ secrets.ITEST_GH_TOKEN }}
         run: make integration-test
-  master-deploy:
+  upload-coverage:
+    runs-on: ubuntu-latest
     needs: build-test
+    steps:
+      - name: Download main project dir
+        uses: actions/download-artifact@v1
+        with:
+          name: dockerfile-image-update
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          file: ./dockerfile-image-update/target/site/jacoco/jacoco.xml
+          # flags: unittests
+          # yml: ./codecov.yml
+          fail_ci_if_error: true
+  master-deploy:
+    needs: integration-test
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/master'
     steps:
-      - name: deploy
+      - name: checkout
         uses: actions/checkout@master
         with:
           ref: ${{ github.ref }}
+      - name: Download main project dir
+        uses: actions/download-artifact@v1
+        with:
+          name: dockerfile-image-update
+      - name: Download itest dir
+        uses: actions/download-artifact@v1
+        with:
+          name: dockerfile-image-update-itest
+      - name: deploy
+        env:
+          encrypted_00fae8efff8c_iv: ${{ secrets.encrypted_00fae8efff8c_iv }}
+          encrypted_00fae8efff8c_key: ${{ secrets.encrypted_00fae8efff8c_key }}
+          encrypted_96e73e3cb232_iv: ${{ secrets.encrypted_96e73e3cb232_iv }}
+          encrypted_96e73e3cb232_key: ${{ secrets.encrypted_96e73e3cb232_key }}
+          GPG_KEY_NAME: ${{ secrets.GPG_KEY_NAME }}
+          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+          CI_DEPLOY_USER: ${{ secrets.CI_DEPLOY_USER }}
+          CI_DEPLOY_PASSWORD: ${{ secrets.CI_DEPLOY_PASSWORD }}
+        run: sh ./.ci.deploy.sh
