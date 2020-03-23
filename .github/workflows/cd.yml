@@ -77,6 +77,6 @@ jobs:
         with:
           name: dockerfile-image-update-itest
       - name: deploy
-        uses: actions/checkout@master
-        with:
+        env:
           ref: ${{ github.ref }}
+        run: sh ./.ci.deploy.sh
