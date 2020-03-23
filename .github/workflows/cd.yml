@@ -78,5 +78,14 @@ jobs:
           name: dockerfile-image-update-itest
       - name: deploy
         env:
-          ref: ${{ github.ref }}
+          encrypted_00fae8efff8c_iv: ${{ secrets.encrypted_00fae8efff8c_iv }}
+          encrypted_00fae8efff8c_key: ${{ secrets.encrypted_00fae8efff8c_key }}
+          encrypted_96e73e3cb232_iv: ${{ secrets.encrypted_96e73e3cb232_iv }}
+          encrypted_96e73e3cb232_key: ${{ secrets.encrypted_96e73e3cb232_key }}
+          GPG_KEY_NAME: ${{ secrets.GPG_KEY_NAME }}
+          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+          CI_DEPLOY_USER: ${{ secrets.CI_DEPLOY_USER }}
+          CI_DEPLOY_PASSWORD: ${{ secrets.CI_DEPLOY_PASSWORD }}
         run: sh ./.ci.deploy.sh
