@@ -16,11 +16,37 @@ jobs:
         with:
           ref: ${{ github.ref }}
       - name: docker build
-        run: make mvn-build get-main-project-target-dir
+        run: make mvn-build get-main-project-dirs
+      - name: Upload main module
+        uses: actions/upload-artifact@v1
+        with:
+          name: dockerfile-image-update
+          path: dockerfile-image-update
+      - name: Upload itest module
+        uses: actions/upload-artifact@v1
+        with:
+          name: dockerfile-image-update-itest
+          path: dockerfile-image-update-itest
+  integration-test:
+    runs-on: ubuntu-latest
+    needs: build-test
+    steps:
+      - name: Download itest dir
+        uses: actions/download-artifact@v1
+        with:
+          name: dockerfile-image-update-itest
       - name: integration test
         env:
           ITEST_GH_TOKEN: ${{ secrets.ITEST_GH_TOKEN }}
         run: make integration-test
+  upload-coverage:
+    runs-on: ubuntu-latest
+    needs: build-test
+    steps:
+      - name: Download main project dir
+        uses: actions/download-artifact@v1
+        with:
+          name: dockerfile-image-update
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v1
         with:
@@ -30,10 +56,18 @@ jobs:
           # yml: ./codecov.yml
           fail_ci_if_error: true
   master-deploy:
-    needs: build-test
+    needs: integration-test
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/master'
     steps:
+      - name: Download main project dir
+        uses: actions/download-artifact@v1
+        with:
+          name: dockerfile-image-update
+      - name: Download itest dir
+        uses: actions/download-artifact@v1
+        with:
+          name: dockerfile-image-update-itest
       - name: deploy
         uses: actions/checkout@master
         with:
