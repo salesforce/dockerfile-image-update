@@ -74,7 +74,7 @@ jobs:
           JACOCO_SOURCE_PATH: "${{github.workspace}}/dockerfile-image-update/src/main/java"
         with:
           # The report file must be there, otherwise Code Climate won't find it
-          coverageCommand: mvn test
+          coverageCommand: echo "already done"
           coverageLocations:
             "${{github.workspace}}/dockerfile-image-update/target/site/jacoco/jacoco.xml:jacoco"
   master-deploy:
