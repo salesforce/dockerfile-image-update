@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -ex
 # Set up Maven settings and release
+mkdir -p "${HOME}/.m2"
 cp .ci.settings.xml "${HOME}"/.m2/settings.xml
 docker run --rm -v "${PWD}":/usr/src/build \
                 -v "${HOME}/.m2":/root/.m2 \
