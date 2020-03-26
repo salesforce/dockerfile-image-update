@@ -1,21 +1,20 @@
 #!/usr/bin/env bash
 set -ex
-# Import SSH key to access GitHub for versioning
-openssl aes-256-cbc -K "${encrypted_96e73e3cb232_key}" -iv "${encrypted_96e73e3cb232_iv}" \
-    -in id_rsa_dockerfile_image_update.enc -out id_rsa_dockerfile_image_update -d
-mkdir -p "${HOME}/.ssh"
-mv -f id_rsa_dockerfile_image_update "${HOME}/.ssh/id_rsa"
-
-# Import code signing keys
-openssl aes-256-cbc -K "${encrypted_00fae8efff8c_key}" -iv "${encrypted_00fae8efff8c_iv}" -in codesigning.asc.enc -out codesigning.asc -d
-gpg --fast-import codesigning.asc
-
-# Remove code signing keys (since the releaser plugin requires a clean git workspace)
-shred --remove codesigning.asc
-
 # Set up Maven settings and release
 cp .ci.settings.xml "${HOME}"/.m2/settings.xml
-docker run --rm -v "${PWD}":/usr/src/build -v "${HOME}/.m2":/root/.m2  -v "${HOME}/.ssh":/root/.ssh -v "${HOME}/.gnupg":/root/.gnupg -w /usr/src/build -e CI_DEPLOY_USER -e CI_DEPLOY_PASSWORD -e GPG_KEY_NAME -e GPG_PASSPHRASE maven:3.6-jdk-11 releaser:release
+docker run --rm -v "${PWD}":/usr/src/build \
+                -v "${HOME}/.m2":/root/.m2 \
+                -w /usr/src/build \
+                -e encrypted_96e73e3cb232_key \
+                -e encrypted_96e73e3cb232_iv \
+                -e encrypted_00fae8efff8c_key \
+                -e encrypted_00fae8efff8c_iv \
+                -e CI_DEPLOY_USER \
+                -e CI_DEPLOY_PASSWORD \
+                -e GPG_KEY_NAME \
+                -e GPG_PASSPHRASE \
+                maven:3.6-jdk-11 \
+                /bin/bash -c "source .ci.prepare-ssh-gpg.sh && mvn releaser:release"
 
 #Package what we've released to Maven Central
 docker build -t salesforce/dockerfile-image-update .
