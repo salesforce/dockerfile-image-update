@@ -11,6 +11,8 @@ jobs:
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'dockerfile-image-update-') == false
     steps:
+      - name: gpg-check-conf
+        run: cat "${HOME}/.gnupg/gpg-agent.conf"
       - name: checkout
         uses: actions/checkout@master
         with:
