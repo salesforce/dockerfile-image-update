@@ -11,5 +11,9 @@ echo "github.com ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAq2A7hRGmdnm9tUDbO9IDSwBK6Tb
 openssl aes-256-cbc -K "${encrypted_00fae8efff8c_key}" -iv "${encrypted_00fae8efff8c_iv}" -in codesigning.asc.enc -out codesigning.asc -d
 gpg --no-tty --batch --yes --fast-import codesigning.asc
 
+# Allow loopback pinentry in maven-gpg-plugin (ain't nobody need no shared tty)
+echo "allow-loopback-pinentry" >> ~/.gnupg/gpg-agent.conf
+gpgconf --reload gpg-agent
+
 # Remove code signing keys (since the releaser plugin requires a clean git workspace)
 shred --remove codesigning.asc
