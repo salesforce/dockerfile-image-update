@@ -1,10 +1,11 @@
 ARG JDK_VERSION
 FROM openjdk:${JDK_VERSION}-jre-slim
 
-LABEL version="0.1"
+ARG MVN_VERSION
+LABEL version=${MVN_VERSION}
 
 MAINTAINER dvastrata@salesforce.com
 
-COPY /dockerfile-image-update/target/dockerfile-image-update-1.0-SNAPSHOT.jar /dockerfile-image-update.jar
+COPY /dockerfile-image-update/target/dockerfile-image-update-${MVN_VERSION}.jar /dockerfile-image-update-${MVN_VERSION}.jar
 
-ENTRYPOINT ["java", "-jar", "/dockerfile-image-update.jar"]
+ENTRYPOINT ["java", "-jar", "/dockerfile-image-update-${MVN_VERSION}.jar"]

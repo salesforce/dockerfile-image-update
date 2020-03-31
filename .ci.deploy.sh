@@ -30,8 +30,13 @@ docker run --rm -v "${PWD}":/usr/src/build \
                 maven:3.6-jdk-"${JDK_VERSION}" \
                 /bin/bash -c "source .ci.prepare-ssh-gpg.sh && mvn --quiet --batch-mode releaser:release"
 
+# Get MVN_VERSION
+MVN_VERSION=$(cat ./dockerfile-image-update/target/classes/version.txt)
+echo "Bundling Maven version ${MVN_VERSION}"
+
 #Package what we've released to Maven Central
-docker build --tag salesforce/dockerfile-image-update --build-arg JDK_VERSION="${JDK_VERSION}" .
+docker build --tag salesforce/dockerfile-image-update \
+ --build-arg JDK_VERSION="${JDK_VERSION}" --build-arg MVN_VERSION="${MVN_VERSION}" .
 
 # Push latest docker image
 set +x
@@ -40,7 +45,6 @@ set -x
 docker push salesforce/dockerfile-image-update
 
 # Tag / push image locked to Maven version of the command-line module
-MVN_VERSION=$(cat ./dockerfile-image-update/target/classes/version.txt)
 docker tag "salesforce/dockerfile-image-update salesforce/dockerfile-image-update:${MVN_VERSION}"
 docker push "salesforce/dockerfile-image-update:${MVN_VERSION}"
 
