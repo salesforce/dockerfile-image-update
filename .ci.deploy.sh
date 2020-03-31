@@ -31,7 +31,7 @@ docker run --rm -v "${PWD}":/usr/src/build \
                 /bin/bash -c "source .ci.prepare-ssh-gpg.sh && mvn --quiet --batch-mode releaser:release"
 
 #Package what we've released to Maven Central
-docker build -t salesforce/dockerfile-image-update .
+docker build --tag salesforce/dockerfile-image-update --build-arg JDK_VERSION="${JDK_VERSION}" .
 
 # Push latest docker image
 set +x
