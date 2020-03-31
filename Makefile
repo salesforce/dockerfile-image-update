@@ -1,5 +1,8 @@
 all: mvn-docker-build get-itest-jar-from-maven-image integration-test
 
+# JDK_VERSION should be the JDK version we use to source our container dependencies
+JDK_VERSION=8
+
 DFIU_DIR=dockerfile-image-update
 DFIU_TARGET=${DFIU_DIR}/target
 DFIU_FULLPATH=${DFIU_TARGET}/dockerfile-image-update-1.0-SNAPSHOT.jar
@@ -8,10 +11,10 @@ DFIU_ITEST_TARGET=${DFIU_ITEST_DIR}/target
 DFIU_ITEST_FULLPATH=${DFIU_ITEST_TARGET}/dockerfile-image-update-itest-1.0-SNAPSHOT.jar
 
 mvn-docker-build:
-	docker build -t local-maven-build -f Dockerfile.maven .
+	docker build --tag local-maven-build --file Dockerfile.maven --build-arg JDK_VERSION=${JDK_VERSION} .
 	mkdir -p ${DFIU_TARGET}
 	docker run --rm -v $(CURDIR):/tmp/project local-maven-build /bin/bash -c "cp ${DFIU_FULLPATH} /tmp/project/${DFIU_FULLPATH}"
-	docker build -t salesforce/dockerfile-image-update .
+	docker build --tag salesforce/dockerfile-image-update --build-arg JDK_VERSION=${JDK_VERSION} .
 
 #TODO: Modify docker-compose.yml for local image
 #TODO: add --abort-on-container-exit to docker-compose once itests can be made not to flap see issue #21
@@ -27,3 +30,6 @@ get-main-project-dirs:
 get-itest-jar-from-maven-image:
 	mkdir -p ${DFIU_ITEST_TARGET}
 	docker run --rm -v $(CURDIR):/tmp/project local-maven-build /bin/bash -c "cp ${DFIU_ITEST_FULLPATH} /tmp/project/${DFIU_ITEST_FULLPATH}"
+
+deploy:
+	JDK_VERSION=${JDK_VERSION} ./.ci.deploy.sh

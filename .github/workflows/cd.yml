@@ -110,4 +110,4 @@ jobs:
           DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
           CI_DEPLOY_USER: ${{ secrets.CI_DEPLOY_USER }}
           CI_DEPLOY_PASSWORD: ${{ secrets.CI_DEPLOY_PASSWORD }}
-        run: sh ./.ci.deploy.sh
+        run: make deploy

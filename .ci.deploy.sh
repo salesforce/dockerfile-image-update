@@ -1,5 +1,18 @@
 #!/usr/bin/env bash
+declare -a vars=(JDK_VERSION encrypted_00fae8efff8c_key encrypted_00fae8efff8c_iv \
+    encrypted_96e73e3cb232_key encrypted_96e73e3cb232_iv CI_DEPLOY_USER CI_DEPLOY_PASSWORD \
+    GPG_KEY_NAME GPG_PASSPHRASE DOCKER_USERNAME DOCKER_PASSWORD)
+
+for var_name in "${vars[@]}"
+do
+  if [ -z "$(eval "echo \$$var_name")" ]; then
+    echo "Missing environment variable $var_name"
+    exit 1
+  fi
+done
+
 set -ex
+
 # Set up Maven settings and release
 mkdir -p "${HOME}/.m2"
 cp .ci.settings.xml "${HOME}"/.m2/settings.xml
@@ -14,8 +27,8 @@ docker run --rm -v "${PWD}":/usr/src/build \
                 -e CI_DEPLOY_PASSWORD \
                 -e GPG_KEY_NAME \
                 -e GPG_PASSPHRASE \
-                maven:3.6-jdk-11 \
-                /bin/bash -c "source .ci.prepare-ssh-gpg.sh && mvn releaser:release"
+                maven:3.6-jdk-"${JDK_VERSION}" \
+                /bin/bash -c "source .ci.prepare-ssh-gpg.sh && mvn --quiet --batch-mode releaser:release"
 
 #Package what we've released to Maven Central
 docker build -t salesforce/dockerfile-image-update .
