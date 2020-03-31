@@ -93,8 +93,8 @@ public class FromInstruction {
 
     /**
      * Get a new {@code FromInstruction} the same as this but with the {@code tag} set as {@code newTag}
-     * @param newTag
-     * @return
+     * @param newTag the new image tag
+     * @return a new FROM with the new image tag
      */
     public FromInstruction getFromInstructionWithNewTag(String newTag) {
         return new FromInstruction(baseImageName, newTag, additionalParts, comments);

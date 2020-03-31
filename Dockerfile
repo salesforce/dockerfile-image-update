@@ -1,4 +1,5 @@
-FROM openjdk:11-jre-slim
+ARG JDK_VERSION
+FROM openjdk:${JDK_VERSION}-jre-slim
 
 LABEL version="0.1"
 

@@ -1,4 +1,5 @@
-FROM maven:3.6-jdk-11 AS build
+ARG JDK_VERSION
+FROM maven:3.6-jdk-${JDK_VERSION} AS build
 
 COPY . .
 RUN mvn --version

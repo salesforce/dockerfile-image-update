@@ -45,8 +45,8 @@ public class GitHubUtil {
      * paid account.
      *
      * @param repoName Name of the repository
-     * @return
-     * @throws IOException
+     * @return GHRepository for {@code repoName}
+     * @throws IOException when failing to get a GHRepository
      */
     public GHRepository createPublicRepo(String repoName) throws IOException {
         GHCreateRepositoryBuilder repoBuilder = github.createRepository(repoName);
@@ -183,8 +183,8 @@ public class GitHubUtil {
     /**
      * Returns a <code>java.util.Map</code> of GitHub repositories owned by a user. Returned Map's keys are the repository
      * names and values are their corresponding GitHub repository objects.
-     * @param user
-     * @return
+     * @param user GitHub user (person/org) which has repositories
+     * @return map of repo name to GHRepository
      */
     public Map<String, GHRepository> getReposForUserAtCurrentInstant(GHMyself user) {
         Map<String, GHRepository> repoByName = new HashMap<>();
