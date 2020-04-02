@@ -2,6 +2,10 @@ package com.salesforce.dockerfileimageupdate.itest;
 
 import com.google.common.base.Strings;
 
+/**
+ * Finds the dockerfile-image-updater jar based on the provided version.
+ * This will default to 1.0-SNAPSHOT and is generally useful for the integration test container.
+ */
 public class MainJarFinder {
 
     public static final String MVN_VERSION = "MVN_VERSION";
@@ -23,11 +27,16 @@ public class MainJarFinder {
         this.environment = environment;
     }
 
+    /**
+     * Builds the name of the dockerfile-image-update jar with either the default version or
+     * a version provided by the MVN_VERSION environment variable
+     * @return the name of the dockerfile-image-update jar
+     */
     public static String getName() {
         return new MainJarFinder().getJarNameFromEnvironment();
     }
 
-    public String getJarNameFromEnvironment() {
+    protected String getJarNameFromEnvironment() {
         String version = this.getVersionFromEnvironment();
         return String.format(JAR_NAME_FORMAT, version);
     }

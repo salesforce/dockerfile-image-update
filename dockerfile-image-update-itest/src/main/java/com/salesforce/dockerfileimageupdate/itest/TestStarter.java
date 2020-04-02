@@ -51,6 +51,12 @@ public class TestStarter {
         }
     }
 
+    /**
+     * This will provide a test suite for TestNG which will be based on the package.
+     * It delegates any class inspection / reflection to TestNG.
+     *
+     * @return the XmlSuite for com.salesforce.dockerfileimageupdate.itest.tests.*
+     */
     private List<XmlSuite> getXmlSuites() {
         XmlSuite suite = new XmlSuite();
         suite.setName("Full Integration Test");
