@@ -10,6 +10,7 @@ package com.salesforce.dockerfileimageupdate.itest.tests;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
+import com.salesforce.dockerfileimageupdate.itest.MainJarFinder;
 import com.salesforce.dockerfileimageupdate.utils.GitHubUtil;
 import org.kohsuke.github.*;
 import org.slf4j.Logger;
@@ -87,7 +88,8 @@ public class ParentCommandTest {
 
     @Test
     public void testParent() throws Exception {
-        ProcessBuilder builder = new ProcessBuilder("java", "-jar", "dockerfile-image-update.jar", "parent",
+        String jarName = new MainJarFinder().getJarNameFromEnvironment();
+        ProcessBuilder builder = new ProcessBuilder("java", "-jar", jarName, "parent",
                 IMAGE_1, TAG, STORE_NAME);
         builder.redirectOutput(ProcessBuilder.Redirect.INHERIT);
         builder.redirectError(ProcessBuilder.Redirect.INHERIT);
@@ -108,7 +110,7 @@ public class ParentCommandTest {
 
     @Test
     public void testSameNameAcrossDifferentOrgs() throws Exception {
-        ProcessBuilder builder = new ProcessBuilder("java", "-jar", "dockerfile-image-update.jar", "parent",
+        ProcessBuilder builder = new ProcessBuilder("java", "-jar", MainJarFinder.getName(), "parent",
                 IMAGE_2, TAG, STORE_NAME);
         builder.redirectOutput(ProcessBuilder.Redirect.INHERIT);
         builder.redirectError(ProcessBuilder.Redirect.INHERIT);
