@@ -8,6 +8,7 @@
 
 package com.salesforce.dockerfileimageupdate.itest.tests;
 
+import com.salesforce.dockerfileimageupdate.itest.MainJarFinder;
 import com.salesforce.dockerfileimageupdate.utils.GitHubUtil;
 import org.kohsuke.github.GHOrganization;
 import org.kohsuke.github.GHRepository;
@@ -94,7 +95,7 @@ public class AllCommandTest {
 
     @Test
     public void testAllCommand() throws Exception {
-        ProcessBuilder builder = new ProcessBuilder("java", "-jar", "dockerfile-image-update.jar", "all", STORE_NAME);
+        ProcessBuilder builder = new ProcessBuilder("java", "-jar", MainJarFinder.getName(), "all", STORE_NAME);
         builder.redirectOutput(ProcessBuilder.Redirect.INHERIT);
         builder.redirectError(ProcessBuilder.Redirect.INHERIT);
         Process pc = builder.start(); // may throw IOException
