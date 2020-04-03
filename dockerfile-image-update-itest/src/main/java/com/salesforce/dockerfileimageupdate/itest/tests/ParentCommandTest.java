@@ -10,6 +10,7 @@ package com.salesforce.dockerfileimageupdate.itest.tests;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
+import com.salesforce.dockerfileimageupdate.itest.MainJarFinder;
 import com.salesforce.dockerfileimageupdate.utils.GitHubUtil;
 import org.kohsuke.github.*;
 import org.slf4j.Logger;
@@ -18,6 +19,7 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.file.Paths;
@@ -87,18 +89,28 @@ public class ParentCommandTest {
 
     @Test
     public void testParent() throws Exception {
-        ProcessBuilder builder = new ProcessBuilder("java", "-jar", "dockerfile-image-update.jar", "parent",
-                IMAGE_1, TAG, STORE_NAME);
-        builder.redirectOutput(ProcessBuilder.Redirect.INHERIT);
-        builder.redirectError(ProcessBuilder.Redirect.INHERIT);
-        Process pc = builder.start(); // may throw IOException
-
-        int exitcode = pc.waitFor();
+        int exitcode = spawnParentProcess(IMAGE_1);
         assertEquals(exitcode, 0, "Parent command for testParent failed.");
 
         for (String repoName : REPOS) {
             TestValidationCommon.validateRepo(repoName, IMAGE_1, TAG, github, gitHubUtil);
         }
+    }
+
+    /**
+     * This method spawns a dockerfile-image-update process with the parent command.
+     *
+     * @param imageName name of the image to update
+     * @return exit code of parent process
+     */
+    private int spawnParentProcess(String imageName) throws IOException, InterruptedException {
+        ProcessBuilder builder = new ProcessBuilder("java", "-jar", MainJarFinder.getName(), "parent",
+                imageName, TAG, STORE_NAME);
+        builder.redirectOutput(ProcessBuilder.Redirect.INHERIT);
+        builder.redirectError(ProcessBuilder.Redirect.INHERIT);
+        Process pc = builder.start(); // may throw IOException
+
+        return pc.waitFor();
     }
 
     @Test(dependsOnMethods = "testParent")
@@ -108,13 +120,7 @@ public class ParentCommandTest {
 
     @Test
     public void testSameNameAcrossDifferentOrgs() throws Exception {
-        ProcessBuilder builder = new ProcessBuilder("java", "-jar", "dockerfile-image-update.jar", "parent",
-                IMAGE_2, TAG, STORE_NAME);
-        builder.redirectOutput(ProcessBuilder.Redirect.INHERIT);
-        builder.redirectError(ProcessBuilder.Redirect.INHERIT);
-        Process pc = builder.start(); // may throw IOException
-
-        int exitcode = pc.waitFor();
+        int exitcode = spawnParentProcess(IMAGE_2);
         assertEquals(exitcode, 0, "Parent command for testSameNameAcrossDifferentOrgs failed.");
 
         for (String repoName : DUPLICATES_CREATED_BY_GIT_HUB) {

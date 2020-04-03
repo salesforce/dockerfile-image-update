@@ -26,6 +26,5 @@ launcherHome*
 target/
 /test-results/
 .imageupdate/
-dockerfile-image-update-itest/src/test/
 test-results/
 dependency-reduced-pom.xml

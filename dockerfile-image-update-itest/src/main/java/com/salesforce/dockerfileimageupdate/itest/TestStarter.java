@@ -11,9 +11,13 @@ package com.salesforce.dockerfileimageupdate.itest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.*;
+import org.testng.xml.XmlPackage;
+import org.testng.xml.XmlRun;
 import org.testng.xml.XmlSuite;
+import org.testng.xml.XmlTest;
 
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -37,7 +41,7 @@ public class TestStarter {
         TestNG testNG = new TestNG();
         testNG.setOutputDirectory(TEST_PATH);
         testNG.getReporters().add(stdoutReporter);
-        testNG.setTestClasses(new Class[]{TestCollector.class});
+        testNG.setXmlSuites(this.getXmlSuites());
         testNG.addListener(tla);
         testNG.run();
 
@@ -45,6 +49,27 @@ public class TestStarter {
             log.error("Test(s) have failed see output above");
             System.exit(2);
         }
+    }
+
+    /**
+     * This will provide a test suite for TestNG which will be based on the package.
+     * It delegates any class inspection / reflection to TestNG.
+     *
+     * @return the XmlSuite for com.salesforce.dockerfileimageupdate.itest.tests.*
+     */
+    private List<XmlSuite> getXmlSuites() {
+        XmlSuite suite = new XmlSuite();
+        suite.setName("Full Integration Test");
+        XmlTest test = new XmlTest(suite);
+        test.setName("all-tests");
+        XmlRun xmlRun = new XmlRun();
+        xmlRun.onInclude(test.getName());
+        List<XmlPackage> packages = new ArrayList<>();
+        packages.add(new XmlPackage("com.salesforce.dockerfileimageupdate.itest.tests.*"));
+        test.setXmlPackages(packages);
+        List<XmlSuite> suites = new ArrayList<>();
+        suites.add(suite);
+        return suites;
     }
 
     /**
