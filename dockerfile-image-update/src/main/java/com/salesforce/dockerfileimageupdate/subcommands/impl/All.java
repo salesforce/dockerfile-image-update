@@ -14,6 +14,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
 import com.salesforce.dockerfileimageupdate.SubCommand;
+import com.salesforce.dockerfileimageupdate.repository.GitHub;
 import com.salesforce.dockerfileimageupdate.subcommands.ExecutableWithNamespace;
 import com.salesforce.dockerfileimageupdate.utils.Constants;
 import com.salesforce.dockerfileimageupdate.utils.DockerfileGitHubUtil;
@@ -114,7 +115,7 @@ public class All implements ExecutableWithNamespace {
             } else {
                 // fork the parent if not already forked
                 if (parentReposForked.contains(parentRepoName) == false) {
-                    GHRepository fork = dockerfileGitHubUtil.closeOutdatedPullRequestAndFork(parent);
+                    GHRepository fork = dockerfileGitHubUtil.getForkAndEnsureTargetBranchExistsFromDesiredBranch(parent);
                     if (fork == null) {
                         log.info("Could not fork {}", parentRepoName);
                     } else {
@@ -191,12 +192,7 @@ public class All implements ExecutableWithNamespace {
         }
         GHRepository parent = forkedRepo.getParent();
 
-        if (parent == null || !pathToDockerfilesInParentRepo.containsKey(parent.getFullName()) || parent.isArchived()) {
-            if (parent != null && parent.isArchived()) {
-                log.info("Skipping archived repo: {}", parent.getFullName());
-            }
-            return;
-        }
+        if (GitHub.shouldNotProcessDockerfilesInRepo(pathToDockerfilesInParentRepo, parent)) return;
 
         log.info("Fixing Dockerfiles in {}...", forkedRepo.getFullName());
         String parentName = parent.getFullName();

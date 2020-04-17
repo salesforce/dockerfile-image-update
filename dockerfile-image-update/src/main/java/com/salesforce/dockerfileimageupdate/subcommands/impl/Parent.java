@@ -11,6 +11,7 @@ package com.salesforce.dockerfileimageupdate.subcommands.impl;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import com.salesforce.dockerfileimageupdate.SubCommand;
+import com.salesforce.dockerfileimageupdate.repository.GitHub;
 import com.salesforce.dockerfileimageupdate.subcommands.ExecutableWithNamespace;
 import com.salesforce.dockerfileimageupdate.utils.Constants;
 import com.salesforce.dockerfileimageupdate.utils.DockerfileGitHubUtil;
@@ -130,7 +131,7 @@ public class Parent implements ExecutableWithNamespace {
                 // fork the parent if not already forked
                 if (parentReposForked.contains(parentRepoName) == false) {
                     log.info("Forking {}", parentRepoName);
-                    GHRepository fork = dockerfileGitHubUtil.closeOutdatedPullRequestAndFork(parent);
+                    GHRepository fork = dockerfileGitHubUtil.getForkAndEnsureTargetBranchExistsFromDesiredBranch(parent);
                     if (fork == null) {
                         log.info("Could not fork {}", parentRepoName);
                     } else {
@@ -180,12 +181,8 @@ public class Parent implements ExecutableWithNamespace {
         }
         GHRepository parent = forkedRepo.getParent();
 
-        if (parent == null || !pathToDockerfilesInParentRepo.containsKey(parent.getFullName()) || parent.isArchived()) {
-            if (parent != null && parent.isArchived()) {
-                log.info("Skipping archived repo: {}", parent.getFullName());
-            }
-            return;
-        }
+        if (GitHub.shouldNotProcessDockerfilesInRepo(pathToDockerfilesInParentRepo, parent)) return;
+
         log.info("Fixing Dockerfiles in {}", forkedRepo.getFullName());
         String parentName = parent.getFullName();
         String branch = (ns.get(Constants.GIT_BRANCH) == null) ? forkedRepo.getDefaultBranch() : ns.get(Constants.GIT_BRANCH);
@@ -215,4 +212,5 @@ public class Parent implements ExecutableWithNamespace {
             dockerfileGitHubUtil.createPullReq(parent, branch, forkedRepo, ns.get(Constants.GIT_PR_TITLE));
         }
     }
+
 }

@@ -99,13 +99,13 @@ public class ParentTest {
         when(contentsWithImageIterator.next()).thenReturn(content1, content2, content3, null);
         when(contentsWithImage.iterator()).thenReturn(contentsWithImageIterator);
 
-        when(dockerfileGitHubUtil.closeOutdatedPullRequestAndFork(Mockito.any())).thenReturn(new GHRepository());
+        when(dockerfileGitHubUtil.getForkAndEnsureTargetBranchExistsFromDesiredBranch(Mockito.any())).thenReturn(new GHRepository());
 
         Parent parent = new Parent();
         parent.loadDockerfileGithubUtil(dockerfileGitHubUtil);
         Multimap<String, String> repoMap =  parent.forkRepositoriesFoundAndGetPathToDockerfiles(contentsWithImage);
 
-        verify(dockerfileGitHubUtil, times(3)).closeOutdatedPullRequestAndFork(any());
+        verify(dockerfileGitHubUtil, times(3)).getForkAndEnsureTargetBranchExistsFromDesiredBranch(any());
         assertEquals(repoMap.size(), 3);
     }
 
@@ -148,16 +148,16 @@ public class ParentTest {
         when(contentsWithImageIterator.hasNext()).thenReturn(true, true, true, false);
         when(contentsWithImageIterator.next()).thenReturn(content1, content2, content3, null);
         when(contentsWithImage.iterator()).thenReturn(contentsWithImageIterator);
-        when(dockerfileGitHubUtil.closeOutdatedPullRequestAndFork(contentRepo1)).thenReturn(null); // repo1 is unforkable
-        when(dockerfileGitHubUtil.closeOutdatedPullRequestAndFork(duplicateContentRepo1)).thenReturn(null); // repo1 is unforkable
-        when(dockerfileGitHubUtil.closeOutdatedPullRequestAndFork(contentRepo2)).thenReturn(new GHRepository());
+        when(dockerfileGitHubUtil.getForkAndEnsureTargetBranchExistsFromDesiredBranch(contentRepo1)).thenReturn(null); // repo1 is unforkable
+        when(dockerfileGitHubUtil.getForkAndEnsureTargetBranchExistsFromDesiredBranch(duplicateContentRepo1)).thenReturn(null); // repo1 is unforkable
+        when(dockerfileGitHubUtil.getForkAndEnsureTargetBranchExistsFromDesiredBranch(contentRepo2)).thenReturn(new GHRepository());
 
         Parent parent = new Parent();
         parent.loadDockerfileGithubUtil(dockerfileGitHubUtil);
         Multimap<String, String> repoMap =  parent.forkRepositoriesFoundAndGetPathToDockerfiles(contentsWithImage);
 
         // Since repo "1" is unforkable, we will only try to update repo "2"
-        verify(dockerfileGitHubUtil, times(3)).closeOutdatedPullRequestAndFork(any());
+        verify(dockerfileGitHubUtil, times(3)).getForkAndEnsureTargetBranchExistsFromDesiredBranch(any());
         assertEquals(repoMap.size(), 1);
     }
 
@@ -183,7 +183,7 @@ public class ParentTest {
         parent.loadDockerfileGithubUtil(dockerfileGitHubUtil);
         Multimap<String, String> repoMap = parent.forkRepositoriesFoundAndGetPathToDockerfiles(contentsWithImage);
 
-        verify(dockerfileGitHubUtil, never()).closeOutdatedPullRequestAndFork(any());
+        verify(dockerfileGitHubUtil, never()).getForkAndEnsureTargetBranchExistsFromDesiredBranch(any());
         assertEquals(repoMap.size(), 0);
     }
 
@@ -422,7 +422,7 @@ public class ParentTest {
         parent.loadDockerfileGithubUtil(dockerfileGitHubUtil);
         Multimap<String, String> pathToDockerfiles = parent.forkRepositoriesFoundAndGetPathToDockerfiles(contentsWithImage);
         assertTrue(pathToDockerfiles.isEmpty());
-        Mockito.verify(dockerfileGitHubUtil, times(0)).closeOutdatedPullRequestAndFork(any());
+        Mockito.verify(dockerfileGitHubUtil, times(0)).getForkAndEnsureTargetBranchExistsFromDesiredBranch(any());
     }
 
     @Test

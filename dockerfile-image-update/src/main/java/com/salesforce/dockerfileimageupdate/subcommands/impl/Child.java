@@ -36,7 +36,7 @@ public class Child implements ExecutableWithNamespace {
 
         log.info("Retrieving repository and creating fork...");
         GHRepository repo = dockerfileGitHubUtil.getRepo(ns.get(Constants.GIT_REPO));
-        GHRepository fork = dockerfileGitHubUtil.closeOutdatedPullRequestAndFork(repo);
+        GHRepository fork = dockerfileGitHubUtil.getForkAndEnsureTargetBranchExistsFromDesiredBranch(repo);
         if (fork == null) {
             log.info("Unable to fork {}. Please make sure that the repo is forkable.",
                     repo.getFullName());
