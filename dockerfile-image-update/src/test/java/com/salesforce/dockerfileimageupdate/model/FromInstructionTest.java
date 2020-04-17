@@ -9,7 +9,7 @@ import static org.testng.Assert.assertEquals;
 public class FromInstructionTest {
 
     @DataProvider
-    public Object[][] inputFormInstructionData() {
+    public Object[][] inputFromInstructionData() {
         return new Object[][]{
                 {"FROM dockerimage:3 # some comment",               "FROM dockerimage:3 # some comment"},
                 {"FROM dockerimage:3 AS test",                      "FROM dockerimage:3 AS test"},
@@ -22,7 +22,7 @@ public class FromInstructionTest {
         };
     }
 
-    @Test(dataProvider = "inputFormInstructionData")
+    @Test(dataProvider = "inputFromInstructionData")
     public void testStringResult(String fromInstruction, String expectedResult) {
         assertEquals(new FromInstruction(fromInstruction).toString(), expectedResult);
     }
