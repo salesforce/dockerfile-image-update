@@ -69,7 +69,8 @@ public class DockerfileGitHubUtil {
 
     public PagedSearchIterable<GHContent> findFilesWithImage(String query, String org) throws IOException {
         GHContentSearchBuilder search = gitHubUtil.startSearch();
-        search.language("Dockerfile");
+        // Filename search appears to yield better / more results than language:Dockerfile
+        search.filename("Dockerfile");
         if (org != null) {
             search.user(org);
         }

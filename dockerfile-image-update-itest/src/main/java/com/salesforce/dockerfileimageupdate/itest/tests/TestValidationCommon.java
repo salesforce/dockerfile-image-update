@@ -77,7 +77,7 @@ public class TestValidationCommon {
         boolean bypassedDelay = false;
         for (int i = 0; i < 60; i++) {
             PagedSearchIterable<GHContent> searchImage1 = github.searchContent().
-                    language("Dockerfile").q(image).list();
+                    filename("Dockerfile").q(image).list();
             log.info("Currently {} search gives {} results. It should be {}.", imageName,
                     searchImage1.getTotalCount(), numberOfRepos);
             if (searchImage1.getTotalCount() >= 4) {
