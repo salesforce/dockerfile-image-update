@@ -53,7 +53,7 @@ public class CommandLine {
     }
 
     static ArgumentParser getArgumentParser() {
-        ArgumentParser parser = ArgumentParsers.newArgumentParser("dockerfile-image-update", true)
+        ArgumentParser parser = ArgumentParsers.newFor("dockerfile-image-update").addHelp(true).build()
                 .description("Image Updates through Pull Request Automator");
 
         parser.addArgument("-o", "--" + Constants.GIT_ORG)
