@@ -52,7 +52,7 @@ public class ChildTest {
         Namespace ns = new Namespace(inputMap);
         DockerfileGitHubUtil dockerfileGitHubUtil = Mockito.mock(DockerfileGitHubUtil.class);
         Mockito.when(dockerfileGitHubUtil.getRepo(Mockito.any())).thenReturn(new GHRepository());
-        Mockito.when(dockerfileGitHubUtil.getForkAndEnsureTargetBranchExistsFromDesiredBranch(Mockito.any())).thenReturn(new GHRepository());
+        Mockito.when(dockerfileGitHubUtil.getOrCreateFork(Mockito.any())).thenReturn(new GHRepository());
         doNothing().when(dockerfileGitHubUtil).modifyAllOnGithub(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
         doNothing().when(dockerfileGitHubUtil).updateStore(anyString(), anyString(), anyString());
         doNothing().when(dockerfileGitHubUtil).createPullReq(Mockito.any(), anyString(), Mockito.any(), anyString());
@@ -74,7 +74,7 @@ public class ChildTest {
         Namespace ns = new Namespace(nsMap);
         DockerfileGitHubUtil dockerfileGitHubUtil = Mockito.mock(DockerfileGitHubUtil.class);
         Mockito.when(dockerfileGitHubUtil.getRepo(Mockito.any())).thenReturn(new GHRepository());
-        Mockito.when(dockerfileGitHubUtil.getForkAndEnsureTargetBranchExistsFromDesiredBranch(Mockito.any())).thenReturn(null);
+        Mockito.when(dockerfileGitHubUtil.getOrCreateFork(Mockito.any())).thenReturn(null);
         child.execute(ns, dockerfileGitHubUtil);
         Mockito.verify(dockerfileGitHubUtil, Mockito.never()).createPullReq(Mockito.any(), Mockito.any(), Mockito.any(),
                 Mockito.any());

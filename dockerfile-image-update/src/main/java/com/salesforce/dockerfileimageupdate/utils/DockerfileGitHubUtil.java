@@ -11,6 +11,7 @@ package com.salesforce.dockerfileimageupdate.utils;
 import com.google.common.collect.Multimap;
 import com.google.gson.*;
 import com.salesforce.dockerfileimageupdate.model.FromInstruction;
+import com.salesforce.dockerfileimageupdate.model.GitForkBranch;
 import org.kohsuke.github.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,6 +19,7 @@ import org.slf4j.LoggerFactory;
 import java.io.*;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Created by minho.park on 7/22/16.
@@ -32,27 +34,21 @@ public class DockerfileGitHubUtil {
 
     protected GitHubUtil getGitHubUtil() { return gitHubUtil; }
 
-    public GHRepository getForkAndEnsureTargetBranchExistsFromDesiredBranch(GHRepository parent) throws IOException {
-
+    /**
+     * Return an existing fork in the current user's org or create one if it does not exist
+     *
+     * THIS METHOD ENSURES THAT THE FORK IS DIRECTLY FROM THE PARENT!
+     *
+     * @param parent the proposed/current fork parent
+     * @return existing fork or new fork
+     * @throws IOException if we've encountered forking issues
+     */
+    public GHRepository getOrCreateFork(GHRepository parent) throws IOException {
         for (GHRepository fork : parent.listForks()) {
-            String forkOwner = fork.getOwnerName();
-            GHMyself myself = gitHubUtil.getMyself();
-            String myselfLogin = myself.getLogin();
-            if (forkOwner.equals(myselfLogin)) {
-                GHPullRequest pr = getPullRequestWithPullReqIdentifier(parent);
-                // Only reason we close the existing PR, delete fork and re-fork, is because there is no way to
-                // determine if the existing fork is compatible with it's parent.
-                if (pr != null) {
-                    // close the pull-request since the fork is out of date
-                    log.info("closing existing pr: {}", pr.getUrl());
-                    try {
-                        pr.close();
-                    } catch (IOException e) {
-                        log.info("Issues closing the pull request '{}'. Moving ahead...", pr.getUrl());
-                    }
-                }
-                // delete fork if one already exists before re-forking
-                gitHubUtil.safeDeleteRepo(fork);
+            if (thisUserIsOwner(fork)) {
+                log.info("Fork exists, retrieving full info: {}", fork);
+                // NOTE: listForks() appears to miss information like parent data and GHContent parent doesn't have isArchived()
+                return fork;
             }
         }
         log.info("Forking repo: {}", parent);
@@ -228,7 +224,7 @@ public class DockerfileGitHubUtil {
         try {
             repo.getFileContent(path);
         } catch (IOException e) {
-            repo.createContent("", "initializing store", path);
+            repo.createContent().content("").message("initializing store").path(path).commit();
         }
 
         String latestCommit = repo.getBranches().get(repo.getDefaultBranch()).getSHA1();
@@ -273,12 +269,13 @@ public class DockerfileGitHubUtil {
 
     public void createPullReq(GHRepository origRepo,
                               String branch, GHRepository forkRepo,
-                              String message) throws InterruptedException, IOException {
-        if (message == null) {
-            message = "Automatic Dockerfile Image Updater";
+                              String title) throws InterruptedException, IOException {
+        if (title == null) {
+            title = "Automatic Dockerfile Image Updater";
         }
+        // TODO: This may loop forever in the event of constant -1 pullRequestExitCodes...
         while (true) {
-            int pullRequestExitCode = gitHubUtil.createPullReq(origRepo, branch, forkRepo, message, Constants.PULL_REQ_ID);
+            int pullRequestExitCode = gitHubUtil.createPullReq(origRepo, branch, forkRepo, title, Constants.PULL_REQ_ID);
             if (pullRequestExitCode == 0) {
                 return;
             } else if (pullRequestExitCode == 1) {
@@ -288,23 +285,50 @@ public class DockerfileGitHubUtil {
         }
     }
 
-    private GHPullRequest getPullRequestWithPullReqIdentifier(GHRepository parent) throws IOException {
-        List<GHPullRequest> pullRequests;
-        GHUser myself;
-        try {
-            pullRequests = parent.getPullRequests(GHIssueState.OPEN);
-            myself = gitHubUtil.getMyself();
-        } catch (IOException e) {
-            log.warn("Error occurred while retrieving pull requests for {}", parent.getFullName());
-            return null;
-        }
-
+    /**
+     * Get the pull request from this repository that corresponds to this branch. A prerequisite should be that the repository
+     * passed in here should have already came from the expected parent. We will not check this again here.
+     *
+     * @param repository the repository which should come from an expected parent
+     * @param gitForkBranch the branch name which was derived from the image to update
+     * @return Optional GHPullRequest if we've found one
+     */
+    public Optional<GHPullRequest> getPullRequestForImageBranch(GHRepository repository, GitForkBranch gitForkBranch) {
+        PagedIterable<GHPullRequest> pullRequests =
+                repository.queryPullRequests().state(GHIssueState.OPEN).head(gitForkBranch.getBranchName()).list();
         for (GHPullRequest pullRequest : pullRequests) {
-            GHUser user = pullRequest.getHead().getUser();
-            if (myself.equals(user) && pullRequest.getBody().equals(Constants.PULL_REQ_ID)) {
-                return pullRequest;
-            }
+            // There can be only one since it is based on branch.
+            return Optional.of(pullRequest);
         }
-        return null;
+        return Optional.empty();
+    }
+
+    public void createOrUpdateForkBranchToParentDefault(GHRepository parent, GHRepository fork, GitForkBranch gitForkBranch) throws IOException {
+        GHBranch parentBranch = parent.getBranch(parent.getDefaultBranch());
+        String sha1 = parentBranch.getSHA1();
+        GHBranch forkBranch = fork.getBranches().get(gitForkBranch.getBranchName());
+        String branchRefName = String.format("refs/heads/%s", gitForkBranch.getBranchName());
+        if (forkBranch == null) {
+            fork.createRef(branchRefName, sha1);
+        } else {
+            fork.getRef(branchRefName).updateTo(sha1, true);
+        }
+    }
+
+    /**
+     * Determines whether the user we're logged in as is the repo owner
+     *
+     * @param repo the repo to check
+     * @return are we the repo owner?
+     * @throws IOException when attempting to check our user details
+     */
+    public boolean thisUserIsOwner(GHRepository repo) throws IOException {
+        String repoOwner = repo.getOwnerName();
+        GHMyself myself = gitHubUtil.getMyself();
+        if (myself == null) {
+            throw new IOException("Could not retrieve authenticated user.");
+        }
+        String myselfLogin = myself.getLogin();
+        return repoOwner.equals(myselfLogin);
     }
 }

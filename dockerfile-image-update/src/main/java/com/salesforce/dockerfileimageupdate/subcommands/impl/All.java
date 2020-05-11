@@ -19,7 +19,10 @@ import com.salesforce.dockerfileimageupdate.subcommands.ExecutableWithNamespace;
 import com.salesforce.dockerfileimageupdate.utils.Constants;
 import com.salesforce.dockerfileimageupdate.utils.DockerfileGitHubUtil;
 import net.sourceforge.argparse4j.inf.Namespace;
-import org.kohsuke.github.*;
+import org.kohsuke.github.GHContent;
+import org.kohsuke.github.GHMyself;
+import org.kohsuke.github.GHRepository;
+import org.kohsuke.github.PagedSearchIterable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -114,8 +117,9 @@ public class All implements ExecutableWithNamespace {
                         parentRepoName);
             } else {
                 // fork the parent if not already forked
-                if (parentReposForked.contains(parentRepoName) == false) {
-                    GHRepository fork = dockerfileGitHubUtil.getForkAndEnsureTargetBranchExistsFromDesiredBranch(parent);
+                if (!parentReposForked.contains(parentRepoName)) {
+                    // TODO: Need to close PR!
+                    GHRepository fork = dockerfileGitHubUtil.getOrCreateFork(parent);
                     if (fork == null) {
                         log.info("Could not fork {}", parentRepoName);
                     } else {
@@ -148,7 +152,7 @@ public class All implements ExecutableWithNamespace {
         JsonElement json;
         try (InputStream stream = storeContent.read(); InputStreamReader streamR = new InputStreamReader(stream)) {
             try {
-                json = new JsonParser().parse(streamR);
+                json = JsonParser.parseReader(streamR);
             } catch (JsonParseException e) {
                 log.warn("Not a JSON format store.");
                 return Collections.emptySet();

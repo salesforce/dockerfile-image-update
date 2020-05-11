@@ -99,10 +99,10 @@ public class GitHubUtil {
                     origRepo.getDefaultBranch(), body);
 //            origRepo.createPullRequest("Update base image in Dockerfile", forkRepo.getOwnerName() + ":" + branch,
 //                    origRepo.getDefaultBranch(), "Automatic Dockerfile Image Updater. Please merge.");
-            log.info("A pull request has been created at {}. Please check on Github.", pullRequest.getUrl());
+            log.info("A pull request has been created at {}", pullRequest.getHtmlUrl());
             return 0;
         } catch (IOException e) {
-            log.warn("Handling error with pull request creation...");
+            log.warn("Handling error with pull request creation... {}", e.getMessage());
             JsonElement root = JsonParser.parseString(e.getMessage());
             JsonArray errorJson = root.getAsJsonObject().get("errors").getAsJsonArray();
             String error = errorJson.get(0).getAsJsonObject().get("message").getAsString();
@@ -114,6 +114,7 @@ public class GitHubUtil {
                 log.warn("NOTE: {} Pull request was not created.", error);
                 return 1;
             } else {
+                // TODO: THIS WILL LOOP FOREVVEEEEEERRRR
                 log.warn("An error occurred in pull request: {} Trying again...", error);
                 Thread.sleep(3000);
                 return -1;

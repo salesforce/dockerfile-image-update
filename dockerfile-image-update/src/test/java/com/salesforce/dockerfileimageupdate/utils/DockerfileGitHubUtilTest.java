@@ -10,6 +10,7 @@ package com.salesforce.dockerfileimageupdate.utils;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
+import com.salesforce.dockerfileimageupdate.model.GitForkBranch;
 import org.kohsuke.github.*;
 import org.mockito.Mock;
 import org.testng.annotations.DataProvider;
@@ -20,10 +21,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Optional;
 
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
+import static org.mockito.Matchers.*;
 import static org.mockito.Mockito.*;
 import static org.testng.Assert.*;
 
@@ -44,7 +44,7 @@ public class DockerfileGitHubUtilTest {
     }
 
     @Test
-    public void testExistingPullRequestClosedAndParentIsForkedOnlyOnce() throws Exception {
+    public void testParentIsForkedOnlyOnce() throws Exception {
         gitHubUtil = mock(GitHubUtil.class);
 
         GHRepository parent = mock(GHRepository.class);
@@ -68,77 +68,7 @@ public class DockerfileGitHubUtilTest {
         when(parent.listForks()).thenReturn(listOfForks);
 
         dockerfileGitHubUtil = new DockerfileGitHubUtil(gitHubUtil);
-        GHPullRequest ghPullRequest = mockPullRequestAlreadyExists_True(parent, myself);
-        GHRepository returnRepo = dockerfileGitHubUtil.getForkAndEnsureTargetBranchExistsFromDesiredBranch(parent);
-        verify(ghPullRequest, times(1)).close();
-        verify(gitHubUtil, times(1)).createFork(parent);
-        assertNotNull(returnRepo);
-    }
-
-    @Test
-    public void testParentIsForked_whenNoPullRequestExists() throws Exception {
-        gitHubUtil = mock(GitHubUtil.class);
-
-        GHRepository parent = mock(GHRepository.class);
-        GHRepository fork = mock(GHRepository.class);
-        when(fork.getOwnerName()).thenReturn("me");
-
-        doCallRealMethod().when(gitHubUtil).safeDeleteRepo(fork);
-
-        GHMyself myself = mock(GHMyself.class);
-        when(myself.getLogin()).thenReturn("me");
-
-        PagedIterable<GHRepository> listOfForks = mock(PagedIterable.class);
-        PagedIterator<GHRepository> listOfForksIterator = mock(PagedIterator.class);
-
-        when(gitHubUtil.createFork(parent)).thenReturn(new GHRepository());
-        when(gitHubUtil.getMyself()).thenReturn(myself);
-
-        when(listOfForksIterator.next()).thenReturn(fork);
-        when(listOfForksIterator.hasNext()).thenReturn(true, false);
-        when(listOfForks.iterator()).thenReturn(listOfForksIterator);
-        when(parent.listForks()).thenReturn(listOfForks);
-
-        dockerfileGitHubUtil = new DockerfileGitHubUtil(gitHubUtil);
-        GHPullRequest ghPullRequest = mockPullRequestAlreadyExists_False(parent, myself);
-        GHRepository returnRepo = dockerfileGitHubUtil.getForkAndEnsureTargetBranchExistsFromDesiredBranch(parent);
-        // No PR exists hence PullRequest.close() is not called
-        verify(ghPullRequest, times(0)).close();
-        verify(gitHubUtil, times(1)).createFork(parent);
-        verify(fork, times(1)).delete();
-        assertNotNull(returnRepo);
-    }
-
-    @Test
-    public void testParentIsForked_whenPullRequestFetchThrowsIOException() throws
-            Exception {
-        gitHubUtil = mock(GitHubUtil.class);
-
-        GHRepository parent = mock(GHRepository.class);
-        GHRepository fork = mock(GHRepository.class);
-        when(fork.getOwnerName()).thenReturn("me");
-
-        doCallRealMethod().when(gitHubUtil).safeDeleteRepo(fork);
-
-        GHMyself myself = mock(GHMyself.class);
-        when(myself.getLogin()).thenReturn("me");
-
-        PagedIterable<GHRepository> listOfForks = mock(PagedIterable.class);
-        PagedIterator<GHRepository> listOfForksIterator = mock(PagedIterator.class);
-
-        when(gitHubUtil.createFork(parent)).thenReturn(new GHRepository());
-        when(gitHubUtil.getMyself()).thenReturn(myself);
-
-        when(listOfForksIterator.next()).thenReturn(fork);
-        when(listOfForksIterator.hasNext()).thenReturn(true, false);
-        when(listOfForks.iterator()).thenReturn(listOfForksIterator);
-        when(parent.listForks()).thenReturn(listOfForks);
-
-        dockerfileGitHubUtil = new DockerfileGitHubUtil(gitHubUtil);
-        mockPullRequestAlreadyExists_Error(parent);
-        GHRepository returnRepo = dockerfileGitHubUtil.getForkAndEnsureTargetBranchExistsFromDesiredBranch(parent);
-        verify(gitHubUtil, times(1)).createFork(parent);
-        verify(fork, times(1)).delete();
+        GHRepository returnRepo = dockerfileGitHubUtil.getOrCreateFork(parent);
         assertNotNull(returnRepo);
     }
 
@@ -167,28 +97,55 @@ public class DockerfileGitHubUtilTest {
         when(parent.listForks()).thenReturn(listOfForks);
 
         dockerfileGitHubUtil = new DockerfileGitHubUtil(gitHubUtil);
-        GHRepository returnRepo = dockerfileGitHubUtil.getForkAndEnsureTargetBranchExistsFromDesiredBranch(parent);
+        GHRepository returnRepo = dockerfileGitHubUtil.getOrCreateFork(parent);
         assertNull(returnRepo);
     }
 
-    private GHPullRequest mockPullRequestAlreadyExists_True(GHRepository parent, GHMyself myself) throws IOException {
-        List<GHPullRequest> pullRequests = mock(List.class);
-        Iterator<GHPullRequest> pullRequestIterator = mock(Iterator.class);
-
-
+    @Test
+    public void testReturnPullRequestForBranch() {
+        String imageName = "someimage";
         GHPullRequest ghPullRequest = mock(GHPullRequest.class);
-        when(ghPullRequest.getBody()).thenReturn(Constants.PULL_REQ_ID);
-        GHCommitPointer head = mock(GHCommitPointer.class);
+        GHPullRequestQueryBuilder queryBuilder = getGHPullRequestQueryBuilder(imageName, Optional.of(ghPullRequest));
+        GHRepository parent = mock(GHRepository.class);
+        when(parent.queryPullRequests()).thenReturn(queryBuilder);
+        GitForkBranch gitForkBranch = new GitForkBranch(imageName, "", null);
 
-        when(head.getUser()).thenReturn(myself);
-        when(ghPullRequest.getHead()).thenReturn(head);
 
-        when(pullRequestIterator.next()).thenReturn(ghPullRequest);
-        when(pullRequestIterator.hasNext()).thenReturn(true);
+        gitHubUtil = mock(GitHubUtil.class);
+        dockerfileGitHubUtil = new DockerfileGitHubUtil(gitHubUtil);
+        assertEquals(dockerfileGitHubUtil.getPullRequestForImageBranch(parent, gitForkBranch), Optional.of(ghPullRequest));
+    }
+
+    @Test
+    public void testNoPullRequestForBranch() {
+        String imageName = "someimage";
+        GHPullRequest ghPullRequest = mock(GHPullRequest.class);
+        GHPullRequestQueryBuilder queryBuilder = getGHPullRequestQueryBuilder(imageName, Optional.empty());
+        GHRepository parent = mock(GHRepository.class);
+        when(parent.queryPullRequests()).thenReturn(queryBuilder);
+        GitForkBranch gitForkBranch = new GitForkBranch(imageName, "", null);
+
+
+        gitHubUtil = mock(GitHubUtil.class);
+        dockerfileGitHubUtil = new DockerfileGitHubUtil(gitHubUtil);
+        assertEquals(dockerfileGitHubUtil.getPullRequestForImageBranch(parent, gitForkBranch), Optional.empty());
+    }
+
+    private GHPullRequestQueryBuilder getGHPullRequestQueryBuilder(String imageName, Optional<GHPullRequest> ghPullRequest) {
+        GHPullRequestQueryBuilder queryBuilder = mock(GHPullRequestQueryBuilder.class);
+        when(queryBuilder.state(GHIssueState.OPEN)).thenReturn(queryBuilder);
+        when(queryBuilder.head(imageName)).thenReturn(queryBuilder);
+        PagedIterable<GHPullRequest> pullRequests = mock(PagedIterable.class);
+        PagedIterator<GHPullRequest> pullRequestIterator = mock(PagedIterator.class);
+        if (ghPullRequest.isPresent()) {
+            when(pullRequestIterator.next()).thenReturn(ghPullRequest.get());
+            when(pullRequestIterator.hasNext()).thenReturn(true);
+        } else {
+            when(pullRequestIterator.hasNext()).thenReturn(false);
+        }
         when(pullRequests.iterator()).thenReturn(pullRequestIterator);
-
-        when(parent.getPullRequests(GHIssueState.OPEN)).thenReturn(pullRequests);
-        return ghPullRequest;
+        when(queryBuilder.list()).thenReturn(pullRequests);
+        return queryBuilder;
     }
 
     private GHPullRequest mockPullRequestAlreadyExists_False(GHRepository parent, GHMyself myself) throws IOException {
@@ -617,6 +574,14 @@ public class DockerfileGitHubUtilTest {
         gitHubUtil = mock(GitHubUtil.class);
 
         GHRepository forkRepo = mock(GHRepository.class);
+        GHPullRequestQueryBuilder prBuilder = mock(GHPullRequestQueryBuilder.class);
+        when(prBuilder.state(GHIssueState.OPEN)).thenReturn(prBuilder);
+        PagedIterable<GHPullRequest> iteratable = mock(PagedIterable.class);
+        when(prBuilder.list()).thenReturn(iteratable);
+        PagedIterator<GHPullRequest> iterator = mock(PagedIterator.class);
+        when(iterator.hasNext()).thenReturn(false);
+        when(iteratable.iterator()).thenReturn(iterator);
+        when(forkRepo.queryPullRequests()).thenReturn(prBuilder);
         when(gitHubUtil.createPullReq(any(), anyString(), any(), anyString(), eq(Constants.PULL_REQ_ID))).thenReturn(1);
         doCallRealMethod().when(gitHubUtil).safeDeleteRepo(forkRepo);
         dockerfileGitHubUtil = new DockerfileGitHubUtil(gitHubUtil);
