@@ -12,6 +12,7 @@ import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import com.salesforce.dockerfileimageupdate.SubCommand;
 import com.salesforce.dockerfileimageupdate.model.GitForkBranch;
+import com.salesforce.dockerfileimageupdate.model.GitHubContentToProcess;
 import com.salesforce.dockerfileimageupdate.subcommands.ExecutableWithNamespace;
 import com.salesforce.dockerfileimageupdate.utils.Constants;
 import com.salesforce.dockerfileimageupdate.utils.DockerfileGitHubUtil;
@@ -34,35 +35,6 @@ import java.util.Optional;
 
 public class Parent implements ExecutableWithNamespace {
 
-    static class ForkWithContentPath {
-        private final GHRepository fork;
-        private final GHRepository parent;
-        private final String contentPath;
-
-        ForkWithContentPath(GHRepository fork, GHRepository parent, String contentPath) {
-            this.parent = parent;
-            this.fork = fork;
-            this.contentPath = contentPath;
-        }
-
-        public GHRepository getFork() {
-            return fork;
-        }
-
-        public GHRepository getParent() {
-            return parent;
-        }
-
-        public String getContentPath() {
-            return contentPath;
-        }
-
-        @Override
-        public String toString() {
-            return String.format("content path: %s; fork: %s", contentPath, fork);
-        }
-    }
-
     private static final Logger log = LoggerFactory.getLogger(Parent.class);
 
     private DockerfileGitHubUtil dockerfileGitHubUtil;
@@ -81,12 +53,12 @@ public class Parent implements ExecutableWithNamespace {
         PagedSearchIterable<GHContent> contentsWithImage = getGHContents(ns.get(Constants.GIT_ORG), img);
         if (contentsWithImage == null) return;
 
-        Multimap<String, ForkWithContentPath> pathToDockerfilesInParentRepo = forkRepositoriesFoundAndGetPathToDockerfiles(contentsWithImage);
+        Multimap<String, GitHubContentToProcess> pathToDockerfilesInParentRepo = forkRepositoriesFoundAndGetPathToDockerfiles(contentsWithImage);
         List<IOException> exceptions = new ArrayList<>();
         List<String> skippedRepos = new ArrayList<>();
 
         for (String currUserRepo : pathToDockerfilesInParentRepo.keySet()) {
-            Optional<ForkWithContentPath> forkWithContentPaths =
+            Optional<GitHubContentToProcess> forkWithContentPaths =
                     pathToDockerfilesInParentRepo.get(currUserRepo).stream().findFirst();
             if (forkWithContentPaths.isPresent()) {
                 try {
@@ -139,9 +111,9 @@ public class Parent implements ExecutableWithNamespace {
      *
      * NOTE: We are not currently forking repositories that are already forks
      */
-    protected Multimap<String, ForkWithContentPath> forkRepositoriesFoundAndGetPathToDockerfiles(PagedSearchIterable<GHContent> contentsWithImage) throws IOException {
+    protected Multimap<String, GitHubContentToProcess> forkRepositoriesFoundAndGetPathToDockerfiles(PagedSearchIterable<GHContent> contentsWithImage) throws IOException {
         log.info("Forking repositories...");
-        Multimap<String, ForkWithContentPath> pathToDockerfilesInParentRepo = HashMultimap.create();
+        Multimap<String, GitHubContentToProcess> pathToDockerfilesInParentRepo = HashMultimap.create();
         GHRepository parent;
         String parentRepoName;
         for (GHContent c : contentsWithImage) {
@@ -168,11 +140,11 @@ public class Parent implements ExecutableWithNamespace {
                 GHRepository fork;
                 if (pathToDockerfilesInParentRepo.containsKey(parentRepoName)) {
                     // Found more content for this fork, so add it as well
-                    Collection<ForkWithContentPath> forkWithContentPaths = pathToDockerfilesInParentRepo.get(parentRepoName);
-                    Optional<ForkWithContentPath> firstForkData = forkWithContentPaths.stream().findFirst();
+                    Collection<GitHubContentToProcess> gitHubContentToProcesses = pathToDockerfilesInParentRepo.get(parentRepoName);
+                    Optional<GitHubContentToProcess> firstForkData = gitHubContentToProcesses.stream().findFirst();
                     if (firstForkData.isPresent()) {
                         fork = firstForkData.get().getFork();
-                        pathToDockerfilesInParentRepo.put(parentRepoName, new ForkWithContentPath(fork, parent, c.getPath()));
+                        pathToDockerfilesInParentRepo.put(parentRepoName, new GitHubContentToProcess(fork, parent, c.getPath()));
                     } else {
                         log.warn("For some reason we have ");
                     }
@@ -184,7 +156,7 @@ public class Parent implements ExecutableWithNamespace {
                         log.info("Could not fork {}", parentRepoName);
                     } else {
                         // Add repos to pathToDockerfilesInParentRepo only if we forked it successfully.
-                        pathToDockerfilesInParentRepo.put(parentRepoName, new ForkWithContentPath(fork, parent, c.getPath()));
+                        pathToDockerfilesInParentRepo.put(parentRepoName, new GitHubContentToProcess(fork, parent, c.getPath()));
                     }
                 }
             }
@@ -196,13 +168,13 @@ public class Parent implements ExecutableWithNamespace {
     }
 
     protected void changeDockerfiles(Namespace ns,
-                                     Multimap<String, ForkWithContentPath> pathToDockerfilesInParentRepo,
-                                     ForkWithContentPath forkWithContentPath,
+                                     Multimap<String, GitHubContentToProcess> pathToDockerfilesInParentRepo,
+                                     GitHubContentToProcess gitHubContentToProcess,
                                      List<String> skippedRepos) throws IOException,
             InterruptedException {
         // Should we skip doing a getRepository just to fill in the parent value? We already know this to be the parent...
-        GHRepository parent = forkWithContentPath.getParent();
-        GHRepository forkedRepo = forkWithContentPath.getFork();
+        GHRepository parent = gitHubContentToProcess.getParent();
+        GHRepository forkedRepo = gitHubContentToProcess.getFork();
         // TODO: Getting a null pointer here for someone... probably just fixed this since we have parent
         String parentName = parent.getFullName();
 
@@ -214,7 +186,7 @@ public class Parent implements ExecutableWithNamespace {
         // loop through all the Dockerfiles in the same repo
         boolean isContentModified = false;
         boolean isRepoSkipped = true;
-        for (ForkWithContentPath forkWithCurrentContentPath : pathToDockerfilesInParentRepo.get(parentName)) {
+        for (GitHubContentToProcess forkWithCurrentContentPath : pathToDockerfilesInParentRepo.get(parentName)) {
             String pathToDockerfile = forkWithCurrentContentPath.getContentPath();
             GHContent content = dockerfileGitHubUtil.tryRetrievingContent(forkedRepo, pathToDockerfile, gitForkBranch.getBranchName());
             if (content == null) {

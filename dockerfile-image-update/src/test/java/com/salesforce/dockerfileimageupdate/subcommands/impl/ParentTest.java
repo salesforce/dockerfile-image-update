@@ -11,7 +11,7 @@ package com.salesforce.dockerfileimageupdate.subcommands.impl;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Multimap;
-import com.salesforce.dockerfileimageupdate.subcommands.impl.Parent.ForkWithContentPath;
+import com.salesforce.dockerfileimageupdate.model.GitHubContentToProcess;
 import com.salesforce.dockerfileimageupdate.utils.Constants;
 import com.salesforce.dockerfileimageupdate.utils.DockerfileGitHubUtil;
 import net.sourceforge.argparse4j.inf.Namespace;
@@ -105,7 +105,7 @@ public class ParentTest {
 
         Parent parent = new Parent();
         parent.loadDockerfileGithubUtil(dockerfileGitHubUtil);
-        Multimap<String, ForkWithContentPath> repoMap =  parent.forkRepositoriesFoundAndGetPathToDockerfiles(contentsWithImage);
+        Multimap<String, GitHubContentToProcess> repoMap =  parent.forkRepositoriesFoundAndGetPathToDockerfiles(contentsWithImage);
 
         verify(dockerfileGitHubUtil, times(3)).getOrCreateFork(any());
         assertEquals(repoMap.size(), 3);
@@ -159,7 +159,7 @@ public class ParentTest {
 
         Parent parent = new Parent();
         parent.loadDockerfileGithubUtil(dockerfileGitHubUtil);
-        Multimap<String, ForkWithContentPath> repoMap =  parent.forkRepositoriesFoundAndGetPathToDockerfiles(contentsWithImage);
+        Multimap<String, GitHubContentToProcess> repoMap =  parent.forkRepositoriesFoundAndGetPathToDockerfiles(contentsWithImage);
 
         // Since repo "1" is unforkable, we will only try to update repo "2"
         verify(dockerfileGitHubUtil, times(3)).getOrCreateFork(any());
@@ -188,7 +188,7 @@ public class ParentTest {
 
         Parent parent = new Parent();
         parent.loadDockerfileGithubUtil(dockerfileGitHubUtil);
-        Multimap<String, ForkWithContentPath> repoMap = parent.forkRepositoriesFoundAndGetPathToDockerfiles(contentsWithImage);
+        Multimap<String, GitHubContentToProcess> repoMap = parent.forkRepositoriesFoundAndGetPathToDockerfiles(contentsWithImage);
 
         verify(dockerfileGitHubUtil, never()).getOrCreateFork(any());
         assertEquals(repoMap.size(), 0);
@@ -207,11 +207,11 @@ public class ParentTest {
         when(parentRepo.getFullName()).thenReturn("repo2");
         when(forkedRepo.getParent()).thenReturn(parentRepo);
 
-        Multimap<String, ForkWithContentPath> pathToDockerfilesInParentRepo = HashMultimap.create();
-        pathToDockerfilesInParentRepo.put("repo1", new ForkWithContentPath(null, null, "df1"));
-        pathToDockerfilesInParentRepo.put("repo2", new ForkWithContentPath(null, null, "df2"));
-        pathToDockerfilesInParentRepo.put("repo3", new ForkWithContentPath(null, null, "df3"));
-        pathToDockerfilesInParentRepo.put("repo4", new ForkWithContentPath(null, null, "df4"));
+        Multimap<String, GitHubContentToProcess> pathToDockerfilesInParentRepo = HashMultimap.create();
+        pathToDockerfilesInParentRepo.put("repo1", new GitHubContentToProcess(null, null, "df1"));
+        pathToDockerfilesInParentRepo.put("repo2", new GitHubContentToProcess(null, null, "df2"));
+        pathToDockerfilesInParentRepo.put("repo3", new GitHubContentToProcess(null, null, "df3"));
+        pathToDockerfilesInParentRepo.put("repo4", new GitHubContentToProcess(null, null, "df4"));
 
         GHContent content = mock(GHContent.class);
 
@@ -224,7 +224,7 @@ public class ParentTest {
 
         Parent parent = new Parent();
         parent.loadDockerfileGithubUtil(dockerfileGitHubUtil);
-        parent.changeDockerfiles(ns, pathToDockerfilesInParentRepo, new ForkWithContentPath(forkedRepo, parentRepo, ""), new ArrayList<>());
+        parent.changeDockerfiles(ns, pathToDockerfilesInParentRepo, new GitHubContentToProcess(forkedRepo, parentRepo, ""), new ArrayList<>());
 
         Mockito.verify(dockerfileGitHubUtil, times(1))
                 .tryRetrievingContent(eq(forkedRepo), eq("df2"), eq("image-tag"));
@@ -242,11 +242,11 @@ public class ParentTest {
                 "store");
         Namespace ns = new Namespace(nsMap);
 
-        Multimap<String, ForkWithContentPath> pathToDockerfilesInParentRepo = HashMultimap.create();
-        pathToDockerfilesInParentRepo.put("repo1", new ForkWithContentPath(null, null, "df11"));
-        pathToDockerfilesInParentRepo.put("repo1", new ForkWithContentPath(null, null, "df12"));
-        pathToDockerfilesInParentRepo.put("repo3", new ForkWithContentPath(null, null, "df3"));
-        pathToDockerfilesInParentRepo.put("repo4", new ForkWithContentPath(null, null, "df4"));
+        Multimap<String, GitHubContentToProcess> pathToDockerfilesInParentRepo = HashMultimap.create();
+        pathToDockerfilesInParentRepo.put("repo1", new GitHubContentToProcess(null, null, "df11"));
+        pathToDockerfilesInParentRepo.put("repo1", new GitHubContentToProcess(null, null, "df12"));
+        pathToDockerfilesInParentRepo.put("repo3", new GitHubContentToProcess(null, null, "df3"));
+        pathToDockerfilesInParentRepo.put("repo4", new GitHubContentToProcess(null, null, "df4"));
 
         GHRepository forkedRepo = mock(GHRepository.class);
         when(forkedRepo.isFork()).thenReturn(true);
@@ -268,7 +268,7 @@ public class ParentTest {
 
         Parent parent = new Parent();
         parent.loadDockerfileGithubUtil(dockerfileGitHubUtil);
-        parent.changeDockerfiles(ns, pathToDockerfilesInParentRepo, new ForkWithContentPath(forkedRepo, parentRepo, ""), new ArrayList<>());
+        parent.changeDockerfiles(ns, pathToDockerfilesInParentRepo, new GitHubContentToProcess(forkedRepo, parentRepo, ""), new ArrayList<>());
 
         // Both Dockerfiles retrieved from the same repo
         Mockito.verify(dockerfileGitHubUtil, times(1)).tryRetrievingContent(eq(forkedRepo),
@@ -293,8 +293,8 @@ public class ParentTest {
                 "store");
         Namespace ns = new Namespace(nsMap);
 
-        Multimap<String, ForkWithContentPath> pathToDockerfilesInParentRepo = HashMultimap.create();
-        pathToDockerfilesInParentRepo.put("repo1", new ForkWithContentPath(null, null, "missing_df"));
+        Multimap<String, GitHubContentToProcess> pathToDockerfilesInParentRepo = HashMultimap.create();
+        pathToDockerfilesInParentRepo.put("repo1", new GitHubContentToProcess(null, null, "missing_df"));
 
         GHRepository forkedRepo = mock(GHRepository.class);
         when(forkedRepo.isFork()).thenReturn(true);
@@ -312,7 +312,7 @@ public class ParentTest {
 
         Parent parent = new Parent();
         parent.loadDockerfileGithubUtil(dockerfileGitHubUtil);
-        parent.changeDockerfiles(ns, pathToDockerfilesInParentRepo, new ForkWithContentPath(forkedRepo, parentRepo, ""), new ArrayList<>());
+        parent.changeDockerfiles(ns, pathToDockerfilesInParentRepo, new GitHubContentToProcess(forkedRepo, parentRepo, ""), new ArrayList<>());
 
         // trying to retrieve Dockerfile
         Mockito.verify(dockerfileGitHubUtil, times(1)).tryRetrievingContent(eq(forkedRepo),
@@ -345,7 +345,7 @@ public class ParentTest {
 
         Parent parent = new Parent();
         parent.loadDockerfileGithubUtil(dockerfileGitHubUtil);
-        Multimap<String, ForkWithContentPath> pathToDockerfiles = parent.forkRepositoriesFoundAndGetPathToDockerfiles(contentsWithImage);
+        Multimap<String, GitHubContentToProcess> pathToDockerfiles = parent.forkRepositoriesFoundAndGetPathToDockerfiles(contentsWithImage);
         assertTrue(pathToDockerfiles.isEmpty());
         Mockito.verify(dockerfileGitHubUtil, times(0)).getOrCreateFork(any());
     }

@@ -39,7 +39,7 @@ public class GitForkBranch {
      * @return is the branch name equal to specifiedBranch or the normalized image name
      */
     public boolean isSameBranchOrHasImageNamePrefix(String branchName) {
-        if (this.imageTag == null) {
+        if (this.imageTag.equals("")) {
             return this.getBranchName().equals(branchName);
         } else if (branchName != null) {
             String tempBranchName = branchName.trim();
