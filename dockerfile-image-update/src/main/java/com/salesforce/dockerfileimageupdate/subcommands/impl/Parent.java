@@ -38,7 +38,7 @@ public class Parent implements ExecutableWithNamespace {
 
     private static final Logger log = LoggerFactory.getLogger(Parent.class);
 
-    private DockerfileGitHubUtil dockerfileGitHubUtil;
+    DockerfileGitHubUtil dockerfileGitHubUtil;
 
     @Override
     public void execute(final Namespace ns, DockerfileGitHubUtil dockerfileGitHubUtil)
@@ -51,53 +51,33 @@ public class Parent implements ExecutableWithNamespace {
         this.dockerfileGitHubUtil.updateStore(ns.get(Constants.STORE), img, tag);
 
         log.info("Finding Dockerfiles with the given image...");
-        PagedSearchIterable<GHContent> contentsWithImage = getGHContents(ns.get(Constants.GIT_ORG), img);
-        if (contentsWithImage == null) return;
+        Optional<PagedSearchIterable<GHContent>> contentsWithImage = dockerfileGitHubUtil.getGHContents(ns.get(Constants.GIT_ORG), img);
+        if (contentsWithImage.isPresent()) {
+            Multimap<String, GitHubContentToProcess> pathToDockerfilesInParentRepo = forkRepositoriesFoundAndGetPathToDockerfiles(contentsWithImage.get());
+            List<IOException> exceptions = new ArrayList<>();
+            List<String> skippedRepos = new ArrayList<>();
 
-        Multimap<String, GitHubContentToProcess> pathToDockerfilesInParentRepo = forkRepositoriesFoundAndGetPathToDockerfiles(contentsWithImage);
-        List<IOException> exceptions = new ArrayList<>();
-        List<String> skippedRepos = new ArrayList<>();
-
-        for (String currUserRepo : pathToDockerfilesInParentRepo.keySet()) {
-            Optional<GitHubContentToProcess> forkWithContentPaths =
-                    pathToDockerfilesInParentRepo.get(currUserRepo).stream().findFirst();
-            if (forkWithContentPaths.isPresent()) {
-                try {
-                    changeDockerfiles(ns, pathToDockerfilesInParentRepo, forkWithContentPaths.get(), skippedRepos);
-                } catch (IOException e) {
-                    log.error(String.format("Error changing Dockerfile for %s", forkWithContentPaths.get().getParent().getFullName()), e);
-                    exceptions.add(e);
+            for (String currUserRepo : pathToDockerfilesInParentRepo.keySet()) {
+                Optional<GitHubContentToProcess> forkWithContentPaths =
+                        pathToDockerfilesInParentRepo.get(currUserRepo).stream().findFirst();
+                if (forkWithContentPaths.isPresent()) {
+                    try {
+                        changeDockerfiles(ns, pathToDockerfilesInParentRepo, forkWithContentPaths.get(), skippedRepos);
+                    } catch (IOException e) {
+                        log.error(String.format("Error changing Dockerfile for %s", forkWithContentPaths.get().getParent().getFullName()), e);
+                        exceptions.add(e);
+                    }
+                } else {
+                    log.warn("Didn't find fork for {} so not changing Dockerfiles", currUserRepo);
                 }
-            } else {
-                log.warn("Didn't find fork for {} so not changing Dockerfiles", currUserRepo);
             }
-        }
 
-        ResultsProcessor.processResults(skippedRepos, exceptions, log);
+            ResultsProcessor.processResults(skippedRepos, exceptions, log);
+        }
     }
 
     protected void loadDockerfileGithubUtil(DockerfileGitHubUtil _dockerfileGitHubUtil) {
         dockerfileGitHubUtil = _dockerfileGitHubUtil;
-    }
-
-    protected PagedSearchIterable<GHContent> getGHContents(String org, String img)
-            throws IOException, InterruptedException {
-        PagedSearchIterable<GHContent> contentsWithImage = null;
-        for (int i = 0; i < 5; i++) {
-            contentsWithImage = dockerfileGitHubUtil.findFilesWithImage(img, org);
-            if (contentsWithImage.getTotalCount() > 0) {
-                break;
-            } else {
-                Thread.sleep(1000);
-            }
-        }
-
-        int numOfContentsFound = contentsWithImage.getTotalCount();
-        if (numOfContentsFound <= 0) {
-            log.info("Could not find any repositories with given image.");
-            return null;
-        }
-        return contentsWithImage;
     }
 
     /* There is a separation here with forking and performing the Dockerfile update. This is because of the delay

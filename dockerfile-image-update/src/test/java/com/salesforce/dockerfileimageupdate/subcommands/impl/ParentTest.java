@@ -34,46 +34,6 @@ import static org.testng.Assert.*;
  * Created by minho.park on 7/19/16.
  */
 public class ParentTest {
-
-    @Test
-    public void testGetGHContents() throws Exception {
-        DockerfileGitHubUtil dockerfileGitHubUtil = mock(DockerfileGitHubUtil.class);
-
-        Parent parent = new Parent();
-
-        GHContent content1 = mock(GHContent.class);
-        GHContent content2 = mock(GHContent.class);
-        GHContent content3 = mock(GHContent.class);
-
-        PagedSearchIterable<GHContent> contentsWithImage = mock(PagedSearchIterable.class);
-        when(contentsWithImage.getTotalCount()).thenReturn(3);
-
-        PagedIterator<GHContent> contentsWithImageIterator = mock(PagedIterator.class);
-        when(contentsWithImageIterator.hasNext()).thenReturn(true, true, true, false);
-        when(contentsWithImageIterator.next()).thenReturn(content1, content2, content3, null);
-        when(contentsWithImage.iterator()).thenReturn(contentsWithImageIterator);
-
-        when(dockerfileGitHubUtil.findFilesWithImage(anyString(), eq("org"))).thenReturn(contentsWithImage);
-
-        parent.loadDockerfileGithubUtil(dockerfileGitHubUtil);
-
-        assertEquals(parent.getGHContents("org", "image"), contentsWithImage);
-    }
-
-    @Test
-    public void testGHContentsNoOutput() throws Exception {
-        Parent parent = new Parent();
-
-        PagedSearchIterable<GHContent> contentsWithImage = mock(PagedSearchIterable.class);
-        when(contentsWithImage.getTotalCount()).thenReturn(0);
-
-        DockerfileGitHubUtil dockerfileGitHubUtil = mock(DockerfileGitHubUtil.class);
-        when(dockerfileGitHubUtil.findFilesWithImage(anyString(), eq("org"))).thenReturn(contentsWithImage);
-        parent.loadDockerfileGithubUtil(dockerfileGitHubUtil);
-
-        assertNull(parent.getGHContents("org", "image"));
-    }
-
     @Test
     public void testForkRepositoriesFound() throws Exception {
         DockerfileGitHubUtil dockerfileGitHubUtil = mock(DockerfileGitHubUtil.class);

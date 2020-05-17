@@ -331,4 +331,30 @@ public class DockerfileGitHubUtil {
         String myselfLogin = myself.getLogin();
         return repoOwner.equals(myselfLogin);
     }
+
+    /**
+     * Get GHContents for a provided image in the provided GitHub org.
+     *
+     * @param org GitHub organization
+     * @param img image to find
+     */
+    public Optional<PagedSearchIterable<GHContent>> getGHContents(String org, String img)
+            throws IOException, InterruptedException {
+        PagedSearchIterable<GHContent> contentsWithImage = null;
+        for (int i = 0; i < 5; i++) {
+            contentsWithImage = findFilesWithImage(img, org);
+            if (contentsWithImage.getTotalCount() > 0) {
+                break;
+            } else {
+                Thread.sleep(1000);
+            }
+        }
+
+        int numOfContentsFound = contentsWithImage.getTotalCount();
+        if (numOfContentsFound <= 0) {
+            log.info("Could not find any repositories with given image: {}", img);
+            return Optional.empty();
+        }
+        return Optional.of(contentsWithImage);
+    }
 }
