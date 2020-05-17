@@ -57,7 +57,7 @@ public class GitHubJsonStore {
             JsonElement json;
             try (InputStream stream = content.read(); InputStreamReader streamR = new InputStreamReader(stream)) {
                 try {
-                    json = new JsonParser().parse(streamR);
+                    json = JsonParser.parseReader(streamR);
                 } catch (JsonParseException e) {
                     log.warn("Not a JSON format store. Clearing and rewriting as JSON...");
                     json = JsonNull.INSTANCE;

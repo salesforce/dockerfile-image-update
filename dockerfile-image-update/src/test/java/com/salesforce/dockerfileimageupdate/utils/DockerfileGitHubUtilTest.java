@@ -8,10 +8,7 @@
 
 package com.salesforce.dockerfileimageupdate.utils;
 
-import com.google.gson.JsonElement;
-import com.google.gson.JsonParser;
 import com.salesforce.dockerfileimageupdate.model.GitForkBranch;
-import com.salesforce.dockerfileimageupdate.storage.GitHubJsonStore;
 import org.kohsuke.github.*;
 import org.mockito.Mock;
 import org.testng.annotations.DataProvider;

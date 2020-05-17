@@ -135,7 +135,7 @@ public class ParentCommandTest {
         String latestCommit = storeRepo.getBranches().get(storeRepo.getDefaultBranch()).getSHA1();
         GHContent store = storeRepo.getFileContent("store.json", latestCommit);
         try (InputStream stream = store.read(); InputStreamReader streamR = new InputStreamReader(stream)) {
-            JsonElement json = new JsonParser().parse(streamR);
+            JsonElement json = JsonParser.parseReader(streamR);
             assertNotNull(json);
             JsonElement images = json.getAsJsonObject().get("images");
             assertNotNull(images);
