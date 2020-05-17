@@ -35,4 +35,13 @@ public class ResultsProcessorTest {
             verify(mockLogger, times(1)).info(REPOS_SKIPPED_MESSAGE, skippedRepos);
         }
     }
+
+    @Test
+    public void testProcessResultsHasNothingToReport() throws IOException {
+        Logger mockLogger = mock(Logger.class);
+        ResultsProcessor.processResults(new ArrayList<>(),
+                new ArrayList<>(),
+                mockLogger);
+        verify(mockLogger, times(0)).info(any(), anyList());
+    }
 }
