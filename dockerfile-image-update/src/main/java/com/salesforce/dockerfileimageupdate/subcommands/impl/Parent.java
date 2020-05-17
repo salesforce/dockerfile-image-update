@@ -8,11 +8,11 @@
 
 package com.salesforce.dockerfileimageupdate.subcommands.impl;
 
-import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import com.salesforce.dockerfileimageupdate.SubCommand;
 import com.salesforce.dockerfileimageupdate.model.GitForkBranch;
 import com.salesforce.dockerfileimageupdate.model.GitHubContentToProcess;
+import com.salesforce.dockerfileimageupdate.process.GitHubPullRequestSender;
 import com.salesforce.dockerfileimageupdate.subcommands.ExecutableWithNamespace;
 import com.salesforce.dockerfileimageupdate.utils.Constants;
 import com.salesforce.dockerfileimageupdate.utils.DockerfileGitHubUtil;
@@ -27,7 +27,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -48,12 +47,14 @@ public class Parent implements ExecutableWithNamespace {
         String tag = ns.get(Constants.TAG);
 
         log.info("Updating store...");
-        this.dockerfileGitHubUtil.updateStore(ns.get(Constants.STORE), img, tag);
+        this.dockerfileGitHubUtil.getGitHubJsonStore(ns.get(Constants.STORE)).updateStore(img, tag);
+
+        GitHubPullRequestSender pullRequestSender = new GitHubPullRequestSender(dockerfileGitHubUtil);
 
         log.info("Finding Dockerfiles with the given image...");
         Optional<PagedSearchIterable<GHContent>> contentsWithImage = dockerfileGitHubUtil.getGHContents(ns.get(Constants.GIT_ORG), img);
         if (contentsWithImage.isPresent()) {
-            Multimap<String, GitHubContentToProcess> pathToDockerfilesInParentRepo = forkRepositoriesFoundAndGetPathToDockerfiles(contentsWithImage.get());
+            Multimap<String, GitHubContentToProcess> pathToDockerfilesInParentRepo = pullRequestSender.forkRepositoriesFoundAndGetPathToDockerfiles(contentsWithImage.get());
             List<IOException> exceptions = new ArrayList<>();
             List<String> skippedRepos = new ArrayList<>();
 
@@ -78,69 +79,6 @@ public class Parent implements ExecutableWithNamespace {
 
     protected void loadDockerfileGithubUtil(DockerfileGitHubUtil _dockerfileGitHubUtil) {
         dockerfileGitHubUtil = _dockerfileGitHubUtil;
-    }
-
-    /* There is a separation here with forking and performing the Dockerfile update. This is because of the delay
-     * on Github, where after the fork, there may be a time gap between repository creation and content replication
-     * when forking. So, in hopes of alleviating the situation a little bit, we do all the forking before the
-     * Dockerfile updates.
-     *
-     * NOTE: We are not currently forking repositories that are already forks
-     */
-    protected Multimap<String, GitHubContentToProcess> forkRepositoriesFoundAndGetPathToDockerfiles(PagedSearchIterable<GHContent> contentsWithImage) throws IOException {
-        log.info("Forking repositories...");
-        Multimap<String, GitHubContentToProcess> pathToDockerfilesInParentRepo = HashMultimap.create();
-        GHRepository parent;
-        String parentRepoName;
-        for (GHContent c : contentsWithImage) {
-            /* Kohsuke's GitHub API library, when retrieving the forked repository, looks at the name of the parent to
-             * retrieve. The issue with that is: GitHub, when forking two or more repositories with the same name,
-             * automatically fixes the names to be unique (by appending "-#" to the end). Because of this edge case, we
-             * cannot save the forks and iterate over the repositories; else, we end up missing/not updating the
-             * repositories that were automatically fixed by GitHub. Instead, we save the names of the parent repos
-             * in the map above, find the list of repositories under the authorized user, and iterate through that list.
-             */
-            parent = c.getOwner();
-            parentRepoName = parent.getFullName();
-            // TODO: Error check... Refresh the repo to ensure that the object has full details
-            parent = dockerfileGitHubUtil.getRepo(parentRepoName);
-            if (parent.isFork()) {
-                log.warn("Skipping {} because it's a fork already. Sending a PR to a fork is unsupported at the moment.",
-                        parentRepoName);
-            } else if (parent.isArchived()) {
-                log.warn("Skipping {} because it's archived.", parent.getFullName());
-            } else if (dockerfileGitHubUtil.thisUserIsOwner(parent)) {
-                log.warn("Skipping {} because it is owned by this user.", parent.getFullName());
-            } else {
-                // fork the parent if not already forked
-                GHRepository fork;
-                if (pathToDockerfilesInParentRepo.containsKey(parentRepoName)) {
-                    // Found more content for this fork, so add it as well
-                    Collection<GitHubContentToProcess> gitHubContentToProcesses = pathToDockerfilesInParentRepo.get(parentRepoName);
-                    Optional<GitHubContentToProcess> firstForkData = gitHubContentToProcesses.stream().findFirst();
-                    if (firstForkData.isPresent()) {
-                        fork = firstForkData.get().getFork();
-                        pathToDockerfilesInParentRepo.put(parentRepoName, new GitHubContentToProcess(fork, parent, c.getPath()));
-                    } else {
-                        log.warn("For some reason we have ");
-                    }
-                } else {
-                    log.info("Getting or creating fork: {}", parentRepoName);
-                    fork = dockerfileGitHubUtil.getOrCreateFork(parent);
-//                    fork = null;
-                    if (fork == null) {
-                        log.info("Could not fork {}", parentRepoName);
-                    } else {
-                        // Add repos to pathToDockerfilesInParentRepo only if we forked it successfully.
-                        pathToDockerfilesInParentRepo.put(parentRepoName, new GitHubContentToProcess(fork, parent, c.getPath()));
-                    }
-                }
-            }
-        }
-
-        log.info("Path to Dockerfiles in repos: {}", pathToDockerfilesInParentRepo);
-
-        return pathToDockerfilesInParentRepo;
     }
 
     protected void changeDockerfiles(Namespace ns,

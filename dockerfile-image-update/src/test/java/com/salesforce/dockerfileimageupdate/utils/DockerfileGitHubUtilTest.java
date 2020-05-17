@@ -11,6 +11,7 @@ package com.salesforce.dockerfileimageupdate.utils;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 import com.salesforce.dockerfileimageupdate.model.GitForkBranch;
+import com.salesforce.dockerfileimageupdate.storage.GitHubJsonStore;
 import org.kohsuke.github.*;
 import org.mockito.Mock;
 import org.testng.annotations.DataProvider;
@@ -476,87 +477,6 @@ public class DockerfileGitHubUtilTest {
         dockerfileGitHubUtil.changeIfDockerfileBaseImageLine(img, tag, stringBuilder, "world");
         dockerfileGitHubUtil.changeIfDockerfileBaseImageLine(img, tag, stringBuilder, "this is a test");
         assertEquals(stringBuilder.toString(), "hello\nFROM image:7357\nworld\nthis is a test\n");
-    }
-
-    @DataProvider
-    public Object[][] inputStores() throws Exception {
-        return new Object[][] {
-                {"{\n  \"images\": {\n" +
-                        "    \"test\": \"testingtest\",\n" +
-                        "    \"asdfjkl\": \"asdfjkl\",\n" +
-                        "    \"7fce8488-31f4-4137-ad68-c19c3b33eebb\": \"manualtest\"\n" +
-                        "  }\n" +
-                        "}",
-                        "test", "newtag",
-                        "{\n  \"images\": {\n" +
-                                "    \"test\": \"newtag\",\n" +
-                                "    \"asdfjkl\": \"asdfjkl\",\n" +
-                                "    \"7fce8488-31f4-4137-ad68-c19c3b33eebb\": \"manualtest\"\n" +
-                                "  }\n" +
-                                "}"},
-                {"{\n  \"images\": {\n" +
-                        "    \"test\": \"testingtest\",\n" +
-                        "    \"asdfjkl\": \"asdfjkl\",\n" +
-                        "    \"7fce8488-31f4-4137-ad68-c19c3b33eebb\": \"manualtest\"\n" +
-                        "  }\n" +
-                        "}",
-                        "test", "test",
-                        "{\n  \"images\": {\n" +
-                                "    \"test\": \"test\",\n" +
-                                "    \"asdfjkl\": \"asdfjkl\",\n" +
-                                "    \"7fce8488-31f4-4137-ad68-c19c3b33eebb\": \"manualtest\"\n" +
-                                "  }\n" +
-                                "}"},
-                {"{\n  \"images\": {\n" +
-                        "    \"test\": \"testingtest\",\n" +
-                        "    \"asdfjkl\": \"asdfjkl\",\n" +
-                        "    \"7fce8488-31f4-4137-ad68-c19c3b33eebb\": \"manualtest\"\n" +
-                        "  }\n" +
-                        "}",
-                        "newImage", "newtag2",
-                        "{\n  \"images\": {\n" +
-                                "    \"test\": \"testingtest\",\n" +
-                                "    \"asdfjkl\": \"asdfjkl\",\n" +
-                                "    \"7fce8488-31f4-4137-ad68-c19c3b33eebb\": \"manualtest\",\n" +
-                                "    \"newImage\": \"newtag2\"\n" +
-                                "  }\n" +
-                                "}"},
-                {"{}", "image", "tag",
-                        "{\n  \"images\": {\n" +
-                                "    \"image\": \"tag\"\n" +
-                                "  }\n" +
-                                "}"},
-                {"{}", "test", "test",
-                        "{\n  \"images\": {\n" +
-                                "    \"test\": \"test\"\n" +
-                                "  }\n" +
-                                "}"},
-                {"", "image", "tag",
-                        "{\n  \"images\": {\n" +
-                                "    \"image\": \"tag\"\n" +
-                                "  }\n" +
-                                "}"},
-                {"{\n  \"images\": {\n" +
-                        "  }\n" +
-                        "}",
-                        "image", "tag",
-                        "{\n  \"images\": {\n" +
-                                "    \"image\": \"tag\"\n" +
-                                "  }\n" +
-                                "}"}
-
-        };
-    }
-
-    @Test(dataProvider = "inputStores")
-    public void testGetAndModifyJsonString(String storeContent, String image, String tag, String expectedOutput) throws Exception {
-        gitHubUtil = mock(GitHubUtil.class);
-
-        JsonElement json = new JsonParser().parse(storeContent);
-
-        dockerfileGitHubUtil = new DockerfileGitHubUtil(gitHubUtil);
-        String output = dockerfileGitHubUtil.getAndModifyJsonString(json, image, tag);
-        assertEquals(output, expectedOutput);
     }
 
     @Test

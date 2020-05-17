@@ -9,15 +9,14 @@
 package com.salesforce.dockerfileimageupdate.utils;
 
 import com.google.common.collect.Multimap;
-import com.google.gson.*;
 import com.salesforce.dockerfileimageupdate.model.FromInstruction;
 import com.salesforce.dockerfileimageupdate.model.GitForkBranch;
+import com.salesforce.dockerfileimageupdate.storage.GitHubJsonStore;
 import org.kohsuke.github.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.Optional;
 
@@ -202,69 +201,8 @@ public class DockerfileGitHubUtil {
         return modified;
     }
 
-    /* The store link should be a repository name on Github. */
-    public void updateStore(String store, String img, String tag) throws IOException {
-        if (store == null) {
-            log.info("Image tag store cannot be null. Skipping store update...");
-            return;
-        }
-        log.info("Updating store: {} with image: {} tag: {}...", store, img, tag);
-        GHRepository storeRepo;
-        try {
-            GHMyself myself = gitHubUtil.getMyself();
-            String ownerOrg = myself.getLogin();
-            storeRepo = gitHubUtil.getRepo(Paths.get(ownerOrg, store).toString());
-        } catch (IOException e) {
-            storeRepo = gitHubUtil.createPublicRepo(store);
-        }
-        updateStoreOnGithub(storeRepo, Constants.STORE_JSON_FILE, img, tag);
-    }
-
-    protected void updateStoreOnGithub(GHRepository repo, String path, String img, String tag) throws IOException {
-        try {
-            repo.getFileContent(path);
-        } catch (IOException e) {
-            repo.createContent().content("").message("initializing store").path(path).commit();
-        }
-
-        String latestCommit = repo.getBranches().get(repo.getDefaultBranch()).getSHA1();
-        log.info("Loading image store at commit {}", latestCommit);
-        GHContent content = repo.getFileContent(path, latestCommit);
-
-        if (content.isFile()) {
-            JsonElement json;
-            try (InputStream stream = content.read(); InputStreamReader streamR = new InputStreamReader(stream)) {
-                try {
-                    json = new JsonParser().parse(streamR);
-                } catch (JsonParseException e) {
-                    log.warn("Not a JSON format store. Clearing and rewriting as JSON...");
-                    json = JsonNull.INSTANCE;
-                }
-            }
-            String jsonOutput = getAndModifyJsonString(json, img, tag);
-            content.update(jsonOutput,
-                    String.format("Updated image %s with tag %s.\n@rev none@", img, tag), repo.getDefaultBranch());
-        }
-    }
-
-    protected String getAndModifyJsonString(JsonElement json, String img, String tag) throws IOException {
-        JsonElement images;
-        if (json.isJsonNull()) {
-            json = new JsonObject();
-            images = new JsonObject();
-            json.getAsJsonObject().add("images", images);
-        }
-        images = json.getAsJsonObject().get("images");
-        if (images == null) {
-            images = new JsonObject();
-            json.getAsJsonObject().add("images", images);
-            images = json.getAsJsonObject().get("images");
-        }
-        JsonElement newTag = new JsonPrimitive(tag);
-        images.getAsJsonObject().add(img, newTag);
-
-        Gson gson = new GsonBuilder().setPrettyPrinting().create();
-        return gson.toJson(json);
+    public GitHubJsonStore getGitHubJsonStore(String store) {
+        return new GitHubJsonStore(this.gitHubUtil, store);
     }
 
     public void createPullReq(GHRepository origRepo,

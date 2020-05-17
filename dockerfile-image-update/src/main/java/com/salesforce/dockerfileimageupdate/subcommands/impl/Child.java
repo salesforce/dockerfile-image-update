@@ -32,7 +32,7 @@ public class Child implements ExecutableWithNamespace {
         String forceTag = ns.get(Constants.FORCE_TAG);
 
         /* Updates store if a store is specified. */
-        dockerfileGitHubUtil.updateStore(ns.get(Constants.STORE), img, forceTag);
+        dockerfileGitHubUtil.getGitHubJsonStore(ns.get(Constants.STORE)).updateStore(img, forceTag);
 
         log.info("Retrieving repository and creating fork...");
         GHRepository repo = dockerfileGitHubUtil.getRepo(ns.get(Constants.GIT_REPO));
