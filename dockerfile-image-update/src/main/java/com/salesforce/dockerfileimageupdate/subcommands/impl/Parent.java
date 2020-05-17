@@ -16,6 +16,7 @@ import com.salesforce.dockerfileimageupdate.model.GitHubContentToProcess;
 import com.salesforce.dockerfileimageupdate.subcommands.ExecutableWithNamespace;
 import com.salesforce.dockerfileimageupdate.utils.Constants;
 import com.salesforce.dockerfileimageupdate.utils.DockerfileGitHubUtil;
+import com.salesforce.dockerfileimageupdate.utils.ResultsProcessor;
 import net.sourceforge.argparse4j.inf.Namespace;
 import org.kohsuke.github.GHContent;
 import org.kohsuke.github.GHPullRequest;
@@ -71,13 +72,8 @@ public class Parent implements ExecutableWithNamespace {
                 log.warn("Didn't find fork for {} so not changing Dockerfiles", currUserRepo);
             }
         }
-        if (!exceptions.isEmpty()) {
-            throw new IOException(String.format("There were %s errors with changing Dockerfiles.", exceptions.size()));
-        }
 
-        if (!skippedRepos.isEmpty()) {
-            log.info("List of repos skipped: {}", skippedRepos);
-        }
+        ResultsProcessor.processResults(skippedRepos, exceptions, log);
     }
 
     protected void loadDockerfileGithubUtil(DockerfileGitHubUtil _dockerfileGitHubUtil) {
