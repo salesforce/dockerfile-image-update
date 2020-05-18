@@ -89,19 +89,20 @@ public class GitHubPullRequestSender {
      * @param parentRepo The parent repo which may or may not be a candidate to fork
      */
     protected Optional<String> shouldNotForkRepo(GHRepository parentRepo) {
+        Optional<String> result = Optional.empty();
         if (parentRepo.isFork()) {
-            return Optional.of(REPO_IS_FORK);
-        }
-        if (parentRepo.isArchived()) {
-            return Optional.of(REPO_IS_ARCHIVED);
-        }
-        try {
-            if (dockerfileGitHubUtil.thisUserIsOwner(parentRepo)) {
-                return Optional.of(REPO_IS_OWNED_BY_THIS_USER);
+            result = Optional.of(REPO_IS_FORK);
+        } else if (parentRepo.isArchived()) {
+            result = Optional.of(REPO_IS_ARCHIVED);
+        } else {
+            try {
+                if (dockerfileGitHubUtil.thisUserIsOwner(parentRepo)) {
+                    result = Optional.of(REPO_IS_OWNED_BY_THIS_USER);
+                }
+            } catch (IOException ioException) {
+                result = Optional.of(COULD_NOT_CHECK_THIS_USER);
             }
-        } catch (IOException ioException) {
-            return Optional.of(COULD_NOT_CHECK_THIS_USER);
         }
-        return Optional.empty();
+        return result;
     }
 }
