@@ -11,7 +11,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.Collection;
 import java.util.Optional;
 
 public class GitHubPullRequestSender {
@@ -76,25 +75,24 @@ public class GitHubPullRequestSender {
                                                        GHRepository parent,
                                                        String parentRepoName,
                                                        GHContent ghContent) {
+        GHRepository fork = null;
         if (pathToDockerfilesInParentRepo.containsKey(parentRepoName)) {
             // Found more content for this fork, so add it as well
-            Collection<GitHubContentToProcess> gitHubContentToProcesses = pathToDockerfilesInParentRepo.get(parentRepoName);
-            Optional<GitHubContentToProcess> firstForkData = gitHubContentToProcesses.stream().findFirst();
+            Optional<GitHubContentToProcess> firstForkData = pathToDockerfilesInParentRepo.get(parentRepoName).stream().findFirst();
             if (firstForkData.isPresent()) {
-                GHRepository fork = firstForkData.get().getFork();
-                pathToDockerfilesInParentRepo.put(parentRepoName, new GitHubContentToProcess(fork, parent, ghContent.getPath()));
+                fork = firstForkData.get().getFork();
             } else {
-                log.warn("For some reason we have data inconsistency within the process when trying to find the fork for {}", parentRepoName);
+                log.warn("For some reason we have data inconsistency when trying to find the fork for {}", parentRepoName);
             }
         } else {
             log.info("Getting or creating fork: {}", parentRepoName);
-            GHRepository fork = dockerfileGitHubUtil.getOrCreateFork(parent);
-            if (fork == null) {
-                log.info("Could not fork {}", parentRepoName);
-            } else {
-                // Add repos to pathToDockerfilesInParentRepo only if we forked it successfully.
-                pathToDockerfilesInParentRepo.put(parentRepoName, new GitHubContentToProcess(fork, parent, ghContent.getPath()));
-            }
+            fork = dockerfileGitHubUtil.getOrCreateFork(parent);
+        }
+        // Add repos to pathToDockerfilesInParentRepo only if we forked it successfully.
+        if (fork == null) {
+            log.info("Could not fork {}", parentRepoName);
+        } else {
+            pathToDockerfilesInParentRepo.put(parentRepoName, new GitHubContentToProcess(fork, parent, ghContent.getPath()));
         }
     }
 
