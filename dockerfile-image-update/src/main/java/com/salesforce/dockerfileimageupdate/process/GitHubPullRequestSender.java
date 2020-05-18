@@ -68,7 +68,7 @@ public class GitHubPullRequestSender {
                     }
                 } else {
                     log.info("Getting or creating fork: {}", parentRepoName);
-                    fork = dockerfileGitHubUtil.getOrCreateFork(parent); //CATCH IOException
+                    fork = dockerfileGitHubUtil.getOrCreateFork(parent);
                     if (fork == null) {
                         log.info("Could not fork {}", parentRepoName);
                     } else {
