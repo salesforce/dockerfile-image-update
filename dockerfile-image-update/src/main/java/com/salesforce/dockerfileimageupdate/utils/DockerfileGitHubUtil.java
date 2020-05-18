@@ -9,15 +9,17 @@
 package com.salesforce.dockerfileimageupdate.utils;
 
 import com.google.common.collect.Multimap;
-import com.google.gson.*;
 import com.salesforce.dockerfileimageupdate.model.FromInstruction;
+import com.salesforce.dockerfileimageupdate.model.GitForkBranch;
+import com.salesforce.dockerfileimageupdate.storage.GitHubJsonStore;
 import org.kohsuke.github.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
-import java.nio.file.Paths;
 import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Created by minho.park on 7/22/16.
@@ -32,27 +34,25 @@ public class DockerfileGitHubUtil {
 
     protected GitHubUtil getGitHubUtil() { return gitHubUtil; }
 
-    public GHRepository closeOutdatedPullRequestAndFork(GHRepository parent) throws IOException {
-
+    /**
+     * Return an existing fork in the current user's org or create one if it does not exist
+     *
+     * THIS METHOD ENSURES THAT THE FORK IS DIRECTLY FROM THE PARENT!
+     *
+     * @param parent the proposed/current fork parent
+     * @return existing fork or new fork
+     */
+    public GHRepository getOrCreateFork(GHRepository parent) {
         for (GHRepository fork : parent.listForks()) {
-            String forkOwner = fork.getOwnerName();
-            GHMyself myself = gitHubUtil.getMyself();
-            String myselfLogin = myself.getLogin();
-            if (forkOwner.equals(myselfLogin)) {
-                GHPullRequest pr = getPullRequestWithPullReqIdentifier(parent);
-                // Only reason we close the existing PR, delete fork and re-fork, is because there is no way to
-                // determine if the existing fork is compatible with it's parent.
-                if (pr != null) {
-                    // close the pull-request since the fork is out of date
-                    log.info("closing existing pr: {}", pr.getUrl());
-                    try {
-                        pr.close();
-                    } catch (IOException e) {
-                        log.info("Issues closing the pull request '{}'. Moving ahead...", pr.getUrl());
-                    }
+            try {
+                if (thisUserIsOwner(fork)) {
+                    log.info("Fork exists, retrieving full info: {}", fork);
+                    // NOTE: listForks() appears to miss information like parent data and GHContent parent doesn't have isArchived()
+                    return fork;
                 }
-                // delete fork if one already exists before re-forking
-                gitHubUtil.safeDeleteRepo(fork);
+            } catch (IOException ioException) {
+                log.error("Could not determine user to see if we can fork. Skipping.", ioException);
+                return null;
             }
         }
         log.info("Forking repo: {}", parent);
@@ -69,7 +69,8 @@ public class DockerfileGitHubUtil {
 
     public PagedSearchIterable<GHContent> findFilesWithImage(String query, String org) throws IOException {
         GHContentSearchBuilder search = gitHubUtil.startSearch();
-        search.language("Dockerfile");
+        // Filename search appears to yield better / more results than language:Dockerfile
+        search.filename("Dockerfile");
         if (org != null) {
             search.user(org);
         }
@@ -113,7 +114,7 @@ public class DockerfileGitHubUtil {
                 break;
             } catch (FileNotFoundException e1) {
                 log.warn("Content in repository not created yet. Retrying connection to fork...");
-                Thread.sleep(1000);
+                Thread.sleep(TimeUnit.SECONDS.toMillis(1));
             }
         }
         for (GHContent con : tree) {
@@ -205,79 +206,19 @@ public class DockerfileGitHubUtil {
         return modified;
     }
 
-    /* The store link should be a repository name on Github. */
-    public void updateStore(String store, String img, String tag) throws IOException {
-        if (store == null) {
-            log.info("Image tag store cannot be null. Skipping store update...");
-            return;
-        }
-        log.info("Updating store: {} with image: {} tag: {}...", store, img, tag);
-        GHRepository storeRepo;
-        try {
-            GHMyself myself = gitHubUtil.getMyself();
-            String ownerOrg = myself.getLogin();
-            storeRepo = gitHubUtil.getRepo(Paths.get(ownerOrg, store).toString());
-        } catch (IOException e) {
-            storeRepo = gitHubUtil.createPublicRepo(store);
-        }
-        updateStoreOnGithub(storeRepo, Constants.STORE_JSON_FILE, img, tag);
-    }
-
-    protected void updateStoreOnGithub(GHRepository repo, String path, String img, String tag) throws IOException {
-        try {
-            repo.getFileContent(path);
-        } catch (IOException e) {
-            repo.createContent("", "initializing store", path);
-        }
-
-        String latestCommit = repo.getBranches().get(repo.getDefaultBranch()).getSHA1();
-        log.info("Loading image store at commit {}", latestCommit);
-        GHContent content = repo.getFileContent(path, latestCommit);
-
-        if (content.isFile()) {
-            JsonElement json;
-            try (InputStream stream = content.read(); InputStreamReader streamR = new InputStreamReader(stream)) {
-                try {
-                    json = new JsonParser().parse(streamR);
-                } catch (JsonParseException e) {
-                    log.warn("Not a JSON format store. Clearing and rewriting as JSON...");
-                    json = JsonNull.INSTANCE;
-                }
-            }
-            String jsonOutput = getAndModifyJsonString(json, img, tag);
-            content.update(jsonOutput,
-                    String.format("Updated image %s with tag %s.\n@rev none@", img, tag), repo.getDefaultBranch());
-        }
-    }
-
-    protected String getAndModifyJsonString(JsonElement json, String img, String tag) throws IOException {
-        JsonElement images;
-        if (json.isJsonNull()) {
-            json = new JsonObject();
-            images = new JsonObject();
-            json.getAsJsonObject().add("images", images);
-        }
-        images = json.getAsJsonObject().get("images");
-        if (images == null) {
-            images = new JsonObject();
-            json.getAsJsonObject().add("images", images);
-            images = json.getAsJsonObject().get("images");
-        }
-        JsonElement newTag = new JsonPrimitive(tag);
-        images.getAsJsonObject().add(img, newTag);
-
-        Gson gson = new GsonBuilder().setPrettyPrinting().create();
-        return gson.toJson(json);
+    public GitHubJsonStore getGitHubJsonStore(String store) {
+        return new GitHubJsonStore(this.gitHubUtil, store);
     }
 
     public void createPullReq(GHRepository origRepo,
                               String branch, GHRepository forkRepo,
-                              String message) throws InterruptedException, IOException {
-        if (message == null) {
-            message = "Automatic Dockerfile Image Updater";
+                              String title) throws InterruptedException, IOException {
+        if (title == null) {
+            title = "Automatic Dockerfile Image Updater";
         }
+        // TODO: This may loop forever in the event of constant -1 pullRequestExitCodes...
         while (true) {
-            int pullRequestExitCode = gitHubUtil.createPullReq(origRepo, branch, forkRepo, message, Constants.PULL_REQ_ID);
+            int pullRequestExitCode = gitHubUtil.createPullReq(origRepo, branch, forkRepo, title, Constants.PULL_REQ_ID);
             if (pullRequestExitCode == 0) {
                 return;
             } else if (pullRequestExitCode == 1) {
@@ -287,23 +228,76 @@ public class DockerfileGitHubUtil {
         }
     }
 
-    private GHPullRequest getPullRequestWithPullReqIdentifier(GHRepository parent) throws IOException {
-        List<GHPullRequest> pullRequests;
-        GHUser myself;
-        try {
-            pullRequests = parent.getPullRequests(GHIssueState.OPEN);
-            myself = gitHubUtil.getMyself();
-        } catch (IOException e) {
-            log.warn("Error occurred while retrieving pull requests for {}", parent.getFullName());
-            return null;
-        }
-
+    /**
+     * Get the pull request from this repository that corresponds to this branch. A prerequisite should be that the repository
+     * passed in here should have already came from the expected parent. We will not check this again here.
+     *
+     * @param repository the repository which should come from an expected parent
+     * @param gitForkBranch the branch name which was derived from the image to update
+     * @return Optional GHPullRequest if we've found one
+     */
+    public Optional<GHPullRequest> getPullRequestForImageBranch(GHRepository repository, GitForkBranch gitForkBranch) {
+        PagedIterable<GHPullRequest> pullRequests =
+                repository.queryPullRequests().state(GHIssueState.OPEN).head(gitForkBranch.getBranchName()).list();
         for (GHPullRequest pullRequest : pullRequests) {
-            GHUser user = pullRequest.getHead().getUser();
-            if (myself.equals(user) && pullRequest.getBody().equals(Constants.PULL_REQ_ID)) {
-                return pullRequest;
+            // There can be only one since it is based on branch.
+            return Optional.of(pullRequest);
+        }
+        return Optional.empty();
+    }
+
+    public void createOrUpdateForkBranchToParentDefault(GHRepository parent, GHRepository fork, GitForkBranch gitForkBranch) throws IOException {
+        GHBranch parentBranch = parent.getBranch(parent.getDefaultBranch());
+        String sha1 = parentBranch.getSHA1();
+        GHBranch forkBranch = fork.getBranches().get(gitForkBranch.getBranchName());
+        String branchRefName = String.format("refs/heads/%s", gitForkBranch.getBranchName());
+        if (forkBranch == null) {
+            fork.createRef(branchRefName, sha1);
+        } else {
+            fork.getRef(branchRefName).updateTo(sha1, true);
+        }
+    }
+
+    /**
+     * Determines whether the user we're logged in as is the repo owner
+     *
+     * @param repo the repo to check
+     * @return are we the repo owner?
+     * @throws IOException when attempting to check our user details
+     */
+    public boolean thisUserIsOwner(GHRepository repo) throws IOException {
+        String repoOwner = repo.getOwnerName();
+        GHMyself myself = gitHubUtil.getMyself();
+        if (myself == null) {
+            throw new IOException("Could not retrieve authenticated user.");
+        }
+        String myselfLogin = myself.getLogin();
+        return repoOwner.equals(myselfLogin);
+    }
+
+    /**
+     * Get GHContents for a provided image in the provided GitHub org.
+     *
+     * @param org GitHub organization
+     * @param img image to find
+     */
+    public Optional<PagedSearchIterable<GHContent>> getGHContents(String org, String img)
+            throws IOException, InterruptedException {
+        PagedSearchIterable<GHContent> contentsWithImage = null;
+        for (int i = 0; i < 5; i++) {
+            contentsWithImage = findFilesWithImage(img, org);
+            if (contentsWithImage.getTotalCount() > 0) {
+                break;
+            } else {
+                Thread.sleep(TimeUnit.SECONDS.toMillis(1));
             }
         }
-        return null;
+
+        int numOfContentsFound = contentsWithImage.getTotalCount();
+        if (numOfContentsFound <= 0) {
+            log.info("Could not find any repositories with given image: {}", img);
+            return Optional.empty();
+        }
+        return Optional.of(contentsWithImage);
     }
 }

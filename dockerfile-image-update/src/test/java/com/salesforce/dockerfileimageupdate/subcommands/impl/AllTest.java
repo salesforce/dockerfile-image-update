@@ -60,7 +60,7 @@ public class AllTest {
         all.loadDockerfileGithubUtil(dockerfileGitHubUtil);
         all.forkRepositoriesFound(ArrayListMultimap.create(), ArrayListMultimap.create(), contentsWithImage, "image");
 
-        Mockito.verify(dockerfileGitHubUtil, times(3)).closeOutdatedPullRequestAndFork(any());
+        Mockito.verify(dockerfileGitHubUtil, times(3)).getOrCreateFork(any());
     }
 
     @Test
@@ -99,9 +99,9 @@ public class AllTest {
         when(contentsWithImageIterator.hasNext()).thenReturn(true, true, true, false);
         when(contentsWithImageIterator.next()).thenReturn(content1, content2, content3, null);
         when(contentsWithImage.iterator()).thenReturn(contentsWithImageIterator);
-        when(dockerfileGitHubUtil.closeOutdatedPullRequestAndFork(contentRepo1)).thenReturn(null); // repo1 is unforkable
-        when(dockerfileGitHubUtil.closeOutdatedPullRequestAndFork(contentRepo2)).thenReturn(null); // repo1 is unforkable
-        when(dockerfileGitHubUtil.closeOutdatedPullRequestAndFork(contentRepo3)).thenReturn(new GHRepository());
+        when(dockerfileGitHubUtil.getOrCreateFork(contentRepo1)).thenReturn(null); // repo1 is unforkable
+        when(dockerfileGitHubUtil.getOrCreateFork(contentRepo2)).thenReturn(null); // repo1 is unforkable
+        when(dockerfileGitHubUtil.getOrCreateFork(contentRepo3)).thenReturn(new GHRepository());
 
         All all = new All();
         all.loadDockerfileGithubUtil(dockerfileGitHubUtil);
@@ -112,7 +112,7 @@ public class AllTest {
         // Since repo "1" is unforkable, we only added repo "2" to pathToDockerfilesInParentRepo
         assertEquals(pathToDockerfilesInParentRepo.size(), 1);
         assertEquals(imagesFoundInParentRepo.size(), 1);
-        Mockito.verify(dockerfileGitHubUtil, times(3)).closeOutdatedPullRequestAndFork(any());
+        Mockito.verify(dockerfileGitHubUtil, times(3)).getOrCreateFork(any());
     }
 
     @Test
@@ -394,7 +394,7 @@ public class AllTest {
         All all = new All();
         all.loadDockerfileGithubUtil(dockerfileGitHubUtil);
         all.forkRepositoriesFound(ArrayListMultimap.create(), ArrayListMultimap.create(), contentsWithImage, "image");
-        Mockito.verify(dockerfileGitHubUtil, times(0)).closeOutdatedPullRequestAndFork(any());
+        Mockito.verify(dockerfileGitHubUtil, times(0)).getOrCreateFork(any());
     }
 
     @Test

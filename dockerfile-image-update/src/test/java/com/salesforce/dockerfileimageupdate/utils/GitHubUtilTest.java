@@ -85,6 +85,7 @@ public class GitHubUtilTest {
         GitHubUtil gitHubUtil = new GitHubUtil(github);
         GHRepository origRepo = mock(GHRepository.class);
         when(origRepo.getDefaultBranch()).thenReturn("master");
+        when(origRepo.createPullRequest(any(), any(), any(), any())).thenReturn(mock(GHPullRequest.class));
         GHRepository forkRepo = mock(GHRepository.class);
         when(forkRepo.getOwnerName()).thenReturn("owner");
         assertEquals(gitHubUtil.createPullReq(origRepo, "branch", forkRepo, "title", "body"), 0);

@@ -17,7 +17,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -72,12 +75,18 @@ public class GitHubUtil {
         return null;
     }
 
+    /**
+     * Attempt to delete the GitHub repo if there are no pull requests associated with it
+     * @param repo the repo to delete
+     */
     public void safeDeleteRepo(GHRepository repo) throws IOException {
-        try {
-            repo.delete();
-        } catch (IOException e) {
-            throw new IOException("Please verify that the GitHub token " +
-                    "provided has access to deleting repositories.");
+        if (!repo.queryPullRequests().state(GHIssueState.OPEN).list().iterator().hasNext()) {
+            try {
+                repo.delete();
+            } catch (IOException e) {
+                throw new IOException("Please verify that the GitHub token " +
+                        "provided has access to deleting repositories.");
+            }
         }
     }
 
@@ -86,15 +95,15 @@ public class GitHubUtil {
         log.info("Creating Pull Request on {} from {}...", origRepo.getFullName(), forkRepo.getFullName());
         //TODO: if no commits, pull request will fail, but this doesn't handle that.
         try {
-            origRepo.createPullRequest(title, forkRepo.getOwnerName() + ":" + branch,
+            GHPullRequest pullRequest = origRepo.createPullRequest(title, forkRepo.getOwnerName() + ":" + branch,
                     origRepo.getDefaultBranch(), body);
 //            origRepo.createPullRequest("Update base image in Dockerfile", forkRepo.getOwnerName() + ":" + branch,
 //                    origRepo.getDefaultBranch(), "Automatic Dockerfile Image Updater. Please merge.");
-            log.info("A pull request has been created. Please check on Github.");
+            log.info("A pull request has been created at {}", pullRequest.getHtmlUrl());
             return 0;
         } catch (IOException e) {
-            log.warn("Handling error with pull request creation...");
-            JsonElement root = new JsonParser().parse(e.getMessage());
+            log.warn("Handling error with pull request creation... {}", e.getMessage());
+            JsonElement root = JsonParser.parseString(e.getMessage());
             JsonArray errorJson = root.getAsJsonObject().get("errors").getAsJsonArray();
             String error = errorJson.get(0).getAsJsonObject().get("message").getAsString();
             log.info("error: {}", error);
@@ -105,6 +114,7 @@ public class GitHubUtil {
                 log.warn("NOTE: {} Pull request was not created.", error);
                 return 1;
             } else {
+                // TODO: THIS WILL LOOP FOREVVEEEEEERRRR
                 log.warn("An error occurred in pull request: {} Trying again...", error);
                 Thread.sleep(3000);
                 return -1;
@@ -120,7 +130,7 @@ public class GitHubUtil {
                 break;
             } catch (IOException e1) {
                 log.warn("Repository not created yet. Retrying connection to repository...");
-                Thread.sleep(1000);
+                Thread.sleep(TimeUnit.SECONDS.toMillis(1));
             }
         }
         return repo;
@@ -137,7 +147,7 @@ public class GitHubUtil {
                 break;
             } catch (IOException e1) {
                 log.warn("Content in repository not created yet. Retrying connection to fork...");
-                Thread.sleep(1000);
+                Thread.sleep(TimeUnit.SECONDS.toMillis(1));
             }
         }
         return content;

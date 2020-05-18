@@ -109,7 +109,7 @@ public class ChildCommandTest {
             GHRepository storeRepo = github.getRepository(Paths.get(user, STORE_NAME).toString());
             GHContent store = storeRepo.getFileContent("store.json");
             try (InputStream stream = store.read(); InputStreamReader streamR = new InputStreamReader(stream)) {
-                    json = new JsonParser().parse(streamR);
+                    json = JsonParser.parseReader(streamR);
                     images = json.getAsJsonObject().get("images");
                     break;
             } catch (IllegalStateException e) {
@@ -129,7 +129,7 @@ public class ChildCommandTest {
     public void testAsUser() throws Exception {
         GHRepository repo = github.getOrganization(ORG).getRepository(NAME);
         List<GHPullRequest> prs = repo.getPullRequests(GHIssueState.OPEN);
-        Assert.assertTrue(prs.size() == 1);
+        Assert.assertEquals(prs.size(), 1);
         for (GHPullRequest pr : prs) {
             pr.merge("Automatic merge through itests.");
             pr.close();
