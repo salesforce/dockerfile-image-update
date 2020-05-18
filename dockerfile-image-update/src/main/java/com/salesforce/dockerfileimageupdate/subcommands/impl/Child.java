@@ -9,6 +9,7 @@
 package com.salesforce.dockerfileimageupdate.subcommands.impl;
 
 import com.salesforce.dockerfileimageupdate.SubCommand;
+import com.salesforce.dockerfileimageupdate.model.GitForkBranch;
 import com.salesforce.dockerfileimageupdate.subcommands.ExecutableWithNamespace;
 import com.salesforce.dockerfileimageupdate.utils.Constants;
 import com.salesforce.dockerfileimageupdate.utils.DockerfileGitHubUtil;
@@ -37,29 +38,18 @@ public class Child implements ExecutableWithNamespace {
         log.info("Retrieving repository and creating fork...");
         GHRepository repo = dockerfileGitHubUtil.getRepo(ns.get(Constants.GIT_REPO));
         GHRepository fork = dockerfileGitHubUtil.getOrCreateFork(repo);
-        // TODO: Need to close PR
         if (fork == null) {
             log.info("Unable to fork {}. Please make sure that the repo is forkable.",
                     repo.getFullName());
             return;
         }
 
-        if (branch == null) {
-            branch = repo.getDefaultBranch();
-        }
-        log.info("Modifying on Github...");
-        dockerfileGitHubUtil.modifyAllOnGithub(fork, branch, img, forceTag);
-        dockerfileGitHubUtil.createPullReq(repo, branch, fork, ns.get(Constants.GIT_PR_TITLE));
+        GitForkBranch gitForkBranch = new GitForkBranch(img, forceTag, branch);
 
-        /* TODO: A potential problem that requires a design decision:
-         * 1. Leave forks in authenticated repository.
-         *    Pro: If the pull request has not been merged, it won't create a new pull request.
-         *    Con: Makes a lot of fork repositories on personal repository.
-         * 2. Delete forks in authenticated repository.
-         *    Pro: No extra repositories on personal repository; authenticated repository stays clean.
-         *    Con: If the pull request not merged yet, it will create a new pull request, making it harder for users
-         *         to read.
-         */
-//        fork.delete();
+        dockerfileGitHubUtil.createOrUpdateForkBranchToParentDefault(repo, fork, gitForkBranch);
+
+        log.info("Modifying on Github...");
+        dockerfileGitHubUtil.modifyAllOnGithub(fork, gitForkBranch.getBranchName(), img, forceTag);
+        dockerfileGitHubUtil.createPullReq(repo, gitForkBranch.getBranchName(), fork, ns.get(Constants.GIT_PR_TITLE));
     }
 }
