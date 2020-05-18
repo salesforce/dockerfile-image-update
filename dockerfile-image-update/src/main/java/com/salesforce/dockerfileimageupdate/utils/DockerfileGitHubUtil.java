@@ -19,6 +19,7 @@ import org.slf4j.LoggerFactory;
 import java.io.*;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Created by minho.park on 7/22/16.
@@ -109,7 +110,7 @@ public class DockerfileGitHubUtil {
                 break;
             } catch (FileNotFoundException e1) {
                 log.warn("Content in repository not created yet. Retrying connection to fork...");
-                Thread.sleep(1000);
+                Thread.sleep(TimeUnit.SECONDS.toMillis(1));
             }
         }
         for (GHContent con : tree) {

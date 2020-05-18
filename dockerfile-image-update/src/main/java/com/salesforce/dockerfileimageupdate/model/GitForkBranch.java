@@ -1,20 +1,17 @@
 package com.salesforce.dockerfileimageupdate.model;
 
-// Converts an imageName to a branchName. Primary conversion necessary is : to -
-// Also support backward compatible method of specifying a branch
-//
-// Container name rules: https://docs.docker.com/engine/reference/commandline/tag/#extended-description
-// Branch Rules: https://mirrors.edge.kernel.org/pub/software/scm/git/docs/git-check-ref-format.html
-//
+/**
+ * Converts an imageName to a branchName. Primary conversion necessary is : to -
+ * Also support backward compatible method of specifying a branch
+ *
+ * Container name rules: https://docs.docker.com/engine/reference/commandline/tag/#extended-description
+ * Branch Rules: https://mirrors.edge.kernel.org/pub/software/scm/git/docs/git-check-ref-format.html
+ */
 public class GitForkBranch {
     private final String branchPrefix;
     private final String imageName;
     private final String imageTag;
     private final boolean specifiedBranchOverride;
-
-    public GitForkBranch(String imageName, String imageTag) {
-        this(imageName, imageTag, null);
-    }
 
     public GitForkBranch(String imageName, String imageTag, String specifiedBranch) {
         this.imageTag = (imageTag == null || imageTag.trim().isEmpty()) ? "" : imageTag.trim();
@@ -65,8 +62,12 @@ public class GitForkBranch {
     }
 
     /**
-     * Either the specified branch of a combo of normalized imageName-imageTag
-     * @return
+     * Either the specified branch or a combo of normalized imageName-imageTag
+     *
+     * This essentially uses a cleansed and lowercase imageName as the branch prefix.
+     * If an imageTag exists, we append a dash and then the imageTag.
+     *
+     * @return cleansed branchPrefix[-imageTag]
      */
     public String getBranchName() {
         if (this.imageTag == null || this.imageTag.trim().isEmpty()) {
