@@ -20,10 +20,7 @@ import com.salesforce.dockerfileimageupdate.utils.Constants;
 import com.salesforce.dockerfileimageupdate.utils.DockerfileGitHubUtil;
 import com.salesforce.dockerfileimageupdate.utils.ResultsProcessor;
 import net.sourceforge.argparse4j.inf.Namespace;
-import org.kohsuke.github.GHContent;
-import org.kohsuke.github.GHMyself;
-import org.kohsuke.github.GHRepository;
-import org.kohsuke.github.PagedSearchIterable;
+import org.kohsuke.github.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -115,6 +112,19 @@ public class All implements ExecutableWithNamespace {
                 if (!parentReposForked.contains(parentRepoName)) {
                     // TODO: Need to close PR!
                     GHRepository fork = dockerfileGitHubUtil.getOrCreateFork(parent);
+                    GHPullRequest pr = getPullRequestWithPullReqIdentifier(parent);
+                    // Only reason we close the existing PR, delete fork and re-fork, is because there is no way to
+                    // determine if the existing fork is compatible with it's parent.
+                    if (pr != null) {
+                        // close the pull-request since the fork is out of date
+                        log.info("closing existing pr: {}", pr.getUrl());
+                        try {
+                            pr.close();
+                        } catch (IOException e) {
+                            log.info("Issues closing the pull request '{}'. Moving ahead...", pr.getUrl());
+                        }
+                    }
+
                     if (fork == null) {
                         log.info("Could not fork {}", parentRepoName);
                     } else {
@@ -232,5 +242,25 @@ public class All implements ExecutableWithNamespace {
         if (isContentModified) {
             dockerfileGitHubUtil.createPullReq(parent, branch, forkedRepo, ns.get(Constants.GIT_PR_TITLE));
         }
+    }
+
+    private GHPullRequest getPullRequestWithPullReqIdentifier(GHRepository parent) throws IOException {
+        List<GHPullRequest> pullRequests;
+        GHUser myself;
+        try {
+            pullRequests = parent.getPullRequests(GHIssueState.OPEN);
+            myself = dockerfileGitHubUtil.getMyself();
+        } catch (IOException e) {
+            log.warn("Error occurred while retrieving pull requests for {}", parent.getFullName());
+            return null;
+        }
+
+        for (GHPullRequest pullRequest : pullRequests) {
+            GHUser user = pullRequest.getHead().getUser();
+            if (myself.equals(user) && pullRequest.getBody().equals(Constants.PULL_REQ_ID)) {
+                return pullRequest;
+            }
+        }
+        return null;
     }
 }

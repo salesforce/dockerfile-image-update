@@ -18,7 +18,6 @@ import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
-import java.util.Collections;
 import java.util.Map;
 
 import static com.salesforce.dockerfileimageupdate.utils.Constants.*;
@@ -33,7 +32,6 @@ public class ChildTest {
     @DataProvider
     public Object[][] inputMap() {
         return new Object[][] {
-                {Collections.emptyMap()},
                 {ImmutableMap.of(
                         GIT_REPO, "test",
                         IMG, "test",
