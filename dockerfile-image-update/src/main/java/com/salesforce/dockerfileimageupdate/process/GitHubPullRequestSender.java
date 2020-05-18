@@ -55,33 +55,47 @@ public class GitHubPullRequestSender {
                 log.warn("Skipping {} because {}", parentRepoName, shouldNotForkRepo.get());
             } else {
                 // fork the parent if not already forked
-                GHRepository fork;
-                if (pathToDockerfilesInParentRepo.containsKey(parentRepoName)) {
-                    // Found more content for this fork, so add it as well
-                    Collection<GitHubContentToProcess> gitHubContentToProcesses = pathToDockerfilesInParentRepo.get(parentRepoName);
-                    Optional<GitHubContentToProcess> firstForkData = gitHubContentToProcesses.stream().findFirst();
-                    if (firstForkData.isPresent()) {
-                        fork = firstForkData.get().getFork();
-                        pathToDockerfilesInParentRepo.put(parentRepoName, new GitHubContentToProcess(fork, parent, ghContent.getPath()));
-                    } else {
-                        log.warn("For some reason we have data inconsistency within the process when trying to find the fork for {}", parentRepoName);
-                    }
-                } else {
-                    log.info("Getting or creating fork: {}", parentRepoName);
-                    fork = dockerfileGitHubUtil.getOrCreateFork(parent);
-                    if (fork == null) {
-                        log.info("Could not fork {}", parentRepoName);
-                    } else {
-                        // Add repos to pathToDockerfilesInParentRepo only if we forked it successfully.
-                        pathToDockerfilesInParentRepo.put(parentRepoName, new GitHubContentToProcess(fork, parent, ghContent.getPath()));
-                    }
-                }
+                ensureForkedAndAddToListForProcessing(pathToDockerfilesInParentRepo, parent, parentRepoName, ghContent);
             }
         }
 
         log.info("Path to Dockerfiles in repos: {}", pathToDockerfilesInParentRepo);
 
         return pathToDockerfilesInParentRepo;
+    }
+
+    /**
+     * Ensure that we have forked this repository if it hasn't already been forked and add the content for processing
+     *
+     * @param pathToDockerfilesInParentRepo multimap for current and later processing
+     * @param parent the actual parent repo with content
+     * @param parentRepoName the name of the parent repo
+     * @param ghContent the content that was found which should have this image
+     */
+    private void ensureForkedAndAddToListForProcessing(Multimap<String, GitHubContentToProcess> pathToDockerfilesInParentRepo,
+                                                       GHRepository parent,
+                                                       String parentRepoName,
+                                                       GHContent ghContent) {
+        if (pathToDockerfilesInParentRepo.containsKey(parentRepoName)) {
+            // Found more content for this fork, so add it as well
+            Collection<GitHubContentToProcess> gitHubContentToProcesses = pathToDockerfilesInParentRepo.get(parentRepoName);
+            Optional<GitHubContentToProcess> firstForkData = gitHubContentToProcesses.stream().findFirst();
+            if (firstForkData.isPresent()) {
+                GHRepository fork = firstForkData.get().getFork();
+                pathToDockerfilesInParentRepo.put(parentRepoName, new GitHubContentToProcess(fork, parent, ghContent.getPath()));
+            } else {
+                log.warn("For some reason we have data inconsistency within the process when trying to find the fork for {}", parentRepoName);
+            }
+        } else {
+            log.info("Getting or creating fork: {}", parentRepoName);
+            GHRepository fork = dockerfileGitHubUtil.getOrCreateFork(parent);
+            if (fork == null) {
+                log.info("Could not fork {}", parentRepoName);
+            } else {
+                // Add repos to pathToDockerfilesInParentRepo only if we forked it successfully.
+                pathToDockerfilesInParentRepo.put(parentRepoName, new GitHubContentToProcess(fork, parent, ghContent.getPath()));
+            }
+        }
     }
 
     /**
