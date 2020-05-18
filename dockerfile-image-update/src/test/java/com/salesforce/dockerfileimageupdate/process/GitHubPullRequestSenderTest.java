@@ -3,13 +3,14 @@ package com.salesforce.dockerfileimageupdate.process;
 import com.google.common.collect.Multimap;
 import com.salesforce.dockerfileimageupdate.model.GitHubContentToProcess;
 import com.salesforce.dockerfileimageupdate.utils.DockerfileGitHubUtil;
-import org.kohsuke.github.GHContent;
-import org.kohsuke.github.GHRepository;
-import org.kohsuke.github.PagedIterator;
-import org.kohsuke.github.PagedSearchIterable;
+import org.kohsuke.github.*;
 import org.mockito.Mockito;
 import org.testng.annotations.Test;
 
+import java.io.IOException;
+import java.util.Optional;
+
+import static com.salesforce.dockerfileimageupdate.process.GitHubPullRequestSender.*;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
 import static org.testng.Assert.assertEquals;
@@ -157,50 +158,37 @@ public class GitHubPullRequestSenderTest {
         assertTrue(pathToDockerfiles.isEmpty());
         Mockito.verify(dockerfileGitHubUtil, times(0)).getOrCreateFork(any());
     }
-// TODO: COVER THIS SCENARIO
-//    @Test
-//    public void checkPullRequestNotMadeForArchived() throws Exception {
-//        final String repoName = "mock repo";
-//        Map<String, Object> nsMap = ImmutableMap.of(Constants.IMG,
-//                "image", Constants.TAG,
-//                "tag", Constants.STORE,
-//                "store");
-//        Namespace ns = new Namespace(nsMap);
-//
-//        GHRepository parentRepo = mock(GHRepository.class);
-//        GHRepository forkRepo = mock(GHRepository.class);
-//        DockerfileGitHubUtil dockerfileGitHubUtil = mock(DockerfileGitHubUtil.class);
-//        GHContent content = mock(GHContent.class);
-//        GHMyself myself = mock(GHMyself.class);
-//
-//        when(parentRepo.isArchived()).thenReturn(true);
-//
-//        when(parentRepo.getFullName()).thenReturn(repoName);
-//        when(forkRepo.getFullName()).thenReturn(repoName);
-//        when(content.getOwner()).thenReturn(parentRepo);
-//        when(dockerfileGitHubUtil.getRepo(eq(repoName))).thenReturn(forkRepo);
-//        when(forkRepo.isFork()).thenReturn(true);
-//        when(forkRepo.getParent()).thenReturn(parentRepo);
-//        when(dockerfileGitHubUtil.getMyself()).thenReturn(myself);
-//        when(dockerfileGitHubUtil.getPullRequestForImageBranch(any(), any())).thenReturn(Optional.empty());
-//
-//        Multimap<String, ForkWithContentPath> pathToDockerfilesInParentRepo = HashMultimap.create();
-//        pathToDockerfilesInParentRepo.put(repoName, null);
-//
-//        Parent parent = new Parent();
-//        parent.loadDockerfileGithubUtil(dockerfileGitHubUtil);
-//        PagedSearchIterable<GHContent> results = mock(PagedSearchIterable.class);
-//        PagedIterator<GHContent> iterator = mock(PagedIterator.class);
-//        when(results.iterator()).thenReturn(iterator);
-//        when(iterator.hasNext()).thenReturn(true, false);
-//        when(iterator.next()).thenReturn(content);
-////        Multimap<String, ForkWithContentPath> forks = parent.forkRepositoriesFoundAndGetPathToDockerfiles(results);
-//        parent.changeDockerfiles(ns, pathToDockerfilesInParentRepo, forkRepo, Collections.emptyList());
-//
-//        Mockito.verify(dockerfileGitHubUtil, Mockito.never())
-//                .createPullReq(Mockito.any(), anyString(), Mockito.any(), anyString());
-//        //Make sure we at least call the isArchived.
-//        Mockito.verify(parentRepo, Mockito.times(1)).isArchived();
-////        assertTrue(forks.isEmpty());
-//    }
+
+    @Test
+    public void testShouldNotForkForkedRepo() {
+        DockerfileGitHubUtil dockerfileGitHubUtil = mock(DockerfileGitHubUtil.class);
+        GHRepository repo = mock(GHRepository.class);
+        GitHubPullRequestSender gitHubPullRequestSender = new GitHubPullRequestSender(dockerfileGitHubUtil);
+
+        when(repo.isFork()).thenReturn(true);
+        assertEquals(gitHubPullRequestSender.shouldNotForkRepo(repo), Optional.of(REPO_IS_FORK));
+    }
+
+    @Test
+    public void testShouldNotForkArchivedRepo() {
+        DockerfileGitHubUtil dockerfileGitHubUtil = mock(DockerfileGitHubUtil.class);
+        GHRepository repo = mock(GHRepository.class);
+        GitHubPullRequestSender gitHubPullRequestSender = new GitHubPullRequestSender(dockerfileGitHubUtil);
+
+        when(repo.isFork()).thenReturn(false);
+        when(repo.isArchived()).thenReturn(true);
+        assertEquals(gitHubPullRequestSender.shouldNotForkRepo(repo), Optional.of(REPO_IS_ARCHIVED));
+    }
+
+    @Test
+    public void testShouldNotForkWeOwnThisRepo() throws IOException {
+        DockerfileGitHubUtil dockerfileGitHubUtil = mock(DockerfileGitHubUtil.class);
+        GHRepository repo = mock(GHRepository.class);
+        GitHubPullRequestSender gitHubPullRequestSender = new GitHubPullRequestSender(dockerfileGitHubUtil);
+
+        when(repo.isFork()).thenReturn(false);
+        when(repo.isArchived()).thenReturn(false);
+        when(dockerfileGitHubUtil.thisUserIsOwner(repo)).thenReturn(true);
+        assertEquals(gitHubPullRequestSender.shouldNotForkRepo(repo), Optional.of(REPO_IS_OWNED_BY_THIS_USER));
+    }
 }

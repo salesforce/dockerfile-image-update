@@ -16,6 +16,10 @@ import java.util.Optional;
 
 public class GitHubPullRequestSender {
     private static final Logger log = LoggerFactory.getLogger(GitHubPullRequestSender.class);
+    public static final String REPO_IS_FORK = "it's a fork already. Sending a PR to a fork is unsupported at the moment.";
+    public static final String REPO_IS_ARCHIVED = "it's archived.";
+    public static final String REPO_IS_OWNED_BY_THIS_USER = "it is owned by this user.";
+    public static final String COULD_NOT_CHECK_THIS_USER = "we could not determine fork status because we don't know the identity of the authenticated user.";
     private final DockerfileGitHubUtil dockerfileGitHubUtil;
 
     public GitHubPullRequestSender(DockerfileGitHubUtil dockerfileGitHubUtil) {
@@ -34,7 +38,7 @@ public class GitHubPullRequestSender {
         Multimap<String, GitHubContentToProcess> pathToDockerfilesInParentRepo = HashMultimap.create();
         GHRepository parent;
         String parentRepoName;
-        for (GHContent c : contentsWithImage) {
+        for (GHContent ghContent : contentsWithImage) {
             /* Kohsuke's GitHub API library, when retrieving the forked repository, looks at the name of the parent to
              * retrieve. The issue with that is: GitHub, when forking two or more repositories with the same name,
              * automatically fixes the names to be unique (by appending "-#" to the end). Because of this edge case, we
@@ -42,17 +46,13 @@ public class GitHubPullRequestSender {
              * repositories that were automatically fixed by GitHub. Instead, we save the names of the parent repos
              * in the map above, find the list of repositories under the authorized user, and iterate through that list.
              */
-            parent = c.getOwner();
+            parent = ghContent.getOwner();
             parentRepoName = parent.getFullName();
             // TODO: Error check... Refresh the repo to ensure that the object has full details
             parent = dockerfileGitHubUtil.getRepo(parentRepoName);
-            if (parent.isFork()) {
-                log.warn("Skipping {} because it's a fork already. Sending a PR to a fork is unsupported at the moment.",
-                        parentRepoName);
-            } else if (parent.isArchived()) {
-                log.warn("Skipping {} because it's archived.", parent.getFullName());
-            } else if (dockerfileGitHubUtil.thisUserIsOwner(parent)) {
-                log.warn("Skipping {} because it is owned by this user.", parent.getFullName());
+            Optional<String> shouldNotForkRepo = shouldNotForkRepo(parent);
+            if (shouldNotForkRepo.isPresent()) {
+                log.warn("Skipping {} because {}", parentRepoName, shouldNotForkRepo.get());
             } else {
                 // fork the parent if not already forked
                 GHRepository fork;
@@ -62,19 +62,18 @@ public class GitHubPullRequestSender {
                     Optional<GitHubContentToProcess> firstForkData = gitHubContentToProcesses.stream().findFirst();
                     if (firstForkData.isPresent()) {
                         fork = firstForkData.get().getFork();
-                        pathToDockerfilesInParentRepo.put(parentRepoName, new GitHubContentToProcess(fork, parent, c.getPath()));
+                        pathToDockerfilesInParentRepo.put(parentRepoName, new GitHubContentToProcess(fork, parent, ghContent.getPath()));
                     } else {
-                        log.warn("For some reason we have ");
+                        log.warn("For some reason we have data inconsistency within the process when trying to find the fork for {}", parentRepoName);
                     }
                 } else {
                     log.info("Getting or creating fork: {}", parentRepoName);
-                    fork = dockerfileGitHubUtil.getOrCreateFork(parent);
-//                    fork = null;
+                    fork = dockerfileGitHubUtil.getOrCreateFork(parent); //CATCH IOException
                     if (fork == null) {
                         log.info("Could not fork {}", parentRepoName);
                     } else {
                         // Add repos to pathToDockerfilesInParentRepo only if we forked it successfully.
-                        pathToDockerfilesInParentRepo.put(parentRepoName, new GitHubContentToProcess(fork, parent, c.getPath()));
+                        pathToDockerfilesInParentRepo.put(parentRepoName, new GitHubContentToProcess(fork, parent, ghContent.getPath()));
                     }
                 }
             }
@@ -83,5 +82,26 @@ public class GitHubPullRequestSender {
         log.info("Path to Dockerfiles in repos: {}", pathToDockerfilesInParentRepo);
 
         return pathToDockerfilesInParentRepo;
+    }
+
+    /**
+     * Returns a optional with the reason if we should not fork a repo else returns an empty optional if we should fork.
+     * @param parentRepo The parent repo which may or may not be a candidate to fork
+     */
+    protected Optional<String> shouldNotForkRepo(GHRepository parentRepo) {
+        if (parentRepo.isFork()) {
+            return Optional.of(REPO_IS_FORK);
+        }
+        if (parentRepo.isArchived()) {
+            return Optional.of(REPO_IS_ARCHIVED);
+        }
+        try {
+            if (dockerfileGitHubUtil.thisUserIsOwner(parentRepo)) {
+                return Optional.of(REPO_IS_OWNED_BY_THIS_USER);
+            }
+        } catch (IOException ioException) {
+            return Optional.of(COULD_NOT_CHECK_THIS_USER);
+        }
+        return Optional.empty();
     }
 }

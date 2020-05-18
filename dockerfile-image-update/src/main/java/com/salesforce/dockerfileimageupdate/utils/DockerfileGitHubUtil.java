@@ -41,14 +41,18 @@ public class DockerfileGitHubUtil {
      *
      * @param parent the proposed/current fork parent
      * @return existing fork or new fork
-     * @throws IOException if we've encountered forking issues
      */
-    public GHRepository getOrCreateFork(GHRepository parent) throws IOException {
+    public GHRepository getOrCreateFork(GHRepository parent) {
         for (GHRepository fork : parent.listForks()) {
-            if (thisUserIsOwner(fork)) {
-                log.info("Fork exists, retrieving full info: {}", fork);
-                // NOTE: listForks() appears to miss information like parent data and GHContent parent doesn't have isArchived()
-                return fork;
+            try {
+                if (thisUserIsOwner(fork)) {
+                    log.info("Fork exists, retrieving full info: {}", fork);
+                    // NOTE: listForks() appears to miss information like parent data and GHContent parent doesn't have isArchived()
+                    return fork;
+                }
+            } catch (IOException ioException) {
+                log.error("Could not determine user to see if we can fork. Skipping.", ioException);
+                return null;
             }
         }
         log.info("Forking repo: {}", parent);
