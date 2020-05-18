@@ -75,16 +75,8 @@ public class GitHubPullRequestSender {
                                                        GHRepository parent,
                                                        String parentRepoName,
                                                        GHContent ghContent) {
-        GHRepository fork = null;
-        if (pathToDockerfilesInParentRepo.containsKey(parentRepoName)) {
-            // Found more content for this fork, so add it as well
-            Optional<GitHubContentToProcess> firstForkData = pathToDockerfilesInParentRepo.get(parentRepoName).stream().findFirst();
-            if (firstForkData.isPresent()) {
-                fork = firstForkData.get().getFork();
-            } else {
-                log.warn("For some reason we have data inconsistency when trying to find the fork for {}", parentRepoName);
-            }
-        } else {
+        GHRepository fork = getForkFromExistingRecordToProcess(pathToDockerfilesInParentRepo, parentRepoName);
+        if (fork == null) {
             log.info("Getting or creating fork: {}", parentRepoName);
             fork = dockerfileGitHubUtil.getOrCreateFork(parent);
         }
@@ -94,6 +86,25 @@ public class GitHubPullRequestSender {
         } else {
             pathToDockerfilesInParentRepo.put(parentRepoName, new GitHubContentToProcess(fork, parent, ghContent.getPath()));
         }
+    }
+
+    /**
+     * If there's an existing record, return the fork from that.
+     *
+     * @param pathToDockerfilesInParentRepo processing multimap
+     * @param parentRepoName name of parent repo to find
+     */
+    protected GHRepository getForkFromExistingRecordToProcess(Multimap<String, GitHubContentToProcess> pathToDockerfilesInParentRepo,
+                                                            String parentRepoName) {
+        if (pathToDockerfilesInParentRepo.containsKey(parentRepoName)) {
+            Optional<GitHubContentToProcess> firstForkData = pathToDockerfilesInParentRepo.get(parentRepoName).stream().findFirst();
+            if (firstForkData.isPresent()) {
+                return firstForkData.get().getFork();
+            } else {
+                log.warn("For some reason we have data inconsistency when trying to find the fork for {}", parentRepoName);
+            }
+        }
+        return null;
     }
 
     /**
