@@ -19,7 +19,6 @@ import com.salesforce.dockerfileimageupdate.utils.DockerfileGitHubUtil;
 import com.salesforce.dockerfileimageupdate.utils.ResultsProcessor;
 import net.sourceforge.argparse4j.inf.Namespace;
 import org.kohsuke.github.GHContent;
-import org.kohsuke.github.GHPullRequest;
 import org.kohsuke.github.GHRepository;
 import org.kohsuke.github.PagedSearchIterable;
 import org.slf4j.Logger;
@@ -125,19 +124,4 @@ public class Parent implements ExecutableWithNamespace {
             // TODO: Run through PRs in fork to see if they have head branches that match the prefix and close those?
         }
     }
-    private Optional<GHPullRequest> commentAndCloseExistingPullRequestsForBranch(GHRepository parentRepo, GitForkBranch gitForkBranch) {
-        Optional<GHPullRequest> specifiedBranchPullRequest = dockerfileGitHubUtil.getPullRequestForImageBranch(parentRepo, gitForkBranch);
-        //            GHPullRequest pullRequest = specifiedBranchPullRequest.get();
-        //            try {
-        //                pullRequest.comment(String.format("Closing PR due to PR update for image %s and tag %s",
-        //                        gitForkBranch.getImageName(), gitForkBranch.getImageTag()));
-        //                pullRequest.close();
-        //                log.info("Found and closed PR {}", pullRequest.getUrl());
-        //            } catch (IOException ioException) {
-        //                log.error("Error trying to comment/close PR for {}: {}", pullRequest.getUrl(), ioException.getMessage());
-        //            }
-        specifiedBranchPullRequest.ifPresent(ghPullRequest -> log.info("yeah... going to do the things on {}", ghPullRequest.getHtmlUrl()));
-        return specifiedBranchPullRequest;
-    }
-
 }
