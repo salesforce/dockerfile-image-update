@@ -289,7 +289,7 @@ public class DockerfileGitHubUtil {
             if (contentsWithImage.getTotalCount() > 0) {
                 break;
             } else {
-                Thread.sleep(1000);
+                Thread.sleep(TimeUnit.SECONDS.toMillis(1));
             }
         }
 

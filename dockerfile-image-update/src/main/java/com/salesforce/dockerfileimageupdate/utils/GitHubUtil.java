@@ -130,7 +130,7 @@ public class GitHubUtil {
                 break;
             } catch (IOException e1) {
                 log.warn("Repository not created yet. Retrying connection to repository...");
-                Thread.sleep(1000);
+                Thread.sleep(TimeUnit.SECONDS.toMillis(1));
             }
         }
         return repo;
@@ -147,7 +147,7 @@ public class GitHubUtil {
                 break;
             } catch (IOException e1) {
                 log.warn("Content in repository not created yet. Retrying connection to fork...");
-                Thread.sleep(1000);
+                Thread.sleep(TimeUnit.SECONDS.toMillis(1));
             }
         }
         return content;
