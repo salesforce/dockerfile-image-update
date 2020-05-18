@@ -32,7 +32,7 @@ public class GitHubPullRequestSender {
      *
      * NOTE: We are not currently forking repositories that are already forks
      */
-    public Multimap<String, GitHubContentToProcess> forkRepositoriesFoundAndGetPathToDockerfiles(PagedSearchIterable<GHContent> contentsWithImage) throws IOException {
+    public Multimap<String, GitHubContentToProcess> forkRepositoriesFoundAndGetPathToDockerfiles(PagedSearchIterable<GHContent> contentsWithImage) {
         log.info("Forking repositories...");
         Multimap<String, GitHubContentToProcess> pathToDockerfilesInParentRepo = HashMultimap.create();
         GHRepository parent;
@@ -47,14 +47,18 @@ public class GitHubPullRequestSender {
              */
             parent = ghContent.getOwner();
             parentRepoName = parent.getFullName();
-            // TODO: Error check... Refresh the repo to ensure that the object has full details
-            parent = dockerfileGitHubUtil.getRepo(parentRepoName);
-            Optional<String> shouldNotForkRepo = shouldNotForkRepo(parent);
-            if (shouldNotForkRepo.isPresent()) {
-                log.warn("Skipping {} because {}", parentRepoName, shouldNotForkRepo.get());
-            } else {
-                // fork the parent if not already forked
-                ensureForkedAndAddToListForProcessing(pathToDockerfilesInParentRepo, parent, parentRepoName, ghContent);
+            // Refresh the repo to ensure that the object has full details
+            try {
+                parent = dockerfileGitHubUtil.getRepo(parentRepoName);
+                Optional<String> shouldNotForkRepo = shouldNotForkRepo(parent);
+                if (shouldNotForkRepo.isPresent()) {
+                    log.warn("Skipping {} because {}", parentRepoName, shouldNotForkRepo.get());
+                } else {
+                    // fork the parent if not already forked
+                    ensureForkedAndAddToListForProcessing(pathToDockerfilesInParentRepo, parent, parentRepoName, ghContent);
+                }
+            } catch (IOException exception) {
+                log.warn("Could not refresh details of {}", parentRepoName);
             }
         }
 
