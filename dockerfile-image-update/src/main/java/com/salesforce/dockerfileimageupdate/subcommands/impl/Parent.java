@@ -12,7 +12,7 @@ import com.google.common.collect.Multimap;
 import com.salesforce.dockerfileimageupdate.SubCommand;
 import com.salesforce.dockerfileimageupdate.model.GitForkBranch;
 import com.salesforce.dockerfileimageupdate.model.GitHubContentToProcess;
-import com.salesforce.dockerfileimageupdate.model.PullRequestBody;
+import com.salesforce.dockerfileimageupdate.model.PullRequestInfo;
 import com.salesforce.dockerfileimageupdate.process.GitHubPullRequestSender;
 import com.salesforce.dockerfileimageupdate.subcommands.ExecutableWithNamespace;
 import com.salesforce.dockerfileimageupdate.utils.Constants;
@@ -120,12 +120,14 @@ public class Parent implements ExecutableWithNamespace {
         }
 
         if (isContentModified) {
+            PullRequestInfo pullRequestInfo =
+                    new PullRequestInfo(ns.get(Constants.GIT_PR_TITLE),
+                            gitForkBranch.getImageName(), gitForkBranch.getImageTag());
             // TODO: get the new PR number and cross post over to old ones
             dockerfileGitHubUtil.createPullReq(parent,
                     gitForkBranch.getBranchName(),
                     forkedRepo,
-                    ns.get(Constants.GIT_PR_TITLE),
-                    PullRequestBody.getBody(gitForkBranch.getImageName(), gitForkBranch.getImageTag()));
+                    pullRequestInfo);
             // TODO: Run through PRs in fork to see if they have head branches that match the prefix and close those?
         }
     }

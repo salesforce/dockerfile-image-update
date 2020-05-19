@@ -54,12 +54,12 @@ public class ChildTest {
         doNothing().when(dockerfileGitHubUtil).modifyAllOnGithub(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
         GitHubJsonStore gitHubJsonStore = mock(GitHubJsonStore.class);
         when(dockerfileGitHubUtil.getGitHubJsonStore(anyString())).thenReturn(gitHubJsonStore);
-        doNothing().when(dockerfileGitHubUtil).createPullReq(Mockito.any(), anyString(), Mockito.any(), anyString(), anyString());
+        doNothing().when(dockerfileGitHubUtil).createPullReq(Mockito.any(), anyString(), Mockito.any(), any());
 
         child.execute(ns, dockerfileGitHubUtil);
 
         Mockito.verify(dockerfileGitHubUtil, atLeastOnce())
-                .createPullReq(Mockito.any(), anyString(), Mockito.any(), anyString(), anyString());
+                .createPullReq(Mockito.any(), anyString(), Mockito.any(), any());
     }
 
     @Test
@@ -78,6 +78,6 @@ public class ChildTest {
         Mockito.when(dockerfileGitHubUtil.getOrCreateFork(Mockito.any())).thenReturn(null);
         child.execute(ns, dockerfileGitHubUtil);
         Mockito.verify(dockerfileGitHubUtil, Mockito.never()).createPullReq(Mockito.any(), Mockito.any(), Mockito.any(),
-                Mockito.any(), anyString());
+                Mockito.any());
     }
 }

@@ -14,6 +14,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
 import com.salesforce.dockerfileimageupdate.SubCommand;
+import com.salesforce.dockerfileimageupdate.model.PullRequestInfo;
 import com.salesforce.dockerfileimageupdate.repository.GitHub;
 import com.salesforce.dockerfileimageupdate.subcommands.ExecutableWithNamespace;
 import com.salesforce.dockerfileimageupdate.utils.Constants;
@@ -240,7 +241,11 @@ public class All implements ExecutableWithNamespace {
         }
 
         if (isContentModified) {
-            dockerfileGitHubUtil.createPullReq(parent, branch, forkedRepo, ns.get(Constants.GIT_PR_TITLE), Constants.PULL_REQ_ID);
+            // Passing null for image/tag to temporarily maintain old behavior of using constant.
+            PullRequestInfo pullRequestInfo =   
+                    new PullRequestInfo(ns.get(Constants.GIT_PR_TITLE),null, null);
+
+            dockerfileGitHubUtil.createPullReq(parent, branch, forkedRepo, pullRequestInfo);
         }
     }
 

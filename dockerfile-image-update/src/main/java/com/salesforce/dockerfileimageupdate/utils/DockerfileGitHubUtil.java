@@ -11,6 +11,7 @@ package com.salesforce.dockerfileimageupdate.utils;
 import com.google.common.collect.Multimap;
 import com.salesforce.dockerfileimageupdate.model.FromInstruction;
 import com.salesforce.dockerfileimageupdate.model.GitForkBranch;
+import com.salesforce.dockerfileimageupdate.model.PullRequestInfo;
 import com.salesforce.dockerfileimageupdate.storage.GitHubJsonStore;
 import org.kohsuke.github.*;
 import org.slf4j.Logger;
@@ -212,13 +213,11 @@ public class DockerfileGitHubUtil {
 
     public void createPullReq(GHRepository origRepo,
                               String branch, GHRepository forkRepo,
-                              String title, String body) throws InterruptedException, IOException {
-        if (title == null) {
-            title = "Automatic Dockerfile Image Updater";
-        }
+                              PullRequestInfo pullRequestInfo) throws InterruptedException, IOException {
         // TODO: This may loop forever in the event of constant -1 pullRequestExitCodes...
         while (true) {
-            int pullRequestExitCode = gitHubUtil.createPullReq(origRepo, branch, forkRepo, title, body);
+            int pullRequestExitCode = gitHubUtil.createPullReq(origRepo,
+                    branch, forkRepo, pullRequestInfo.getTitle(), pullRequestInfo.getBody());
             if (pullRequestExitCode == 0) {
                 return;
             } else if (pullRequestExitCode == 1) {
