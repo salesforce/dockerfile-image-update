@@ -240,7 +240,7 @@ public class All implements ExecutableWithNamespace {
         }
 
         if (isContentModified) {
-            dockerfileGitHubUtil.createPullReq(parent, branch, forkedRepo, ns.get(Constants.GIT_PR_TITLE));
+            dockerfileGitHubUtil.createPullReq(parent, branch, forkedRepo, ns.get(Constants.GIT_PR_TITLE), Constants.PULL_REQ_ID);
         }
     }
 

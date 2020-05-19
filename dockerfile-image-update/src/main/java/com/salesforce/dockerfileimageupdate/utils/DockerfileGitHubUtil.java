@@ -212,13 +212,13 @@ public class DockerfileGitHubUtil {
 
     public void createPullReq(GHRepository origRepo,
                               String branch, GHRepository forkRepo,
-                              String title) throws InterruptedException, IOException {
+                              String title, String body) throws InterruptedException, IOException {
         if (title == null) {
             title = "Automatic Dockerfile Image Updater";
         }
         // TODO: This may loop forever in the event of constant -1 pullRequestExitCodes...
         while (true) {
-            int pullRequestExitCode = gitHubUtil.createPullReq(origRepo, branch, forkRepo, title, Constants.PULL_REQ_ID);
+            int pullRequestExitCode = gitHubUtil.createPullReq(origRepo, branch, forkRepo, title, body);
             if (pullRequestExitCode == 0) {
                 return;
             } else if (pullRequestExitCode == 1) {

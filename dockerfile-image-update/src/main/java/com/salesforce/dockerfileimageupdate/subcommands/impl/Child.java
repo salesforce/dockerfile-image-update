@@ -10,6 +10,7 @@ package com.salesforce.dockerfileimageupdate.subcommands.impl;
 
 import com.salesforce.dockerfileimageupdate.SubCommand;
 import com.salesforce.dockerfileimageupdate.model.GitForkBranch;
+import com.salesforce.dockerfileimageupdate.model.PullRequestBody;
 import com.salesforce.dockerfileimageupdate.subcommands.ExecutableWithNamespace;
 import com.salesforce.dockerfileimageupdate.utils.Constants;
 import com.salesforce.dockerfileimageupdate.utils.DockerfileGitHubUtil;
@@ -50,6 +51,10 @@ public class Child implements ExecutableWithNamespace {
 
         log.info("Modifying on Github...");
         dockerfileGitHubUtil.modifyAllOnGithub(fork, gitForkBranch.getBranchName(), img, forceTag);
-        dockerfileGitHubUtil.createPullReq(repo, gitForkBranch.getBranchName(), fork, ns.get(Constants.GIT_PR_TITLE));
+        dockerfileGitHubUtil.createPullReq(repo,
+                gitForkBranch.getBranchName(),
+                fork,
+                ns.get(Constants.GIT_PR_TITLE),
+                PullRequestBody.getBody(gitForkBranch.getImageName(), gitForkBranch.getImageTag()));
     }
 }

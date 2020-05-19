@@ -482,7 +482,7 @@ public class DockerfileGitHubUtilTest {
 
         when(gitHubUtil.createPullReq(any(), anyString(), any(), anyString(), eq(Constants.PULL_REQ_ID))).thenReturn(-1, -1, -1, 0);
         dockerfileGitHubUtil = new DockerfileGitHubUtil(gitHubUtil);
-        dockerfileGitHubUtil.createPullReq(new GHRepository(), "branch", new GHRepository(), "Automatic Dockerfile Image Updater");
+        dockerfileGitHubUtil.createPullReq(new GHRepository(), "branch", new GHRepository(), "Automatic Dockerfile Image Updater", Constants.PULL_REQ_ID);
         verify(gitHubUtil, times(4)).createPullReq(any(), anyString(), any(), anyString(), eq(Constants.PULL_REQ_ID));
     }
 
@@ -502,7 +502,7 @@ public class DockerfileGitHubUtilTest {
         when(gitHubUtil.createPullReq(any(), anyString(), any(), anyString(), eq(Constants.PULL_REQ_ID))).thenReturn(1);
         doCallRealMethod().when(gitHubUtil).safeDeleteRepo(forkRepo);
         dockerfileGitHubUtil = new DockerfileGitHubUtil(gitHubUtil);
-        dockerfileGitHubUtil.createPullReq(new GHRepository(), "branch", forkRepo, null);
+        dockerfileGitHubUtil.createPullReq(new GHRepository(), "branch", forkRepo, null, Constants.PULL_REQ_ID);
         verify(gitHubUtil, times(1)).createPullReq(any(), anyString(), any(), anyString(), eq(Constants.PULL_REQ_ID));
         verify(forkRepo, times(1)).delete();
     }

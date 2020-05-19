@@ -170,7 +170,7 @@ public class AllTest {
         Mockito.verify(dockerfileGitHubUtil, times(0))
                 .modifyOnGithub(any(), anyString(), anyString(), anyString(), anyString());
         Mockito.verify(dockerfileGitHubUtil, times(0))
-                .createPullReq(eq(parentRepo), anyString(), eq(forkedRepo), anyString());
+                .createPullReq(eq(parentRepo), anyString(), eq(forkedRepo), anyString(), eq(Constants.PULL_REQ_ID));
     }
 
     @Test
@@ -192,7 +192,7 @@ public class AllTest {
                 anyString(), anyString());
         Mockito.verify(dockerfileGitHubUtil, times(0))
                 .modifyOnGithub(any(), anyString(), anyString(), anyString(), anyString());
-        Mockito.verify(dockerfileGitHubUtil, times(0)).createPullReq(any(), anyString(), any(), anyString());
+        Mockito.verify(dockerfileGitHubUtil, times(0)).createPullReq(any(), anyString(), any(), anyString(), eq(Constants.PULL_REQ_ID));
 
     }
 
@@ -248,7 +248,7 @@ public class AllTest {
         Mockito.verify(dockerfileGitHubUtil, times(1))
                 .modifyOnGithub(any(), eq("branch"), eq("image2"), eq("tag2"), anyString());
         Mockito.verify(dockerfileGitHubUtil, times(1)).createPullReq(eq(parentRepo),
-                eq("branch"), eq(forkedRepo), anyString());
+                eq("branch"), eq(forkedRepo), anyString(), eq(Constants.PULL_REQ_ID));
     }
 
     @Test
@@ -318,7 +318,7 @@ public class AllTest {
 
         // Only one PR created on the repo with changes to both Dockerfiles.
         Mockito.verify(dockerfileGitHubUtil, times(1)).createPullReq(eq(parentRepo),
-                eq("branch"), eq(forkedRepo), anyString());
+                eq("branch"), eq(forkedRepo), anyString(), eq(Constants.PULL_REQ_ID));
     }
 
     @Test
@@ -372,7 +372,7 @@ public class AllTest {
         Mockito.verify(dockerfileGitHubUtil, times(0))
                 .modifyOnGithub(any(), anyString(), anyString(), anyString(), anyString());
         Mockito.verify(dockerfileGitHubUtil, times(0)).createPullReq(eq(parentRepo),
-                anyString(), eq(forkedRepo), anyString());
+                anyString(), eq(forkedRepo), anyString(), eq(Constants.PULL_REQ_ID));
     }
 
     @Test
@@ -444,7 +444,7 @@ public class AllTest {
         all.changeDockerfiles(ns, pathToDockerfilesInParentRepo, null, null, forkRepo, null);
 
         Mockito.verify(dockerfileGitHubUtil, Mockito.never())
-                .createPullReq(Mockito.any(), anyString(), Mockito.any(), anyString());
+                .createPullReq(Mockito.any(), anyString(), Mockito.any(), anyString(), eq(Constants.PULL_REQ_ID));
         //Make sure we at least check if its archived
         Mockito.verify(parentRepo, Mockito.times(2)).isArchived();
     }
