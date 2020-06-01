@@ -1,5 +1,6 @@
 package com.salesforce.dockerfileimageupdate.process;
 
+import com.salesforce.dockerfileimageupdate.model.FromInstruction;
 import com.salesforce.dockerfileimageupdate.model.GitForkBranch;
 import com.salesforce.dockerfileimageupdate.model.ShouldForkResult;
 import com.salesforce.dockerfileimageupdate.utils.DockerfileGitHubUtil;
@@ -8,7 +9,10 @@ import org.kohsuke.github.GHRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 
 import static com.salesforce.dockerfileimageupdate.model.ShouldForkResult.shouldForkResult;
 import static com.salesforce.dockerfileimageupdate.model.ShouldForkResult.shouldNotForkResult;
@@ -44,56 +48,70 @@ public class ForkableRepoValidator {
                                        GitForkBranch gitForkBranch) {
         return parentIsFork(parentRepo)
                 .and(parentIsArchived(parentRepo)
-                        .and(thisUserIsNotOwner(parentRepo)));
-//                                .and(contentExistsInDefaultBranch(parentRepo, searchResultContent, gitForkBranch))));
+                        .and(thisUserIsNotOwner(parentRepo)
+                                .and(contentHasChangesInDefaultBranch(parentRepo, searchResultContent, gitForkBranch))));
     }
 
-//    protected ShouldForkResult contentExistsInDefaultBranch(GHRepository parentRepo,
-//                                                            GHContent searchResultContent,
-//                                                            GitForkBranch gitForkBranch) {
-//        try {
-//            String searchContentPath = searchResultContent.getPath();
-//            GHContent content =
-//                    dockerfileGitHubUtil.tryRetrievingContent(parentRepo,
-//                            searchContentPath, parentRepo.getDefaultBranch());
-//            if (content == null) {
-//                return shouldNotForkResult(
-//                        String.format(CONTENT_PATH_NOT_IN_DEFAULT_BRANCH_TEMPLATE, searchContentPath));
-//            } else {
-//                // TODO: check to see if it's got our FROM
-//                if (!needsToBeUpdated(content, gitForkBranch)) {
-//                    return shouldNotForkResult(
-//                            String.format(COULD_NOT_FIND_IMAGE_TO_UPDATE_TEMPLATE,
-//                                    gitForkBranch.getImageName(), searchContentPath));
-//                }
-//            }
-//        } catch (InterruptedException e) {
-//            log.warn("Couldn't get parent content to check for some reason. Trying to proceed...");
-//        }
-//        return shouldForkResult();
-//    }
-//
-//    protected boolean needsToBeUpdated(GHContent content, GitForkBranch gitForkBranch) {
-//        try (InputStream stream = content.read();
-//             InputStreamReader streamR = new InputStreamReader(stream);
-//             BufferedReader reader = new BufferedReader(streamR)) {
-//            String line;
-//            while ( (line = reader.readLine()) != null ) {
-//                if (FromInstruction.isFromInstruction(line)) {
-//                    FromInstruction fromInstruction = new FromInstruction(line);
-//                    if (fromInstruction.hasBaseImage(gitForkBranch.getImageName()) &&
-//                            fromInstruction.hasADifferentTag(gitForkBranch.getImageTag())) {
-//                        return true;
-//                    }
-//                }
-//            }
-//
-//        } catch (IOException exception) {
-//            exception.printStackTrace();
-//        }
-//        return false;
-//    }
-//
+    /**
+     * Check to see if the default branch of the parentRepo has the path we found in searchResultContent and
+     * whether that content has a qualifying base image update
+     * @param parentRepo parentRepo which we'd fork off of
+     * @param searchResultContent search result with path to check in parent repo's default branch (where we'd PR)
+     * @param gitForkBranch information about the imageName we'd like to update with the new tag
+     */
+    protected ShouldForkResult contentHasChangesInDefaultBranch(GHRepository parentRepo,
+                                                                GHContent searchResultContent,
+                                                                GitForkBranch gitForkBranch) {
+        try {
+            String searchContentPath = searchResultContent.getPath();
+            GHContent content =
+                    dockerfileGitHubUtil.tryRetrievingContent(parentRepo,
+                            searchContentPath, parentRepo.getDefaultBranch());
+            if (content == null) {
+                return shouldNotForkResult(
+                        String.format(CONTENT_PATH_NOT_IN_DEFAULT_BRANCH_TEMPLATE, searchContentPath));
+            } else {
+                if (hasNoChanges(content, gitForkBranch)) {
+                    return shouldNotForkResult(
+                            String.format(COULD_NOT_FIND_IMAGE_TO_UPDATE_TEMPLATE,
+                                    gitForkBranch.getImageName(), searchContentPath));
+                }
+            }
+        } catch (InterruptedException e) {
+            log.warn("Couldn't get parent content to check for some reason for {}. Trying to proceed... exception: {}",
+                    parentRepo.getFullName(), e.getMessage());
+        }
+        return shouldForkResult();
+    }
+
+    /**
+     * Check to see whether there are any changes in the specified content where the specified base image
+     * in gitForkBranch needs an update
+     *
+     * @param content content to check
+     * @param gitForkBranch information about the base image we'd like to update
+     */
+    protected boolean hasNoChanges(GHContent content, GitForkBranch gitForkBranch) {
+        try (InputStream stream = content.read();
+             InputStreamReader streamR = new InputStreamReader(stream);
+             BufferedReader reader = new BufferedReader(streamR)) {
+            String line;
+            while ( (line = reader.readLine()) != null ) {
+                if (FromInstruction.isFromInstruction(line)) {
+                    FromInstruction fromInstruction = new FromInstruction(line);
+                    if (fromInstruction.hasBaseImage(gitForkBranch.getImageName()) &&
+                            fromInstruction.hasADifferentTag(gitForkBranch.getImageTag())) {
+                        return false;
+                    }
+                }
+            }
+        } catch (IOException exception) {
+            log.warn("Failed while checking if there are changes in {}. Skipping... exception: {}",
+                    content.getPath(), exception.getMessage());
+        }
+        return true;
+    }
+
     /**
      * Attempts to check to see if this user is the owner of the repo (don't fork your own repo).
      * If we can't tell because of a systemic error, don't attempt to fork (we could perhaps loosen this in the future).
