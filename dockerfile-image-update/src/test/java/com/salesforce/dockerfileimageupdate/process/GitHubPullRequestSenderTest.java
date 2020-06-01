@@ -4,14 +4,13 @@ import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import com.salesforce.dockerfileimageupdate.model.GitHubContentToProcess;
 import com.salesforce.dockerfileimageupdate.utils.DockerfileGitHubUtil;
-import org.kohsuke.github.*;
+import org.kohsuke.github.GHContent;
+import org.kohsuke.github.GHRepository;
+import org.kohsuke.github.PagedIterator;
+import org.kohsuke.github.PagedSearchIterable;
 import org.mockito.Mockito;
 import org.testng.annotations.Test;
 
-import java.io.IOException;
-import java.util.Optional;
-
-import static com.salesforce.dockerfileimageupdate.process.GitHubPullRequestSender.*;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
 import static org.testng.Assert.*;
@@ -48,7 +47,8 @@ public class GitHubPullRequestSenderTest {
         when(dockerfileGitHubUtil.getRepo(any())).thenReturn(mock(GHRepository.class));
 
         GitHubPullRequestSender pullRequestSender = new GitHubPullRequestSender(dockerfileGitHubUtil);
-        Multimap<String, GitHubContentToProcess> repoMap =  pullRequestSender.forkRepositoriesFoundAndGetPathToDockerfiles(contentsWithImage);
+        Multimap<String, GitHubContentToProcess> repoMap =
+                pullRequestSender.forkRepositoriesFoundAndGetPathToDockerfiles(contentsWithImage, null);
 
         verify(dockerfileGitHubUtil, times(3)).getOrCreateFork(any());
         assertEquals(repoMap.size(), 3);
@@ -101,7 +101,8 @@ public class GitHubPullRequestSenderTest {
         when(dockerfileGitHubUtil.getRepo(contentRepo2.getFullName())).thenReturn(contentRepo2);
 
         GitHubPullRequestSender pullRequestSender = new GitHubPullRequestSender(dockerfileGitHubUtil);
-        Multimap<String, GitHubContentToProcess> repoMap =  pullRequestSender.forkRepositoriesFoundAndGetPathToDockerfiles(contentsWithImage);
+        Multimap<String, GitHubContentToProcess> repoMap =
+                pullRequestSender.forkRepositoriesFoundAndGetPathToDockerfiles(contentsWithImage, null);
 
         // Since repo "1" is unforkable, we will only try to update repo "2"
         verify(dockerfileGitHubUtil, times(3)).getOrCreateFork(any());
@@ -129,7 +130,8 @@ public class GitHubPullRequestSenderTest {
         when(dockerfileGitHubUtil.getRepo(any())).thenReturn(contentRepo1);
 
         GitHubPullRequestSender pullRequestSender = new GitHubPullRequestSender(dockerfileGitHubUtil);
-        Multimap<String, GitHubContentToProcess> repoMap = pullRequestSender.forkRepositoriesFoundAndGetPathToDockerfiles(contentsWithImage);
+        Multimap<String, GitHubContentToProcess> repoMap =
+                pullRequestSender.forkRepositoriesFoundAndGetPathToDockerfiles(contentsWithImage, null);
 
         verify(dockerfileGitHubUtil, never()).getOrCreateFork(any());
         assertEquals(repoMap.size(), 0);
@@ -154,54 +156,10 @@ public class GitHubPullRequestSenderTest {
         when(dockerfileGitHubUtil.getRepo(any())).thenReturn(parentRepo);
 
         GitHubPullRequestSender pullRequestSender = new GitHubPullRequestSender(dockerfileGitHubUtil);
-        Multimap<String, GitHubContentToProcess> pathToDockerfiles = pullRequestSender.forkRepositoriesFoundAndGetPathToDockerfiles(contentsWithImage);
+        Multimap<String, GitHubContentToProcess> pathToDockerfiles =
+                pullRequestSender.forkRepositoriesFoundAndGetPathToDockerfiles(contentsWithImage, null);
         assertTrue(pathToDockerfiles.isEmpty());
         Mockito.verify(dockerfileGitHubUtil, times(0)).getOrCreateFork(any());
-    }
-
-    @Test
-    public void testShouldNotForkForkedRepo() {
-        DockerfileGitHubUtil dockerfileGitHubUtil = mock(DockerfileGitHubUtil.class);
-        GHRepository repo = mock(GHRepository.class);
-        GitHubPullRequestSender gitHubPullRequestSender = new GitHubPullRequestSender(dockerfileGitHubUtil);
-
-        when(repo.isFork()).thenReturn(true);
-        assertEquals(gitHubPullRequestSender.shouldNotForkRepo(repo), Optional.of(REPO_IS_FORK));
-    }
-
-    @Test
-    public void testShouldNotForkArchivedRepo() {
-        DockerfileGitHubUtil dockerfileGitHubUtil = mock(DockerfileGitHubUtil.class);
-        GHRepository repo = mock(GHRepository.class);
-        GitHubPullRequestSender gitHubPullRequestSender = new GitHubPullRequestSender(dockerfileGitHubUtil);
-
-        when(repo.isFork()).thenReturn(false);
-        when(repo.isArchived()).thenReturn(true);
-        assertEquals(gitHubPullRequestSender.shouldNotForkRepo(repo), Optional.of(REPO_IS_ARCHIVED));
-    }
-
-    @Test
-    public void testShouldNotForkWeOwnThisRepo() throws IOException {
-        DockerfileGitHubUtil dockerfileGitHubUtil = mock(DockerfileGitHubUtil.class);
-        GHRepository repo = mock(GHRepository.class);
-        GitHubPullRequestSender gitHubPullRequestSender = new GitHubPullRequestSender(dockerfileGitHubUtil);
-
-        when(repo.isFork()).thenReturn(false);
-        when(repo.isArchived()).thenReturn(false);
-        when(dockerfileGitHubUtil.thisUserIsOwner(repo)).thenReturn(true);
-        assertEquals(gitHubPullRequestSender.shouldNotForkRepo(repo), Optional.of(REPO_IS_OWNED_BY_THIS_USER));
-    }
-
-    @Test
-    public void testShouldNotForkHandlesException() throws IOException {
-        DockerfileGitHubUtil dockerfileGitHubUtil = mock(DockerfileGitHubUtil.class);
-        GHRepository repo = mock(GHRepository.class);
-        GitHubPullRequestSender gitHubPullRequestSender = new GitHubPullRequestSender(dockerfileGitHubUtil);
-
-        when(repo.isFork()).thenReturn(false);
-        when(repo.isArchived()).thenReturn(false);
-        when(dockerfileGitHubUtil.thisUserIsOwner(repo)).thenThrow(new IOException("sad times"));
-        assertEquals(gitHubPullRequestSender.shouldNotForkRepo(repo), Optional.of(COULD_NOT_CHECK_THIS_USER));
     }
 
     @Test

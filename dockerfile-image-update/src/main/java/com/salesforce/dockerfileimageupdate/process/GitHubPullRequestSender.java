@@ -2,7 +2,9 @@ package com.salesforce.dockerfileimageupdate.process;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
+import com.salesforce.dockerfileimageupdate.model.GitForkBranch;
 import com.salesforce.dockerfileimageupdate.model.GitHubContentToProcess;
+import com.salesforce.dockerfileimageupdate.model.ShouldForkResult;
 import com.salesforce.dockerfileimageupdate.utils.DockerfileGitHubUtil;
 import org.kohsuke.github.GHContent;
 import org.kohsuke.github.GHRepository;
@@ -32,9 +34,12 @@ public class GitHubPullRequestSender {
      *
      * NOTE: We are not currently forking repositories that are already forks
      */
-    public Multimap<String, GitHubContentToProcess> forkRepositoriesFoundAndGetPathToDockerfiles(PagedSearchIterable<GHContent> contentsWithImage) {
+    public Multimap<String, GitHubContentToProcess> forkRepositoriesFoundAndGetPathToDockerfiles(
+            PagedSearchIterable<GHContent> contentsWithImage,
+            GitForkBranch gitForkBranch) {
         log.info("Forking repositories...");
         Multimap<String, GitHubContentToProcess> pathToDockerfilesInParentRepo = HashMultimap.create();
+        ForkableRepoValidator validator = new ForkableRepoValidator(dockerfileGitHubUtil);
         GHRepository parent;
         String parentRepoName;
         for (GHContent ghContent : contentsWithImage) {
@@ -50,12 +55,12 @@ public class GitHubPullRequestSender {
             // Refresh the repo to ensure that the object has full details
             try {
                 parent = dockerfileGitHubUtil.getRepo(parentRepoName);
-                Optional<String> shouldNotForkRepo = shouldNotForkRepo(parent);
-                if (shouldNotForkRepo.isPresent()) {
-                    log.warn("Skipping {} because {}", parentRepoName, shouldNotForkRepo.get());
-                } else {
+                ShouldForkResult shouldForkResult = validator.shouldFork(parent, ghContent, gitForkBranch);
+                if (shouldForkResult.isForkable()) {
                     // fork the parent if not already forked
                     ensureForkedAndAddToListForProcessing(pathToDockerfilesInParentRepo, parent, parentRepoName, ghContent);
+                } else {
+                    log.warn("Skipping {} because {}", parentRepoName, shouldForkResult.getReason());
                 }
             } catch (IOException exception) {
                 log.warn("Could not refresh details of {}", parentRepoName);
@@ -109,27 +114,5 @@ public class GitHubPullRequestSender {
             }
         }
         return null;
-    }
-
-    /**
-     * Returns a optional with the reason if we should not fork a repo else returns an empty optional if we should fork.
-     * @param parentRepo The parent repo which may or may not be a candidate to fork
-     */
-    protected Optional<String> shouldNotForkRepo(GHRepository parentRepo) {
-        Optional<String> result = Optional.empty();
-        if (parentRepo.isFork()) {
-            result = Optional.of(REPO_IS_FORK);
-        } else if (parentRepo.isArchived()) {
-            result = Optional.of(REPO_IS_ARCHIVED);
-        } else {
-            try {
-                if (dockerfileGitHubUtil.thisUserIsOwner(parentRepo)) {
-                    result = Optional.of(REPO_IS_OWNED_BY_THIS_USER);
-                }
-            } catch (IOException ioException) {
-                result = Optional.of(COULD_NOT_CHECK_THIS_USER);
-            }
-        }
-        return result;
     }
 }
