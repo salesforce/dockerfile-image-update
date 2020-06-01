@@ -3,6 +3,7 @@ package com.salesforce.dockerfileimageupdate.process;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import com.salesforce.dockerfileimageupdate.model.GitHubContentToProcess;
+import com.salesforce.dockerfileimageupdate.model.ShouldForkResult;
 import com.salesforce.dockerfileimageupdate.utils.DockerfileGitHubUtil;
 import org.kohsuke.github.GHContent;
 import org.kohsuke.github.GHRepository;
@@ -46,7 +47,10 @@ public class GitHubPullRequestSenderTest {
         when(dockerfileGitHubUtil.getOrCreateFork(Mockito.any())).thenReturn(new GHRepository());
         when(dockerfileGitHubUtil.getRepo(any())).thenReturn(mock(GHRepository.class));
 
-        GitHubPullRequestSender pullRequestSender = new GitHubPullRequestSender(dockerfileGitHubUtil);
+        ForkableRepoValidator forkableRepoValidator = mock(ForkableRepoValidator.class);
+        when(forkableRepoValidator.shouldFork(any(), any(), any())).thenReturn(ShouldForkResult.shouldForkResult());
+
+        GitHubPullRequestSender pullRequestSender = new GitHubPullRequestSender(dockerfileGitHubUtil, forkableRepoValidator);
         Multimap<String, GitHubContentToProcess> repoMap =
                 pullRequestSender.forkRepositoriesFoundAndGetPathToDockerfiles(contentsWithImage, null);
 
@@ -100,7 +104,10 @@ public class GitHubPullRequestSenderTest {
         when(dockerfileGitHubUtil.getRepo(duplicateContentRepo1.getFullName())).thenReturn(duplicateContentRepo1);
         when(dockerfileGitHubUtil.getRepo(contentRepo2.getFullName())).thenReturn(contentRepo2);
 
-        GitHubPullRequestSender pullRequestSender = new GitHubPullRequestSender(dockerfileGitHubUtil);
+        ForkableRepoValidator forkableRepoValidator = mock(ForkableRepoValidator.class);
+        when(forkableRepoValidator.shouldFork(any(), any(), any())).thenReturn(ShouldForkResult.shouldForkResult());
+
+        GitHubPullRequestSender pullRequestSender = new GitHubPullRequestSender(dockerfileGitHubUtil, forkableRepoValidator);
         Multimap<String, GitHubContentToProcess> repoMap =
                 pullRequestSender.forkRepositoriesFoundAndGetPathToDockerfiles(contentsWithImage, null);
 
@@ -110,7 +117,7 @@ public class GitHubPullRequestSenderTest {
     }
 
     @Test
-    public void testForkRepositoriesFound_forkRepoIsSkipped() throws Exception {
+    public void testDoNotForkReposWhichDoNotQualify() throws Exception {
         DockerfileGitHubUtil dockerfileGitHubUtil = mock(DockerfileGitHubUtil.class);
 
         GHRepository contentRepo1 = mock(GHRepository.class);
@@ -129,7 +136,10 @@ public class GitHubPullRequestSenderTest {
 
         when(dockerfileGitHubUtil.getRepo(any())).thenReturn(contentRepo1);
 
-        GitHubPullRequestSender pullRequestSender = new GitHubPullRequestSender(dockerfileGitHubUtil);
+        ForkableRepoValidator forkableRepoValidator = mock(ForkableRepoValidator.class);
+        when(forkableRepoValidator.shouldFork(any(), any(), any())).thenReturn(ShouldForkResult.shouldNotForkResult(""));
+
+        GitHubPullRequestSender pullRequestSender = new GitHubPullRequestSender(dockerfileGitHubUtil, forkableRepoValidator);
         Multimap<String, GitHubContentToProcess> repoMap =
                 pullRequestSender.forkRepositoriesFoundAndGetPathToDockerfiles(contentsWithImage, null);
 
@@ -138,35 +148,10 @@ public class GitHubPullRequestSenderTest {
     }
 
     @Test
-    public void testPullRequestToAForkIsUnSupported() throws Exception {
-
-        GHRepository parentRepo = mock(GHRepository.class);
-        // When the repo is a fork then skip it.
-        when(parentRepo.isFork()).thenReturn(true);
-        GHContent content = mock(GHContent.class);
-        when(content.getOwner()).thenReturn(parentRepo);
-
-        DockerfileGitHubUtil dockerfileGitHubUtil = mock(DockerfileGitHubUtil.class);
-        PagedSearchIterable<GHContent> contentsWithImage = mock(PagedSearchIterable.class);
-        PagedIterator<GHContent> contentsWithImageIterator = mock(PagedIterator.class);
-        when(contentsWithImageIterator.hasNext()).thenReturn(true, false);
-        when(contentsWithImageIterator.next()).thenReturn(content, null);
-        when(contentsWithImage.iterator()).thenReturn(contentsWithImageIterator);
-
-        when(dockerfileGitHubUtil.getRepo(any())).thenReturn(parentRepo);
-
-        GitHubPullRequestSender pullRequestSender = new GitHubPullRequestSender(dockerfileGitHubUtil);
-        Multimap<String, GitHubContentToProcess> pathToDockerfiles =
-                pullRequestSender.forkRepositoriesFoundAndGetPathToDockerfiles(contentsWithImage, null);
-        assertTrue(pathToDockerfiles.isEmpty());
-        Mockito.verify(dockerfileGitHubUtil, times(0)).getOrCreateFork(any());
-    }
-
-    @Test
     public void testGetForkFromExistingRecordToProcess() {
         String reponame = "reponame";
         DockerfileGitHubUtil dockerfileGitHubUtil = mock(DockerfileGitHubUtil.class);
-        GitHubPullRequestSender gitHubPullRequestSender = new GitHubPullRequestSender(dockerfileGitHubUtil);
+        GitHubPullRequestSender gitHubPullRequestSender = new GitHubPullRequestSender(dockerfileGitHubUtil, mock(ForkableRepoValidator.class));
         GHRepository fork = mock(GHRepository.class);
         GHRepository parent = mock(GHRepository.class);
         Multimap<String, GitHubContentToProcess> processMultimap = HashMultimap.create();
@@ -178,7 +163,7 @@ public class GitHubPullRequestSenderTest {
     public void testGetForkNotFoundFromExistingRecords() {
         String reponame = "reponame";
         DockerfileGitHubUtil dockerfileGitHubUtil = mock(DockerfileGitHubUtil.class);
-        GitHubPullRequestSender gitHubPullRequestSender = new GitHubPullRequestSender(dockerfileGitHubUtil);
+        GitHubPullRequestSender gitHubPullRequestSender = new GitHubPullRequestSender(dockerfileGitHubUtil, mock(ForkableRepoValidator.class));
         Multimap<String, GitHubContentToProcess> processMultimap = HashMultimap.create();
         assertNull(gitHubPullRequestSender.getForkFromExistingRecordToProcess(processMultimap, reponame));
     }

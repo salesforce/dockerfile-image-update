@@ -18,13 +18,12 @@ import java.util.Optional;
 public class GitHubPullRequestSender {
     private static final Logger log = LoggerFactory.getLogger(GitHubPullRequestSender.class);
     public static final String REPO_IS_FORK = "it's a fork already. Sending a PR to a fork is unsupported at the moment.";
-    public static final String REPO_IS_ARCHIVED = "it's archived.";
-    public static final String REPO_IS_OWNED_BY_THIS_USER = "it is owned by this user.";
-    public static final String COULD_NOT_CHECK_THIS_USER = "we could not determine fork status because we don't know the identity of the authenticated user.";
     private final DockerfileGitHubUtil dockerfileGitHubUtil;
+    private final ForkableRepoValidator forkableRepoValidator;
 
-    public GitHubPullRequestSender(DockerfileGitHubUtil dockerfileGitHubUtil) {
+    public GitHubPullRequestSender(DockerfileGitHubUtil dockerfileGitHubUtil, ForkableRepoValidator forkableRepoValidator) {
         this.dockerfileGitHubUtil = dockerfileGitHubUtil;
+        this.forkableRepoValidator = forkableRepoValidator;
     }
 
     /* There is a separation here with forking and performing the Dockerfile update. This is because of the delay
@@ -39,7 +38,6 @@ public class GitHubPullRequestSender {
             GitForkBranch gitForkBranch) {
         log.info("Forking repositories...");
         Multimap<String, GitHubContentToProcess> pathToDockerfilesInParentRepo = HashMultimap.create();
-        ForkableRepoValidator validator = new ForkableRepoValidator(dockerfileGitHubUtil);
         GHRepository parent;
         String parentRepoName;
         for (GHContent ghContent : contentsWithImage) {
@@ -55,7 +53,7 @@ public class GitHubPullRequestSender {
             // Refresh the repo to ensure that the object has full details
             try {
                 parent = dockerfileGitHubUtil.getRepo(parentRepoName);
-                ShouldForkResult shouldForkResult = validator.shouldFork(parent, ghContent, gitForkBranch);
+                ShouldForkResult shouldForkResult = forkableRepoValidator.shouldFork(parent, ghContent, gitForkBranch);
                 if (shouldForkResult.isForkable()) {
                     // fork the parent if not already forked
                     ensureForkedAndAddToListForProcessing(pathToDockerfilesInParentRepo, parent, parentRepoName, ghContent);
