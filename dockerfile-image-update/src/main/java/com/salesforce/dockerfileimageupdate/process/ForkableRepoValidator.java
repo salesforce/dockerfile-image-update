@@ -97,12 +97,9 @@ public class ForkableRepoValidator {
              BufferedReader reader = new BufferedReader(streamR)) {
             String line;
             while ( (line = reader.readLine()) != null ) {
-                if (FromInstruction.isFromInstruction(line)) {
-                    FromInstruction fromInstruction = new FromInstruction(line);
-                    if (fromInstruction.hasBaseImage(gitForkBranch.getImageName()) &&
-                            fromInstruction.hasADifferentTag(gitForkBranch.getImageTag())) {
-                        return false;
-                    }
+                if (FromInstruction.isFromInstructionWithThisImageAndOlderTag(line,
+                        gitForkBranch.getImageName(), gitForkBranch.getImageTag())) {
+                    return false;
                 }
             }
         } catch (IOException exception) {

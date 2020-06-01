@@ -224,4 +224,19 @@ public class FromInstructionTest {
     public void testInvalidFromData(String input) {
         new FromInstruction(input);
     }
+
+    @DataProvider
+    public Object[][] isFromInstructionWithThisImageAndOlderTagData() {
+        return new Object[][]{
+                {"FROM someimage", "someimage", "sometag", true},
+                {"FROM someimage:sometag", "someimage", "sometag", false},
+                {"not a from instruction", "someimage", "sometag", false},
+                {"FROM someimage", "someimage", "sometag", true}
+        };
+    }
+
+    @Test(dataProvider = "isFromInstructionWithThisImageAndOlderTagData")
+    public void isFromInstructionWithThisImageAndOlderTag(String line, String imageName, String imageTag, boolean expectedResult) {
+        assertEquals(FromInstruction.isFromInstructionWithThisImageAndOlderTag(line, imageName, imageTag), expectedResult);
+    }
 }
