@@ -2,7 +2,9 @@ package com.salesforce.dockerfileimageupdate.process;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
+import com.salesforce.dockerfileimageupdate.model.GitForkBranch;
 import com.salesforce.dockerfileimageupdate.model.GitHubContentToProcess;
+import com.salesforce.dockerfileimageupdate.model.ShouldForkResult;
 import com.salesforce.dockerfileimageupdate.utils.DockerfileGitHubUtil;
 import org.kohsuke.github.GHContent;
 import org.kohsuke.github.GHRepository;
@@ -16,13 +18,12 @@ import java.util.Optional;
 public class GitHubPullRequestSender {
     private static final Logger log = LoggerFactory.getLogger(GitHubPullRequestSender.class);
     public static final String REPO_IS_FORK = "it's a fork already. Sending a PR to a fork is unsupported at the moment.";
-    public static final String REPO_IS_ARCHIVED = "it's archived.";
-    public static final String REPO_IS_OWNED_BY_THIS_USER = "it is owned by this user.";
-    public static final String COULD_NOT_CHECK_THIS_USER = "we could not determine fork status because we don't know the identity of the authenticated user.";
     private final DockerfileGitHubUtil dockerfileGitHubUtil;
+    private final ForkableRepoValidator forkableRepoValidator;
 
-    public GitHubPullRequestSender(DockerfileGitHubUtil dockerfileGitHubUtil) {
+    public GitHubPullRequestSender(DockerfileGitHubUtil dockerfileGitHubUtil, ForkableRepoValidator forkableRepoValidator) {
         this.dockerfileGitHubUtil = dockerfileGitHubUtil;
+        this.forkableRepoValidator = forkableRepoValidator;
     }
 
     /* There is a separation here with forking and performing the Dockerfile update. This is because of the delay
@@ -32,7 +33,9 @@ public class GitHubPullRequestSender {
      *
      * NOTE: We are not currently forking repositories that are already forks
      */
-    public Multimap<String, GitHubContentToProcess> forkRepositoriesFoundAndGetPathToDockerfiles(PagedSearchIterable<GHContent> contentsWithImage) {
+    public Multimap<String, GitHubContentToProcess> forkRepositoriesFoundAndGetPathToDockerfiles(
+            PagedSearchIterable<GHContent> contentsWithImage,
+            GitForkBranch gitForkBranch) {
         log.info("Forking repositories...");
         Multimap<String, GitHubContentToProcess> pathToDockerfilesInParentRepo = HashMultimap.create();
         GHRepository parent;
@@ -50,12 +53,12 @@ public class GitHubPullRequestSender {
             // Refresh the repo to ensure that the object has full details
             try {
                 parent = dockerfileGitHubUtil.getRepo(parentRepoName);
-                Optional<String> shouldNotForkRepo = shouldNotForkRepo(parent);
-                if (shouldNotForkRepo.isPresent()) {
-                    log.warn("Skipping {} because {}", parentRepoName, shouldNotForkRepo.get());
-                } else {
+                ShouldForkResult shouldForkResult = forkableRepoValidator.shouldFork(parent, ghContent, gitForkBranch);
+                if (shouldForkResult.isForkable()) {
                     // fork the parent if not already forked
                     ensureForkedAndAddToListForProcessing(pathToDockerfilesInParentRepo, parent, parentRepoName, ghContent);
+                } else {
+                    log.warn("Skipping {} because {}", parentRepoName, shouldForkResult.getReason());
                 }
             } catch (IOException exception) {
                 log.warn("Could not refresh details of {}", parentRepoName);
@@ -109,27 +112,5 @@ public class GitHubPullRequestSender {
             }
         }
         return null;
-    }
-
-    /**
-     * Returns a optional with the reason if we should not fork a repo else returns an empty optional if we should fork.
-     * @param parentRepo The parent repo which may or may not be a candidate to fork
-     */
-    protected Optional<String> shouldNotForkRepo(GHRepository parentRepo) {
-        Optional<String> result = Optional.empty();
-        if (parentRepo.isFork()) {
-            result = Optional.of(REPO_IS_FORK);
-        } else if (parentRepo.isArchived()) {
-            result = Optional.of(REPO_IS_ARCHIVED);
-        } else {
-            try {
-                if (dockerfileGitHubUtil.thisUserIsOwner(parentRepo)) {
-                    result = Optional.of(REPO_IS_OWNED_BY_THIS_USER);
-                }
-            } catch (IOException ioException) {
-                result = Optional.of(COULD_NOT_CHECK_THIS_USER);
-            }
-        }
-        return result;
     }
 }
