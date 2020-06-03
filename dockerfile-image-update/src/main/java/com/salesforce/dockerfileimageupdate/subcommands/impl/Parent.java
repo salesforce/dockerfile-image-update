@@ -12,6 +12,7 @@ import com.google.common.collect.Multimap;
 import com.salesforce.dockerfileimageupdate.SubCommand;
 import com.salesforce.dockerfileimageupdate.model.GitForkBranch;
 import com.salesforce.dockerfileimageupdate.model.GitHubContentToProcess;
+import com.salesforce.dockerfileimageupdate.process.ForkableRepoValidator;
 import com.salesforce.dockerfileimageupdate.process.GitHubPullRequestSender;
 import com.salesforce.dockerfileimageupdate.subcommands.ExecutableWithNamespace;
 import com.salesforce.dockerfileimageupdate.utils.Constants;
@@ -48,12 +49,17 @@ public class Parent implements ExecutableWithNamespace {
         log.info("Updating store...");
         this.dockerfileGitHubUtil.getGitHubJsonStore(ns.get(Constants.STORE)).updateStore(img, tag);
 
-        GitHubPullRequestSender pullRequestSender = new GitHubPullRequestSender(dockerfileGitHubUtil);
+        GitHubPullRequestSender pullRequestSender =
+                new GitHubPullRequestSender(dockerfileGitHubUtil, new ForkableRepoValidator(dockerfileGitHubUtil));
+
+        GitForkBranch gitForkBranch =
+                new GitForkBranch(ns.get(Constants.IMG), ns.get(Constants.TAG), ns.get(Constants.GIT_BRANCH));
 
         log.info("Finding Dockerfiles with the given image...");
         Optional<PagedSearchIterable<GHContent>> contentsWithImage = dockerfileGitHubUtil.getGHContents(ns.get(Constants.GIT_ORG), img);
         if (contentsWithImage.isPresent()) {
-            Multimap<String, GitHubContentToProcess> pathToDockerfilesInParentRepo = pullRequestSender.forkRepositoriesFoundAndGetPathToDockerfiles(contentsWithImage.get());
+            Multimap<String, GitHubContentToProcess> pathToDockerfilesInParentRepo =
+                    pullRequestSender.forkRepositoriesFoundAndGetPathToDockerfiles(contentsWithImage.get(), gitForkBranch);
             List<IOException> exceptions = new ArrayList<>();
             List<String> skippedRepos = new ArrayList<>();
 
