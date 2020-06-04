@@ -12,6 +12,7 @@ import com.google.common.collect.Multimap;
 import com.salesforce.dockerfileimageupdate.SubCommand;
 import com.salesforce.dockerfileimageupdate.model.GitForkBranch;
 import com.salesforce.dockerfileimageupdate.model.GitHubContentToProcess;
+import com.salesforce.dockerfileimageupdate.model.PullRequestInfo;
 import com.salesforce.dockerfileimageupdate.process.ForkableRepoValidator;
 import com.salesforce.dockerfileimageupdate.process.GitHubPullRequestSender;
 import com.salesforce.dockerfileimageupdate.subcommands.ExecutableWithNamespace;
