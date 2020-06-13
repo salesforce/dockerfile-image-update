@@ -20,6 +20,7 @@ import java.io.InputStream;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 import static org.mockito.Matchers.*;
 import static org.mockito.Mockito.*;
@@ -534,10 +535,105 @@ public class DockerfileGitHubUtilTest {
         PagedSearchIterable<GHContent> contentsWithImage = mock(PagedSearchIterable.class);
         when(contentsWithImage.getTotalCount()).thenReturn(0);
 
+        GitHubUtil gitHubUtil = mock(GitHubUtil.class);
         DockerfileGitHubUtil dockerfileGitHubUtil = mock(DockerfileGitHubUtil.class);
+        when(dockerfileGitHubUtil.getGitHubUtil()).thenReturn(gitHubUtil);
         when(dockerfileGitHubUtil.findFilesWithImage(anyString(), eq("org"))).thenReturn(contentsWithImage);
         when(dockerfileGitHubUtil.getGHContents("org", "image")).thenCallRealMethod();
 
         assertEquals(dockerfileGitHubUtil.getGHContents("org", "image"), Optional.empty());
+    }
+
+    @Test
+    public void testWaitForExistingForkBranchWaits10SecondsForExceptions() throws IOException, InterruptedException {
+        GitHubUtil gitHubUtil = mock(GitHubUtil.class);
+        GHRepository fork = mock(GHRepository.class);
+        when(fork.getBranch(any())).thenThrow(new GHFileNotFoundException(),
+                new GHFileNotFoundException(),
+                new GHFileNotFoundException(),
+                new GHFileNotFoundException(),
+                new GHFileNotFoundException(),
+                new GHFileNotFoundException(),
+                new GHFileNotFoundException(),
+                new GHFileNotFoundException(),
+                new GHFileNotFoundException(),
+                new GHFileNotFoundException(),
+                new GHFileNotFoundException());
+        DockerfileGitHubUtil dockerfileGitHubUtil = new DockerfileGitHubUtil(gitHubUtil);
+
+        dockerfileGitHubUtil.waitForExistingForkBranch(fork, "somebranch");
+        verify(gitHubUtil, times(10)).waitFor(TimeUnit.SECONDS.toMillis(1));
+    }
+
+    @Test
+    public void testWaitForExistingForkBranchReturnsAfterFound() throws IOException, InterruptedException {
+        GitHubUtil gitHubUtil = mock(GitHubUtil.class);
+        GHRepository fork = mock(GHRepository.class);
+        when(fork.getBranch(any())).thenReturn(null, mock(GHBranch.class));
+        DockerfileGitHubUtil dockerfileGitHubUtil = new DockerfileGitHubUtil(gitHubUtil);
+
+        dockerfileGitHubUtil.waitForExistingForkBranch(fork, "somebranch");
+        verify(gitHubUtil, times(1)).waitFor(TimeUnit.SECONDS.toMillis(1));
+    }
+
+    @Test
+    public void testWaitForExistingForkBranchReturnsImmediately() throws IOException, InterruptedException {
+        GitHubUtil gitHubUtil = mock(GitHubUtil.class);
+        GHRepository fork = mock(GHRepository.class);
+        when(fork.getBranch(any())).thenReturn(mock(GHBranch.class));
+        DockerfileGitHubUtil dockerfileGitHubUtil = new DockerfileGitHubUtil(gitHubUtil);
+
+        dockerfileGitHubUtil.waitForExistingForkBranch(fork, "somebranch");
+        verify(gitHubUtil, times(0)).waitFor(TimeUnit.SECONDS.toMillis(1));
+    }
+
+    @Test
+    public void testWaitForExistingForkBranchWaits10SecondsForNullBranch() throws IOException, InterruptedException {
+        GitHubUtil gitHubUtil = mock(GitHubUtil.class);
+        GHRepository fork = mock(GHRepository.class);
+        when(fork.getBranch(any())).thenReturn(null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null);
+        DockerfileGitHubUtil dockerfileGitHubUtil = new DockerfileGitHubUtil(gitHubUtil);
+
+        dockerfileGitHubUtil.waitForExistingForkBranch(fork, "somebranch");
+        verify(gitHubUtil, times(10)).waitFor(TimeUnit.SECONDS.toMillis(1));
+    }
+
+    @Test
+    public void testThisUserIsOwner() throws IOException {
+        GitHubUtil gitHubUtil = mock(GitHubUtil.class);
+        dockerfileGitHubUtil = new DockerfileGitHubUtil(gitHubUtil);
+        String me = "me";
+        GHRepository repo = mock(GHRepository.class);
+        when(repo.getOwnerName()).thenReturn(me);
+        GHMyself ghMyself = mock(GHMyself.class);
+        when(ghMyself.getLogin()).thenReturn(me);
+        when(gitHubUtil.getMyself()).thenReturn(ghMyself);
+
+        assertTrue(dockerfileGitHubUtil.thisUserIsOwner(repo));
+    }
+
+    @Test(expectedExceptions = IOException.class)
+    public void testThisUserIsOwnerCantFindMyself() throws IOException {
+        GitHubUtil gitHubUtil = mock(GitHubUtil.class);
+        dockerfileGitHubUtil = new DockerfileGitHubUtil(gitHubUtil);
+        String me = "me";
+        GHRepository repo = mock(GHRepository.class);
+        when(repo.getOwnerName()).thenReturn(me);
+        GHMyself ghMyself = mock(GHMyself.class);
+        when(ghMyself.getLogin()).thenReturn(me);
+        when(gitHubUtil.getMyself()).thenReturn(null);
+
+        dockerfileGitHubUtil.thisUserIsOwner(repo);
     }
 }

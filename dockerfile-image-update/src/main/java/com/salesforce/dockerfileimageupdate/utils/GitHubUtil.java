@@ -116,7 +116,7 @@ public class GitHubUtil {
             } else {
                 // TODO: THIS WILL LOOP FOREVVEEEEEERRRR
                 log.warn("An error occurred in pull request: {} Trying again...", error);
-                Thread.sleep(3000);
+                waitFor(TimeUnit.SECONDS.toMillis(3));
                 return -1;
             }
         }
@@ -130,7 +130,7 @@ public class GitHubUtil {
                 break;
             } catch (IOException e1) {
                 log.warn("Repository not created yet. Retrying connection to repository...");
-                Thread.sleep(TimeUnit.SECONDS.toMillis(1));
+                waitFor(TimeUnit.SECONDS.toMillis(1));
             }
         }
         return repo;
@@ -147,7 +147,7 @@ public class GitHubUtil {
                 break;
             } catch (IOException e1) {
                 log.warn("Content in repository not created yet. Retrying connection to fork...");
-                Thread.sleep(TimeUnit.SECONDS.toMillis(1));
+                waitFor(TimeUnit.SECONDS.toMillis(1));
             }
         }
         return content;
@@ -184,10 +184,14 @@ public class GitHubUtil {
                 break;
             } else {
                 log.info("Waiting for GitHub API cache to clear...");
-                Thread.sleep(TimeUnit.MINUTES.toMillis(1));
+                waitFor(TimeUnit.MINUTES.toMillis(1));
             }
         }
         return listOfRepos;
+    }
+
+    protected void waitFor(long millis) throws InterruptedException {
+        Thread.sleep(millis);
     }
 
     /**

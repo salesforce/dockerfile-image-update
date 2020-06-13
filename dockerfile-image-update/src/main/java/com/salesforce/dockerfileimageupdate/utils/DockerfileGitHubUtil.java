@@ -114,7 +114,7 @@ public class DockerfileGitHubUtil {
                 break;
             } catch (FileNotFoundException e1) {
                 log.warn("Content in repository not created yet. Retrying connection to fork...");
-                Thread.sleep(TimeUnit.SECONDS.toMillis(1));
+                getGitHubUtil().waitFor(TimeUnit.SECONDS.toMillis(1));
             }
         }
         for (GHContent con : tree) {
@@ -246,15 +246,50 @@ public class DockerfileGitHubUtil {
         return Optional.empty();
     }
 
-    public void createOrUpdateForkBranchToParentDefault(GHRepository parent, GHRepository fork, GitForkBranch gitForkBranch) throws IOException {
+    /**
+     * Create or update the desired {@code gitForkBranch} in {@code fork} based off of the {@code parent} repo's
+     * default branch to ensure that {@code gitForkBranch} is on the latest commit.
+     *
+     * @param parent parent repo to base from
+     * @param fork fork repo where we'll create or modify the {@code gitForkBranch}
+     * @param gitForkBranch desired branch to create or update based on the parent's default branch
+     */
+    public void createOrUpdateForkBranchToParentDefault(GHRepository parent, GHRepository fork, GitForkBranch gitForkBranch) throws IOException, InterruptedException {
         GHBranch parentBranch = parent.getBranch(parent.getDefaultBranch());
         String sha1 = parentBranch.getSHA1();
-        GHBranch forkBranch = fork.getBranches().get(gitForkBranch.getBranchName());
+        waitForExistingForkBranch(fork, parent.getDefaultBranch());
+        GHBranch forkBranch = fork.getBranch(gitForkBranch.getBranchName());
         String branchRefName = String.format("refs/heads/%s", gitForkBranch.getBranchName());
         if (forkBranch == null) {
             fork.createRef(branchRefName, sha1);
         } else {
             fork.getRef(branchRefName).updateTo(sha1, true);
+        }
+    }
+
+    /**
+     * You must have branches in a repo in order to create a ref per:
+     * https://developer.github.com/enterprise/2.19/v3/git/refs/#create-a-reference
+     *
+     * Generally, we can assume that a fork should have branches so if it does not have branches, we're still
+     * waiting for GitHub to finish replicating the tree behind the scenes.
+     *
+     * @param fork - ensure that this repo has branches and wait until it does
+     * @param branchToCheck - the branch to check
+     */
+    protected void waitForExistingForkBranch(GHRepository fork, String branchToCheck) throws InterruptedException {
+        for (int i = 0; i < 10; i++) {
+            try {
+                GHBranch branch = fork.getBranch(branchToCheck);
+                if (branch != null) {
+                    return;
+                }
+            } catch (IOException exception) {
+                // Keep waiting - generally a GHFileNotFoundException - this is expected rather than a null branch but
+                // we'll handle both scenarios as neither would indicate that the fork branch is ready
+            }
+            log.warn(String.format("Couldn't find default branch `%s` in fork `%s`. Waiting a second...", branchToCheck, fork.getName()));
+            gitHubUtil.waitFor(TimeUnit.SECONDS.toMillis(1));
         }
     }
 
@@ -289,7 +324,7 @@ public class DockerfileGitHubUtil {
             if (contentsWithImage.getTotalCount() > 0) {
                 break;
             } else {
-                Thread.sleep(TimeUnit.SECONDS.toMillis(1));
+                getGitHubUtil().waitFor(TimeUnit.SECONDS.toMillis(1));
             }
         }
 
