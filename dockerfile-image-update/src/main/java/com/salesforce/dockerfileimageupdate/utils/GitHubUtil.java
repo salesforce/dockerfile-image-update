@@ -28,6 +28,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class GitHubUtil {
     private static final Logger log = LoggerFactory.getLogger(GitHubUtil.class);
+    public static final String NO_BRANCH_WARN_FORMAT = "Couldn't find branch `%s` in repo `%s`. Waiting a second...";
 
     private final GitHub github;
 
@@ -122,6 +123,33 @@ public class GitHubUtil {
         }
     }
 
+    /**
+     * Attempt to find the provided {@code branch}. Generally, github-api will retry for us without
+     * the need to do this. This particular process is useful when we need more time such as when
+     * we are waiting for a repository to be forked.
+     *
+     * @param repo - wait until we can retrieve {@code branch from this repo}
+     * @param branchName - the branch to wait for
+     */
+    protected GHBranch tryRetrievingBranch(GHRepository repo, String branchName) throws InterruptedException {
+        for (int i = 0; i < 10; i++) {
+            try {
+                GHBranch branch = repo.getBranch(branchName);
+                if (branch != null) {
+                    return branch;
+                }
+                log.warn(String.format(NO_BRANCH_WARN_FORMAT, branchName, repo.getName()));
+            } catch (IOException exception) {
+                // Keep waiting - this is expected rather than a null branch but we'll handle
+                // both scenarios as neither would indicate that the repo branch is ready
+                log.warn(String.format(NO_BRANCH_WARN_FORMAT + " Exception was: %s",
+                                branchName, repo.getName(), exception.getMessage()));
+            }
+            waitFor(TimeUnit.SECONDS.toMillis(1));
+        }
+        return null;
+    }
+
     public GHRepository tryRetrievingRepository(String repoName) throws InterruptedException {
         GHRepository repo = null;
         for (int i = 0; i < 10; i++) {
@@ -194,6 +222,22 @@ public class GitHubUtil {
         Thread.sleep(millis);
     }
 
+    /**
+     * Check to see if the provided {@code repo} has the {@code branchName}
+     *
+     * @param repo - repo to check
+     * @param branchName - branchName we're looking for in {@code repo}
+     * @return {@code repo} has branch with name {@code branchName}
+     * @throws IOException - there was some exception that we couldn't overcome
+     */
+    public boolean repoHasBranch(GHRepository repo, String branchName) throws IOException {
+        try {
+            GHBranch branch = repo.getBranch(branchName);
+            return branch != null;
+        } catch (GHFileNotFoundException exception) {
+            return false;
+        }
+    }
     /**
      * Returns a <code>java.util.Map</code> of GitHub repositories owned by a user. Returned Map's keys are the repository
      * names and values are their corresponding GitHub repository objects.
