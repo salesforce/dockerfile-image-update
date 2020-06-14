@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.*;
@@ -178,7 +179,7 @@ public class GitHubUtilTest {
         expectedList.add(repo2);
         expectedList.add(repo3);
         expectedList.add(repo4);
-        assertTrue(actualList.size() == expectedList.size());
+        assertEquals(expectedList.size(), actualList.size());
         assertTrue(actualList.containsAll(expectedList));
         assertTrue(expectedList.containsAll(actualList));
     }
@@ -207,7 +208,7 @@ public class GitHubUtilTest {
         GitHub github = mock(GitHub.class);
         GitHubUtil gitHubUtil = new GitHubUtil(github);
         Map<String, GHRepository> repoByName = gitHubUtil.getReposForUserAtCurrentInstant(currentUser);
-        assertTrue(repoByName.size() == 4);
+        assertEquals(repoByName.size(), 4);
         assertTrue(repoByName.containsKey("test1") && repoByName.get("test1") == repo1);
         assertTrue(repoByName.containsKey("test2") && repoByName.get("test2") == repo2);
         assertTrue(repoByName.containsKey("test3") && repoByName.get("test3") == repo3);
@@ -219,6 +220,106 @@ public class GitHubUtilTest {
         GitHub github = mock(GitHub.class);
         GitHubUtil gitHubUtil = new GitHubUtil(github);
         Map<String, GHRepository> repoByName = gitHubUtil.getReposForUserAtCurrentInstant(null);
-        assertTrue(repoByName.size() == 0);
+        assertEquals(repoByName.size(), 0);
+    }
+
+    @Test
+    public void testTryRetrievingBranchWaits10SecondsForExceptions() throws IOException, InterruptedException {
+        GitHubUtil gitHubUtil = mock(GitHubUtil.class);
+        GHRepository fork = mock(GHRepository.class);
+        when(gitHubUtil.tryRetrievingBranch(any(), any())).thenCallRealMethod();
+        when(fork.getBranch(any())).thenThrow(new GHFileNotFoundException(),
+                new GHFileNotFoundException(),
+                new GHFileNotFoundException(),
+                new GHFileNotFoundException(),
+                new GHFileNotFoundException(),
+                new GHFileNotFoundException(),
+                new GHFileNotFoundException(),
+                new GHFileNotFoundException(),
+                new GHFileNotFoundException(),
+                new GHFileNotFoundException(),
+                new GHFileNotFoundException());
+
+        assertNull(gitHubUtil.tryRetrievingBranch(fork, "somebranch"));
+        verify(gitHubUtil, times(10)).waitFor(TimeUnit.SECONDS.toMillis(1));
+    }
+
+    @Test
+    public void testTryRetrievingBranchReturnsAfterFound() throws IOException, InterruptedException {
+        GitHubUtil gitHubUtil = mock(GitHubUtil.class);
+        GHRepository fork = mock(GHRepository.class);
+        when(gitHubUtil.tryRetrievingBranch(any(), any())).thenCallRealMethod();
+        GHBranch branch = mock(GHBranch.class);
+        when(fork.getBranch(any())).thenReturn(null, branch);
+
+        assertEquals(gitHubUtil.tryRetrievingBranch(fork, "somebranch"), branch);
+        verify(gitHubUtil, times(1)).waitFor(TimeUnit.SECONDS.toMillis(1));
+    }
+
+    @Test
+    public void testTryRetrievingBranchReturnsImmediately() throws IOException, InterruptedException {
+        GitHubUtil gitHubUtil = mock(GitHubUtil.class);
+        when(gitHubUtil.tryRetrievingBranch(any(), any())).thenCallRealMethod();
+        GHRepository fork = mock(GHRepository.class);
+        GHBranch branch = mock(GHBranch.class);
+        when(fork.getBranch(any())).thenReturn(branch);
+
+        assertEquals(gitHubUtil.tryRetrievingBranch(fork, "somebranch"), branch);
+        verify(gitHubUtil, times(0)).waitFor(TimeUnit.SECONDS.toMillis(1));
+    }
+
+    @Test
+    public void testTryRetrievingBranchWaits10SecondsForNullBranch() throws IOException, InterruptedException {
+        GitHubUtil gitHubUtil = mock(GitHubUtil.class);
+        when(gitHubUtil.tryRetrievingBranch(any(), any())).thenCallRealMethod();
+        GHRepository fork = mock(GHRepository.class);
+        when(fork.getBranch(any())).thenReturn(null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null);
+
+        assertNull(gitHubUtil.tryRetrievingBranch(fork, "somebranch"));
+        verify(gitHubUtil, times(10)).waitFor(TimeUnit.SECONDS.toMillis(1));
+    }
+
+    @Test
+    public void testRepoHasBranchTrue() throws IOException {
+        GitHubUtil gitHubUtil = mock(GitHubUtil.class);
+        when(gitHubUtil.repoHasBranch(any(), any())).thenCallRealMethod();
+        GHRepository repo = mock(GHRepository.class);
+        String branchName = "some-branch";
+
+        when(repo.getBranch(branchName)).thenReturn(mock(GHBranch.class));
+        assertTrue(gitHubUtil.repoHasBranch(repo, branchName));
+    }
+
+    @Test
+    public void testRepoHasBranchFalseIfNoBranchReturned() throws IOException {
+        GitHubUtil gitHubUtil = mock(GitHubUtil.class);
+        when(gitHubUtil.repoHasBranch(any(), any())).thenCallRealMethod();
+        GHRepository repo = mock(GHRepository.class);
+        String branchName = "some-branch";
+
+        when(repo.getBranch(branchName)).thenReturn(null);
+        assertFalse(gitHubUtil.repoHasBranch(repo, branchName));
+    }
+
+    @Test
+    public void testRepoHasBranchFalseForGHFileNotFoundException() throws IOException {
+        GitHubUtil gitHubUtil = mock(GitHubUtil.class);
+        when(gitHubUtil.repoHasBranch(any(), any())).thenCallRealMethod();
+        GHRepository repo = mock(GHRepository.class);
+        String branchName = "some-branch";
+
+        when(repo.getBranch(branchName)).thenThrow(new GHFileNotFoundException());
+        assertFalse(gitHubUtil.repoHasBranch(repo, branchName));
     }
 }

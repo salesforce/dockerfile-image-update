@@ -20,6 +20,7 @@ import java.io.InputStream;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 import static org.mockito.Matchers.*;
 import static org.mockito.Mockito.*;
@@ -534,10 +535,82 @@ public class DockerfileGitHubUtilTest {
         PagedSearchIterable<GHContent> contentsWithImage = mock(PagedSearchIterable.class);
         when(contentsWithImage.getTotalCount()).thenReturn(0);
 
+        GitHubUtil gitHubUtil = mock(GitHubUtil.class);
         DockerfileGitHubUtil dockerfileGitHubUtil = mock(DockerfileGitHubUtil.class);
+        when(dockerfileGitHubUtil.getGitHubUtil()).thenReturn(gitHubUtil);
         when(dockerfileGitHubUtil.findFilesWithImage(anyString(), eq("org"))).thenReturn(contentsWithImage);
         when(dockerfileGitHubUtil.getGHContents("org", "image")).thenCallRealMethod();
 
         assertEquals(dockerfileGitHubUtil.getGHContents("org", "image"), Optional.empty());
+    }
+
+    @Test
+    public void testThisUserIsOwner() throws IOException {
+        GitHubUtil gitHubUtil = mock(GitHubUtil.class);
+        DockerfileGitHubUtil dockerfileGitHubUtil = new DockerfileGitHubUtil(gitHubUtil);
+        String me = "me";
+        GHRepository repo = mock(GHRepository.class);
+        when(repo.getOwnerName()).thenReturn(me);
+        GHMyself ghMyself = mock(GHMyself.class);
+        when(ghMyself.getLogin()).thenReturn(me);
+        when(gitHubUtil.getMyself()).thenReturn(ghMyself);
+
+        assertTrue(dockerfileGitHubUtil.thisUserIsOwner(repo));
+    }
+
+    @Test(expectedExceptions = IOException.class)
+    public void testThisUserIsOwnerCantFindMyself() throws IOException {
+        GitHubUtil gitHubUtil = mock(GitHubUtil.class);
+        DockerfileGitHubUtil dockerfileGitHubUtil = new DockerfileGitHubUtil(gitHubUtil);
+        String me = "me";
+        GHRepository repo = mock(GHRepository.class);
+        when(repo.getOwnerName()).thenReturn(me);
+        GHMyself ghMyself = mock(GHMyself.class);
+        when(ghMyself.getLogin()).thenReturn(me);
+        when(gitHubUtil.getMyself()).thenReturn(null);
+
+        dockerfileGitHubUtil.thisUserIsOwner(repo);
+    }
+
+    @Test
+    public void testCreateOrUpdateForkBranchToParentDefaultHasBranch() throws IOException, InterruptedException {
+        GitHubUtil gitHubUtil = mock(GitHubUtil.class);
+        DockerfileGitHubUtil dockerfileGitHubUtil = new DockerfileGitHubUtil(gitHubUtil);
+        GHRepository parent = mock(GHRepository.class);
+        String defaultBranch = "default";
+        when(parent.getDefaultBranch()).thenReturn(defaultBranch);
+        GHBranch parentBranch = mock(GHBranch.class);
+        String sha = "abcdef";
+        when(parentBranch.getSHA1()).thenReturn(sha);
+        when(parent.getBranch(defaultBranch)).thenReturn(parentBranch);
+        GHRepository fork = mock(GHRepository.class);
+        GitForkBranch gitForkBranch = new GitForkBranch("imageName", "imageTag", null);
+        when(gitHubUtil.repoHasBranch(fork, gitForkBranch.getBranchName())).thenReturn(true);
+        GHRef returnedRef = mock(GHRef.class);
+        when(fork.getRef(anyString())).thenReturn(returnedRef);
+
+        dockerfileGitHubUtil.createOrUpdateForkBranchToParentDefault(parent, fork, gitForkBranch);
+
+        verify(returnedRef, times(1)).updateTo(sha, true);
+    }
+
+    @Test
+    public void testCreateOrUpdateForkBranchToParentDefaultDoesNotHaveBranch() throws IOException, InterruptedException {
+        GitHubUtil gitHubUtil = mock(GitHubUtil.class);
+        DockerfileGitHubUtil dockerfileGitHubUtil = new DockerfileGitHubUtil(gitHubUtil);
+        GHRepository parent = mock(GHRepository.class);
+        String defaultBranch = "default";
+        when(parent.getDefaultBranch()).thenReturn(defaultBranch);
+        GHBranch parentBranch = mock(GHBranch.class);
+        String sha = "abcdef";
+        when(parentBranch.getSHA1()).thenReturn(sha);
+        when(parent.getBranch(defaultBranch)).thenReturn(parentBranch);
+        GHRepository fork = mock(GHRepository.class);
+        GitForkBranch gitForkBranch = new GitForkBranch("imageName", "imageTag", null);
+        when(gitHubUtil.repoHasBranch(fork, gitForkBranch.getBranchName())).thenReturn(false);
+
+        dockerfileGitHubUtil.createOrUpdateForkBranchToParentDefault(parent, fork, gitForkBranch);
+
+        verify(fork, times(1)).createRef(anyString(), matches(sha));
     }
 }
