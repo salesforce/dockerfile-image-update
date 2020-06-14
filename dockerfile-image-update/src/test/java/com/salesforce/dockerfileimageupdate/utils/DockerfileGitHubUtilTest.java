@@ -573,14 +573,44 @@ public class DockerfileGitHubUtilTest {
     }
 
     @Test
-    public void testCreateOrUpdateForkBranchToParentDefault() throws InterruptedException {
+    public void testCreateOrUpdateForkBranchToParentDefaultHasBranch() throws IOException, InterruptedException {
         GitHubUtil gitHubUtil = mock(GitHubUtil.class);
         DockerfileGitHubUtil dockerfileGitHubUtil = new DockerfileGitHubUtil(gitHubUtil);
         GHRepository parent = mock(GHRepository.class);
         String defaultBranch = "default";
         when(parent.getDefaultBranch()).thenReturn(defaultBranch);
+        GHBranch parentBranch = mock(GHBranch.class);
+        String sha = "abcdef";
+        when(parentBranch.getSHA1()).thenReturn(sha);
+        when(parent.getBranch(defaultBranch)).thenReturn(parentBranch);
         GHRepository fork = mock(GHRepository.class);
-        when(gitHubUtil.tryRetrievingBranch(parent, defaultBranch)).thenReturn(null);
+        GitForkBranch gitForkBranch = new GitForkBranch("imageName", "imageTag", null);
+        when(gitHubUtil.repoHasBranch(fork, gitForkBranch.getBranchName())).thenReturn(true);
+        GHRef returnedRef = mock(GHRef.class);
+        when(fork.getRef(anyString())).thenReturn(returnedRef);
 
+        dockerfileGitHubUtil.createOrUpdateForkBranchToParentDefault(parent, fork, gitForkBranch);
+
+        verify(returnedRef, times(1)).updateTo(sha, true);
+    }
+
+    @Test
+    public void testCreateOrUpdateForkBranchToParentDefaultDoesNotHaveBranch() throws IOException, InterruptedException {
+        GitHubUtil gitHubUtil = mock(GitHubUtil.class);
+        DockerfileGitHubUtil dockerfileGitHubUtil = new DockerfileGitHubUtil(gitHubUtil);
+        GHRepository parent = mock(GHRepository.class);
+        String defaultBranch = "default";
+        when(parent.getDefaultBranch()).thenReturn(defaultBranch);
+        GHBranch parentBranch = mock(GHBranch.class);
+        String sha = "abcdef";
+        when(parentBranch.getSHA1()).thenReturn(sha);
+        when(parent.getBranch(defaultBranch)).thenReturn(parentBranch);
+        GHRepository fork = mock(GHRepository.class);
+        GitForkBranch gitForkBranch = new GitForkBranch("imageName", "imageTag", null);
+        when(gitHubUtil.repoHasBranch(fork, gitForkBranch.getBranchName())).thenReturn(false);
+
+        dockerfileGitHubUtil.createOrUpdateForkBranchToParentDefault(parent, fork, gitForkBranch);
+
+        verify(fork, times(1)).createRef(anyString(), matches(sha));
     }
 }
