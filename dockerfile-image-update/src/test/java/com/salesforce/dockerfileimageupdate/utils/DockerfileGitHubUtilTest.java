@@ -9,6 +9,7 @@
 package com.salesforce.dockerfileimageupdate.utils;
 
 import com.salesforce.dockerfileimageupdate.model.GitForkBranch;
+import com.salesforce.dockerfileimageupdate.model.PullRequestInfo;
 import org.kohsuke.github.*;
 import org.mockito.Mock;
 import org.testng.annotations.DataProvider;
@@ -22,6 +23,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
+import static com.salesforce.dockerfileimageupdate.model.PullRequestInfo.DEFAULT_TITLE;
 import static org.mockito.Matchers.*;
 import static org.mockito.Mockito.*;
 import static org.testng.Assert.*;
@@ -483,8 +485,9 @@ public class DockerfileGitHubUtilTest {
 
         when(gitHubUtil.createPullReq(any(), anyString(), any(), anyString(), eq(Constants.PULL_REQ_ID))).thenReturn(-1, -1, -1, 0);
         dockerfileGitHubUtil = new DockerfileGitHubUtil(gitHubUtil);
-        dockerfileGitHubUtil.createPullReq(new GHRepository(), "branch", new GHRepository(), "Automatic Dockerfile Image Updater");
-        verify(gitHubUtil, times(4)).createPullReq(any(), anyString(), any(), anyString(), eq(Constants.PULL_REQ_ID));
+        PullRequestInfo pullRequestInfo = new PullRequestInfo(null, null, null);
+        dockerfileGitHubUtil.createPullReq(new GHRepository(), "branch", new GHRepository(), pullRequestInfo);
+        verify(gitHubUtil, times(4)).createPullReq(any(), anyString(), any(), eq(DEFAULT_TITLE), eq(Constants.PULL_REQ_ID));
     }
 
     @Test
@@ -503,7 +506,8 @@ public class DockerfileGitHubUtilTest {
         when(gitHubUtil.createPullReq(any(), anyString(), any(), anyString(), eq(Constants.PULL_REQ_ID))).thenReturn(1);
         doCallRealMethod().when(gitHubUtil).safeDeleteRepo(forkRepo);
         dockerfileGitHubUtil = new DockerfileGitHubUtil(gitHubUtil);
-        dockerfileGitHubUtil.createPullReq(new GHRepository(), "branch", forkRepo, null);
+        PullRequestInfo pullRequestInfo = new PullRequestInfo(null, null, null);
+        dockerfileGitHubUtil.createPullReq(new GHRepository(), "branch", forkRepo, pullRequestInfo);
         verify(gitHubUtil, times(1)).createPullReq(any(), anyString(), any(), anyString(), eq(Constants.PULL_REQ_ID));
         verify(forkRepo, times(1)).delete();
     }

@@ -10,6 +10,7 @@ package com.salesforce.dockerfileimageupdate.subcommands.impl;
 
 import com.salesforce.dockerfileimageupdate.SubCommand;
 import com.salesforce.dockerfileimageupdate.model.GitForkBranch;
+import com.salesforce.dockerfileimageupdate.model.PullRequestInfo;
 import com.salesforce.dockerfileimageupdate.subcommands.ExecutableWithNamespace;
 import com.salesforce.dockerfileimageupdate.utils.Constants;
 import com.salesforce.dockerfileimageupdate.utils.DockerfileGitHubUtil;
@@ -20,7 +21,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 
-@SubCommand(help="updates one specific repository with given tag",
+@SubCommand(help = "updates one specific repository with given tag",
         requiredParams = {Constants.GIT_REPO, Constants.IMG, Constants.FORCE_TAG}, optionalParams = {"s", Constants.STORE})
 public class Child implements ExecutableWithNamespace {
     private static final Logger log = LoggerFactory.getLogger(Child.class);
@@ -45,11 +46,18 @@ public class Child implements ExecutableWithNamespace {
         }
 
         GitForkBranch gitForkBranch = new GitForkBranch(img, forceTag, branch);
+        PullRequestInfo pullRequestInfo =
+                new PullRequestInfo(ns.get(Constants.GIT_PR_TITLE),
+                        gitForkBranch.getImageName(),
+                        gitForkBranch.getImageTag());
 
         dockerfileGitHubUtil.createOrUpdateForkBranchToParentDefault(repo, fork, gitForkBranch);
 
         log.info("Modifying on Github...");
         dockerfileGitHubUtil.modifyAllOnGithub(fork, gitForkBranch.getBranchName(), img, forceTag);
-        dockerfileGitHubUtil.createPullReq(repo, gitForkBranch.getBranchName(), fork, ns.get(Constants.GIT_PR_TITLE));
+        dockerfileGitHubUtil.createPullReq(repo,
+                gitForkBranch.getBranchName(),
+                fork,
+                pullRequestInfo);
     }
 }

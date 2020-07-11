@@ -69,7 +69,7 @@ public class ParentTest {
         Mockito.verify(dockerfileGitHubUtil, times(1))
                 .modifyOnGithub(eq(content), eq("image-tag"), eq("image"), eq("tag"), anyString());
         Mockito.verify(dockerfileGitHubUtil, times(1))
-                .createPullReq(eq(parentRepo), eq("image-tag"), eq(forkedRepo), anyString());
+                .createPullReq(eq(parentRepo), eq("image-tag"), eq(forkedRepo), any());
     }
 
     @Test
@@ -120,7 +120,7 @@ public class ParentTest {
 
         // Only one PR created on the repo with changes to both Dockerfiles.
         Mockito.verify(dockerfileGitHubUtil, times(1)).createPullReq(eq(parentRepo),
-                eq("image-tag"), eq(forkedRepo), anyString());
+                eq("image-tag"), eq(forkedRepo), any());
     }
 
     @Test
@@ -160,6 +160,6 @@ public class ParentTest {
         Mockito.verify(dockerfileGitHubUtil, times(0))
                 .modifyOnGithub(any(), anyString(), anyString(), anyString(), anyString());
         Mockito.verify(dockerfileGitHubUtil, times(0)).createPullReq(eq(parentRepo),
-                anyString(), eq(forkedRepo), anyString());
+                anyString(), eq(forkedRepo), any());
     }
 }
