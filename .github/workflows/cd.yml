@@ -52,7 +52,7 @@ jobs:
         with:
           name: dockerfile-image-update
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v1
+        uses: codecov/codecov-action@v1.0.10
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           file: ./dockerfile-image-update/target/site/jacoco/jacoco.xml
