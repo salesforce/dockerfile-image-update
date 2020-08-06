@@ -40,6 +40,8 @@ public class GitHubPullRequestSender {
         Multimap<String, GitHubContentToProcess> pathToDockerfilesInParentRepo = HashMultimap.create();
         GHRepository parent;
         String parentRepoName;
+        int totalContentsFound = 0;
+        int contentsShouldFork = 0;
         for (GHContent ghContent : contentsWithImage) {
             /* Kohsuke's GitHub API library, when retrieving the forked repository, looks at the name of the parent to
              * retrieve. The issue with that is: GitHub, when forking two or more repositories with the same name,
@@ -48,6 +50,7 @@ public class GitHubPullRequestSender {
              * repositories that were automatically fixed by GitHub. Instead, we save the names of the parent repos
              * in the map above, find the list of repositories under the authorized user, and iterate through that list.
              */
+            totalContentsFound++;
             parent = ghContent.getOwner();
             parentRepoName = parent.getFullName();
             // Refresh the repo to ensure that the object has full details
@@ -55,6 +58,7 @@ public class GitHubPullRequestSender {
                 parent = dockerfileGitHubUtil.getRepo(parentRepoName);
                 ShouldForkResult shouldForkResult = forkableRepoValidator.shouldFork(parent, ghContent, gitForkBranch);
                 if (shouldForkResult.isForkable()) {
+                    contentsShouldFork++;
                     // fork the parent if not already forked
                     ensureForkedAndAddToListForProcessing(pathToDockerfilesInParentRepo, parent, parentRepoName, ghContent);
                 } else {
@@ -65,6 +69,8 @@ public class GitHubPullRequestSender {
             }
         }
 
+        log.info("Out of {} content search results processed, {} were deemed eligible for forking to yield {} repositories to fork.",
+                totalContentsFound, contentsShouldFork, pathToDockerfilesInParentRepo.keys().size());
         log.info("Path to Dockerfiles in repos: {}", pathToDockerfilesInParentRepo);
 
         return pathToDockerfilesInParentRepo;
