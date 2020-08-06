@@ -71,6 +71,8 @@ public class DockerfileGitHubUtil {
     public PagedSearchIterable<GHContent> findFilesWithImage(String query, String org) throws IOException {
         GHContentSearchBuilder search = gitHubUtil.startSearch();
         // Filename search appears to yield better / more results than language:Dockerfile
+        // Root cause: linguist doesn't currently deal with prefixes of files:
+        // https://github.com/github/linguist/issues/4566
         search.filename("Dockerfile");
         if (org != null) {
             search.user(org);
@@ -82,7 +84,10 @@ public class DockerfileGitHubUtil {
         log.debug("Searching for {}", query);
         PagedSearchIterable<GHContent> files = search.list();
         int totalCount = files.getTotalCount();
-        log.debug("Number of files found for {}:{}", query, totalCount);
+        if (totalCount > 1000) {
+            log.warn("Number of search results is above 1000! The GitHub Search API will only return around 1000 results - https://developer.github.com/v3/search/#about-the-search-api");
+        }
+        log.info("Number of files found for {}:{}", query, totalCount);
         return files;
     }
 
