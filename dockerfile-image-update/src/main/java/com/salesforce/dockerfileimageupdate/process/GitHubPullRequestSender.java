@@ -53,19 +53,13 @@ public class GitHubPullRequestSender {
             totalContentsFound++;
             parent = ghContent.getOwner();
             parentRepoName = parent.getFullName();
-            // Refresh the repo to ensure that the object has full details
-            try {
-                parent = dockerfileGitHubUtil.getRepo(parentRepoName);
-                ShouldForkResult shouldForkResult = forkableRepoValidator.shouldFork(parent, ghContent, gitForkBranch);
-                if (shouldForkResult.isForkable()) {
-                    contentsShouldFork++;
-                    // fork the parent if not already forked
-                    ensureForkedAndAddToListForProcessing(pathToDockerfilesInParentRepo, parent, parentRepoName, ghContent);
-                } else {
-                    log.warn("Skipping {} because {}", parentRepoName, shouldForkResult.getReason());
-                }
-            } catch (IOException exception) {
-                log.warn("Could not refresh details of {}", parentRepoName);
+            ShouldForkResult shouldForkResult = forkableRepoValidator.shouldFork(parent, ghContent, gitForkBranch);
+            if (shouldForkResult.isForkable()) {
+                contentsShouldFork++;
+                // fork the parent if not already forked
+                ensureForkedAndAddToListForProcessing(pathToDockerfilesInParentRepo, parent, parentRepoName, ghContent);
+            } else {
+                log.warn("Skipping {} because {}", parentRepoName, shouldForkResult.getReason());
             }
         }
 
