@@ -8,6 +8,7 @@
 
 package com.salesforce.dockerfileimageupdate.itest.tests;
 
+import com.google.common.base.Charsets;
 import com.salesforce.dockerfileimageupdate.utils.GitHubUtil;
 import org.apache.commons.io.IOUtils;
 import org.assertj.core.api.Assertions;
@@ -40,7 +41,7 @@ public class TestValidationCommon {
             if (content.getSize() > MAX_CONTENT_SIZE) {
                 fail(String.format("Content is suspiciously large: %s, should be below %s", content.getSize(), MAX_CONTENT_SIZE));
             }
-            String dockerfileContent = IOUtils.toString(content.read());
+            String dockerfileContent = IOUtils.toString(content.read(), Charsets.UTF_8);
             if (dockerfileContent.contains(testTag)) {
                 assertThat(dockerfileContent).startsWith("FROM");
                 assertThat(dockerfileContent).contains(image);
@@ -62,7 +63,7 @@ public class TestValidationCommon {
             assertEquals(prs.size(), 1, "There should only be one pull request.");
             for (GHPullRequest pr : prs) {
                 // TODO: In sometimes two commits are generated; a blank one followed tag bump. Ideally we'd have one
-                Assertions.assertThat(pr.listCommits().asList().size()).isGreaterThanOrEqualTo(1);
+                Assertions.assertThat(pr.listCommits().toList().size()).isGreaterThanOrEqualTo(1);
             }
         } else {
             assertEquals(prs.size(), 0, "There should be no pull requests.");
