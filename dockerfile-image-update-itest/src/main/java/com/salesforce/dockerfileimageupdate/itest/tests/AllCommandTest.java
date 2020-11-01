@@ -74,12 +74,14 @@ public class AllCommandTest {
         GHRepository store = github.createRepository(STORE_NAME)
                 .description("Delete if this exists. If it exists, then an integration test crashed somewhere.")
                 .create();
-        store.createContent("{\n  \"images\": {\n" +
+        store.createContent()
+                .content("{\n  \"images\": {\n" +
                 "    \"" + IMAGE_1 + "\": \"" + TEST_TAG + "\",\n" +
                 "    \"" + IMAGE_2 + "\": \"" + TEST_TAG + "\"\n" +
                 "  }\n" +
-                "}",
-                "Integration Testing", "store.json");
+                "}")
+                .message("Integration Testing")
+                .path("store.json").commit();
         createdRepos.add(store);
 
         for (String s: ORGS) {

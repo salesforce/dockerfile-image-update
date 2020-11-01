@@ -41,9 +41,10 @@ public class ChildCommandTest {
 
     private static final String NAME = "dockerfileImageUpdateChildITest";
     private static final String IMAGE = UUID.randomUUID().toString();
-    private static final String TAG = UUID.randomUUID().toString();
+    private static final String UPDATED_TAG = UUID.randomUUID().toString();
     private static final String STORE_NAME = NAME + "-store";
     private static final String ORG = ORGS.get(0);
+    public static final String ORIGINAL_TAG = "test";
 
     // The following are initialized in setup
     private List<GHRepository> createdRepos = new ArrayList<>();
@@ -69,13 +70,16 @@ public class ChildCommandTest {
                 .create();
         log.info("Initializing {}", repo.getFullName());
         createdRepos.add(repo);
-        repo.createContent("FROM " + IMAGE + ":test", "Integration Testing", "Dockerfile");
+        repo.createContent()
+                .content("FROM " + IMAGE + ":" + ORIGINAL_TAG)
+                .message("Integration Testing")
+                .path("Dockerfile").commit();
     }
 
     @Test
     public void testChild() throws Exception {
         ProcessBuilder builder = new ProcessBuilder("java", "-jar", MainJarFinder.getName(), "child",
-                Paths.get(ORG, NAME).toString(), IMAGE, TAG);
+                Paths.get(ORG, NAME).toString(), IMAGE, UPDATED_TAG);
         builder.redirectOutput(ProcessBuilder.Redirect.INHERIT);
         builder.redirectError(ProcessBuilder.Redirect.INHERIT);
         Process pc = builder.start();
@@ -83,7 +87,7 @@ public class ChildCommandTest {
         int exitcode = pc.waitFor();
         Assert.assertEquals(exitcode, 0);
 
-        TestValidationCommon.validateRepo(NAME, IMAGE, TAG, github, gitHubUtil);
+        TestValidationCommon.validateRepo(NAME, IMAGE, UPDATED_TAG, github, gitHubUtil);
     }
 
     @Test(dependsOnMethods = "testChild")
@@ -94,7 +98,7 @@ public class ChildCommandTest {
     @Test(dependsOnMethods = "testIdempotency")
     public void testStoreUpdate() throws Exception {
         ProcessBuilder builder = new ProcessBuilder("java", "-jar", MainJarFinder.getName(), "child",
-                Paths.get(ORG, NAME).toString(), IMAGE, TAG, "-s", STORE_NAME);
+                Paths.get(ORG, NAME).toString(), IMAGE, UPDATED_TAG, "-s", STORE_NAME);
         builder.redirectOutput(ProcessBuilder.Redirect.INHERIT);
         builder.redirectError(ProcessBuilder.Redirect.INHERIT);
         Process pc = builder.start();
@@ -121,7 +125,7 @@ public class ChildCommandTest {
         if (images == null) {
             Assert.fail();
         } else {
-            Assert.assertEquals(images.getAsJsonObject().get(IMAGE).getAsString(), TAG);
+            Assert.assertEquals(images.getAsJsonObject().get(IMAGE).getAsString(), UPDATED_TAG);
         }
     }
 
@@ -142,7 +146,7 @@ public class ChildCommandTest {
             while ((line = reader.readLine()) != null) {
                 if (line.contains("FROM")) {
                     Assert.assertTrue(line.contains(IMAGE));
-                    Assert.assertTrue(line.endsWith(TAG));
+                    Assert.assertTrue(line.endsWith(UPDATED_TAG));
                 }
             }
         }
