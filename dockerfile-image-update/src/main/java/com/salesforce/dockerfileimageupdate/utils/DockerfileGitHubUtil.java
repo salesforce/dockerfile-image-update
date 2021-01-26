@@ -123,8 +123,10 @@ public class DockerfileGitHubUtil {
                 getGitHubUtil().waitFor(TimeUnit.SECONDS.toMillis(1));
             }
         }
-        for (GHContent con : tree) {
-            modifyOnGithubRecursive(repo, con, branch, img, tag);
+        if (tree != null) {
+            for (GHContent con : tree) {
+                modifyOnGithubRecursive(repo, con, branch, img, tag);
+            }
         }
     }
 
