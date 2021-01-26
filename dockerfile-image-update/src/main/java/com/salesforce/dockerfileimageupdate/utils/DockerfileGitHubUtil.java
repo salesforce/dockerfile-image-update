@@ -80,7 +80,22 @@ public class DockerfileGitHubUtil {
         if (query.substring(query.lastIndexOf(' ') + 1).length() <= 1) {
             throw new IOException("Invalid image name.");
         }
-        search.q("\"FROM " + query + "\"");
+        // Github search returns no results if your verbatim string contains more than two slashes
+        int start = 0;
+        while (start < query.length()) {
+            int slash1 = query.indexOf('/', start);
+            if (slash1 == -1) {
+                search.q((start == 0 ? "\"FROM " : "\"") + query.substring(start) + "\"");
+                break;
+            }
+            int slash2 = query.indexOf('/', slash1 + 1);
+            if (slash2 == -1) {
+                search.q((start == 0 ? "\"FROM " : "\"") + query.substring(start) + "\"");
+                break;
+            }
+            search.q((start == 0 ? "\"FROM " : "\"") + query.substring(start, slash2) + "\"");
+            start = slash2 + 1;
+        }
         log.debug("Searching for {}", query);
         PagedSearchIterable<GHContent> files = search.list();
         int totalCount = files.getTotalCount();
