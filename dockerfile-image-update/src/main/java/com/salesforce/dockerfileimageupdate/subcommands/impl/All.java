@@ -243,7 +243,7 @@ public class All implements ExecutableWithNamespace {
         if (isContentModified) {
             // Passing null for image/tag to temporarily maintain old behavior of using constant.
             PullRequestInfo pullRequestInfo =   
-                    new PullRequestInfo(ns.get(Constants.GIT_PR_TITLE),null, null);
+                    new PullRequestInfo(ns.get(Constants.GIT_PR_TITLE),null, null, ns.get(Constants.GIT_PR_BODY));
 
             dockerfileGitHubUtil.createPullReq(parent, branch, forkedRepo, pullRequestInfo);
         }

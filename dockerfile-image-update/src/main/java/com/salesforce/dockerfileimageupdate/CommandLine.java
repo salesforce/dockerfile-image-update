@@ -69,6 +69,8 @@ public class CommandLine {
                 .help("message to provide for pull requests");
         parser.addArgument("-c")
                 .help("additional commit message for the commits in pull requests");
+        parser.addArgument("-B")
+                .help("additional body text to include in pull requests");
         return parser;
     }
 

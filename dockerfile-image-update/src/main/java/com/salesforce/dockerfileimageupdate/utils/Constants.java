@@ -31,5 +31,6 @@ public class Constants {
     public static final String STORE_JSON_FILE = "store.json";
     public static final String GIT_AUTO_MERGE = "f";
     public static final String GIT_PR_TITLE = "m";
+    public static final String GIT_PR_BODY = "B";
     public static final String GIT_ADDITIONAL_COMMIT_MESSAGE = "c";
 }

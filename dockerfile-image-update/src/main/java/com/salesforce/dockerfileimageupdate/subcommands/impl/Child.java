@@ -49,7 +49,8 @@ public class Child implements ExecutableWithNamespace {
         PullRequestInfo pullRequestInfo =
                 new PullRequestInfo(ns.get(Constants.GIT_PR_TITLE),
                         gitForkBranch.getImageName(),
-                        gitForkBranch.getImageTag());
+                        gitForkBranch.getImageTag(),
+                        ns.get(Constants.GIT_PR_BODY));
 
         dockerfileGitHubUtil.createOrUpdateForkBranchToParentDefault(repo, fork, gitForkBranch);
 
