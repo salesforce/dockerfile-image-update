@@ -128,7 +128,9 @@ public class Parent implements ExecutableWithNamespace {
         if (isContentModified) {
             PullRequestInfo pullRequestInfo =
                     new PullRequestInfo(ns.get(Constants.GIT_PR_TITLE),
-                            gitForkBranch.getImageName(), gitForkBranch.getImageTag());
+                            gitForkBranch.getImageName(),
+                            gitForkBranch.getImageTag(),
+                            ns.get(Constants.GIT_PR_BODY));
             // TODO: get the new PR number and cross post over to old ones
             dockerfileGitHubUtil.createPullReq(parent,
                     gitForkBranch.getBranchName(),
