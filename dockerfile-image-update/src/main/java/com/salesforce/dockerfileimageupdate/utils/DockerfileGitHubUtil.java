@@ -117,7 +117,9 @@ public class DockerfileGitHubUtil {
         for (int i = 0; i < 5; i++) {
             try {
                 tree = repo.getDirectoryContent(".", branch);
-                break;
+                if (tree != null) {
+                    break;
+                }
             } catch (FileNotFoundException e1) {
                 log.warn("Content in repository not created yet. Retrying connection to fork...");
                 getGitHubUtil().waitFor(TimeUnit.SECONDS.toMillis(1));
