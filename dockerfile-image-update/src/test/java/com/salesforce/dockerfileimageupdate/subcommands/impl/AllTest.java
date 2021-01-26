@@ -15,6 +15,7 @@ import com.google.common.collect.Multimap;
 import com.google.gson.JsonElement;
 import com.salesforce.dockerfileimageupdate.utils.Constants;
 import com.salesforce.dockerfileimageupdate.utils.DockerfileGitHubUtil;
+import java.util.Collections;
 import net.sourceforge.argparse4j.inf.Namespace;
 import org.kohsuke.github.*;
 import org.mockito.Mockito;
@@ -123,7 +124,7 @@ public class AllTest {
 
         All all = new All();
         all.loadDockerfileGithubUtil(dockerfileGitHubUtil);
-        all.changeDockerfiles(null,
+        all.changeDockerfiles(new Namespace(Collections.emptyMap()),
                 null,
                 null,
                 null,
@@ -157,7 +158,7 @@ public class AllTest {
 
         All all = new All();
         all.loadDockerfileGithubUtil(dockerfileGitHubUtil);
-        all.changeDockerfiles(null,
+        all.changeDockerfiles(new Namespace(Collections.emptyMap()),
                 pathToDockerfilesInParentRepo,
                 null,
                 null,
@@ -184,7 +185,7 @@ public class AllTest {
 
         All all = new All();
         all.loadDockerfileGithubUtil(dockerfileGitHubUtil);
-        all.changeDockerfiles(null, null, null, null,
+        all.changeDockerfiles(new Namespace(Collections.emptyMap()), null, null, null,
                 currUserRepo, new ArrayList<>());
 
         Mockito.verify(dockerfileGitHubUtil, times(1)).getRepo(anyString());

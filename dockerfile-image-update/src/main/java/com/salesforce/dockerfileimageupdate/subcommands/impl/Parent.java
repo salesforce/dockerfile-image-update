@@ -51,7 +51,8 @@ public class Parent implements ExecutableWithNamespace {
         this.dockerfileGitHubUtil.getGitHubJsonStore(ns.get(Constants.STORE)).updateStore(img, tag);
 
         GitHubPullRequestSender pullRequestSender =
-                new GitHubPullRequestSender(dockerfileGitHubUtil, new ForkableRepoValidator(dockerfileGitHubUtil));
+                new GitHubPullRequestSender(dockerfileGitHubUtil, new ForkableRepoValidator(dockerfileGitHubUtil),
+                        ns.get(Constants.GIT_REPO_EXCLUDES));
 
         GitForkBranch gitForkBranch =
                 new GitForkBranch(ns.get(Constants.IMG), ns.get(Constants.TAG), ns.get(Constants.GIT_BRANCH));

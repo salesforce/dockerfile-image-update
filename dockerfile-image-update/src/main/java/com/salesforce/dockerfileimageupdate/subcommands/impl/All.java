@@ -175,6 +175,15 @@ public class All implements ExecutableWithNamespace {
                                      Map<String, String> imageToTagMap,
                                      GHRepository currUserRepo,
                                      List<String> skippedRepos) throws IOException, InterruptedException {
+        String excludes = ns.get(Constants.GIT_REPO_EXCLUDES);
+        if (excludes != null && currUserRepo.getName().matches(excludes)) {
+            log.info("Skipping repository {} as it name ({}) matches the excludes regex: {}",
+                    currUserRepo.getFullName(),
+                    currUserRepo.getName(),
+                    excludes);
+            skippedRepos.add(currUserRepo.getFullName());
+            return;
+        }
         /* The Github API does not provide the parent if retrieved through a list. If we want to access its parent,
          * we need to retrieve it once again.
          */

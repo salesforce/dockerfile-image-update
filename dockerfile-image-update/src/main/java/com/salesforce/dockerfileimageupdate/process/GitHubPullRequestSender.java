@@ -6,6 +6,7 @@ import com.salesforce.dockerfileimageupdate.model.GitForkBranch;
 import com.salesforce.dockerfileimageupdate.model.GitHubContentToProcess;
 import com.salesforce.dockerfileimageupdate.model.ShouldForkResult;
 import com.salesforce.dockerfileimageupdate.utils.DockerfileGitHubUtil;
+import java.util.regex.Pattern;
 import org.kohsuke.github.GHContent;
 import org.kohsuke.github.GHRepository;
 import org.kohsuke.github.PagedSearchIterable;
@@ -20,10 +21,12 @@ public class GitHubPullRequestSender {
     public static final String REPO_IS_FORK = "it's a fork already. Sending a PR to a fork is unsupported at the moment.";
     private final DockerfileGitHubUtil dockerfileGitHubUtil;
     private final ForkableRepoValidator forkableRepoValidator;
+    private final Pattern excludes;
 
-    public GitHubPullRequestSender(DockerfileGitHubUtil dockerfileGitHubUtil, ForkableRepoValidator forkableRepoValidator) {
+    public GitHubPullRequestSender(DockerfileGitHubUtil dockerfileGitHubUtil, ForkableRepoValidator forkableRepoValidator, String excludes) {
         this.dockerfileGitHubUtil = dockerfileGitHubUtil;
         this.forkableRepoValidator = forkableRepoValidator;
+        this.excludes = excludes == null ? null : Pattern.compile(excludes);
     }
 
     /* There is a separation here with forking and performing the Dockerfile update. This is because of the delay
@@ -53,6 +56,11 @@ public class GitHubPullRequestSender {
             totalContentsFound++;
             parent = ghContent.getOwner();
             parentRepoName = parent.getFullName();
+            if (excludes != null && excludes.matcher(parent.getName()).matches()) {
+                log.info("Skipping repository {} as it name ({}) matches the excludes regex",
+                        parentRepoName, parent.getName());
+                continue;
+            }
             // Refresh the repo to ensure that the object has full details
             try {
                 parent = dockerfileGitHubUtil.getRepo(parentRepoName);
