@@ -13,8 +13,9 @@ public class PullRequestInfo {
     private final String title;
     private final String image;
     private final String tag;
+    private final String bodyExtra;
 
-    public PullRequestInfo(String title, String image, String tag) {
+    public PullRequestInfo(String title, String image, String tag, String bodyExtra) {
         if (title == null || title.trim().isEmpty()) {
             this.title = DEFAULT_TITLE;
         } else {
@@ -22,6 +23,7 @@ public class PullRequestInfo {
         }
         this.image = image;
         this.tag = tag;
+        this.bodyExtra = bodyExtra;
     }
 
     /**
@@ -36,8 +38,12 @@ public class PullRequestInfo {
      */
     public String getBody() {
         if (this.image == null && this.tag == null) {
-            return OLD_CONSTANT_BODY;
+            return appendBodyExtra(OLD_CONSTANT_BODY);
         }
-        return String.format(BODY_TEMPLATE, image, image, tag, image + ":" + tag);
+        return appendBodyExtra(String.format(BODY_TEMPLATE, image, image, tag, image + ":" + tag));
+    }
+
+    private String appendBodyExtra(String body) {
+        return bodyExtra == null || bodyExtra.trim().isEmpty() ? body : body + '\n' + bodyExtra;
     }
 }
