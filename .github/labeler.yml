@@ -8,9 +8,19 @@ chore:
 - ./*.sh
 - Makefile
 - ./*.yml
+- .ci.settings.xml
 - ./*.enc
 - .gitignore
 - Dockerfile*
+
+ci-cd:
+- .github/workflows/**/*
+- .ci.deploy.sh
+- .ci.prepare-ssh-gpg.sh
+- .ci.settings.xml
+- Dockerfile*
+- ./*.enc
+- ./*.yml
 
 documentation: 
 - ./*.md
