@@ -1,11 +1,16 @@
 name: 'Multi-Module Maven Build / Deploy'
 on:
   push:
+    paths-ignore:
+    - 'CODE_OF_CONDUCT.md'
+    - 'LICENSE.txt'
+    - 'README.md'
+    - 'SECURITY.md'
     branches:
-      - master
+      - $default-branch
   pull_request:
     branches:
-      - master
+      - $default-branch
 jobs:
   build-test:
     runs-on: ubuntu-latest
