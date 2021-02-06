@@ -1,0 +1,20 @@
+# Configuration for labeler - https://github.com/actions/labeler
+dependencies:
+- *pom.xml
+
+chore:
+- .github/**/*
+- *.sh
+- Makefile
+- ./*.yml
+- *.enc
+- .gitignore
+- Dockerfile*
+
+documentation: 
+- *.md
+- ./*.txt
+
+tests:
+- dockerfile-image-update-itest/**/*
+- dockerfile-image-update/src/test/**/*

@@ -23,6 +23,7 @@ categories:
     labels:
       - enhancement
       - feature
+      - improvement
       - rfe
   - title: 🐛 Bug Fixes
     labels:
