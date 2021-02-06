@@ -1,18 +1,20 @@
 # Configuration for labeler - https://github.com/actions/labeler
 dependencies:
-- *pom.xml
+- ./**/pom.xml
+- pom.xml
 
 chore:
 - .github/**/*
-- *.sh
+- ./*.sh
 - Makefile
 - ./*.yml
-- *.enc
+- ./*.enc
 - .gitignore
 - Dockerfile*
 
 documentation: 
-- *.md
+- ./*.md
+- ./**/*.md
 - ./*.txt
 
 tests:
