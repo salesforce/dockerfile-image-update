@@ -2,9 +2,11 @@ name: "Code scanning - action"
 
 on:
   push:
-    branches: [ $default-branch ]
+    branches:
+      - master
   pull_request:
-    branches: [ $default-branch ]
+    branches:
+      - master
   schedule:
     #        ┌───────────── minute (0 - 59)
     #        │  ┌───────────── hour (0 - 23)

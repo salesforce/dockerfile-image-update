@@ -8,7 +8,8 @@
 name: "Pull Request Labeler"
 on:
   pull_request:
-    branches: [ $default-branch ]
+    branches:
+      - master
 
 jobs:
   triage:

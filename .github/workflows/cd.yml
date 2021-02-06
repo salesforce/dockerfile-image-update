@@ -6,9 +6,11 @@ on:
     - 'LICENSE.txt'
     - 'README.md'
     - 'SECURITY.md'
-    branches: [ $default-branch ]
+    branches:
+      - master
   pull_request:
-    branches: [ $default-branch ]
+    branches:
+      - master
 jobs:
   build-test:
     runs-on: ubuntu-latest

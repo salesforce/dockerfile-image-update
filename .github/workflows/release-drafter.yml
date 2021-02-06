@@ -2,7 +2,8 @@ name: Release Drafter
 
 on:
   push:
-    branches: [ $default-branch ]
+    branches:
+      - master
 
 jobs:
   update_release_draft:
