@@ -1,0 +1,32 @@
+# Configuration for labeler - https://github.com/actions/labeler
+dependencies:
+- ./**/pom.xml
+- pom.xml
+
+chore:
+- .github/**/*
+- ./*.sh
+- Makefile
+- ./*.yml
+- .ci.settings.xml
+- ./*.enc
+- .gitignore
+- Dockerfile*
+
+ci-cd:
+- .github/workflows/**/*
+- .ci.deploy.sh
+- .ci.prepare-ssh-gpg.sh
+- .ci.settings.xml
+- Dockerfile*
+- ./*.enc
+- ./*.yml
+
+documentation: 
+- ./*.md
+- ./**/*.md
+- ./*.txt
+
+tests:
+- dockerfile-image-update-itest/**/*
+- dockerfile-image-update/src/test/**/*
