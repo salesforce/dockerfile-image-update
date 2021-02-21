@@ -28,7 +28,7 @@ docker run --rm -v "${PWD}":/usr/src/build \
                 -e GPG_KEY_NAME \
                 -e GPG_PASSPHRASE \
                 maven:3.6-jdk-"${JDK_VERSION}" \
-                /bin/bash -c "source .ci.prepare-ssh-gpg.sh && mvn --quiet --batch-mode releaser:release"
+                /bin/bash -c "source .ci.prepare-ssh-gpg.sh && mvn --quiet --batch-mode --projects '!dockerfile-image-update-itest' releaser:release"
 
 # Get MVN_VERSION
 MVN_VERSION=$(cat ./dockerfile-image-update/target/classes/version.txt)
