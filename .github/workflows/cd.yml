@@ -99,10 +99,6 @@ jobs:
         uses: actions/download-artifact@v1
         with:
           name: dockerfile-image-update
-      - name: Download itest dir
-        uses: actions/download-artifact@v1
-        with:
-          name: dockerfile-image-update-itest
       - name: deploy
         env:
           encrypted_00fae8efff8c_iv: ${{ secrets.encrypted_00fae8efff8c_iv }}
