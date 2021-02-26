@@ -53,7 +53,7 @@ jobs:
     #    uses a compiled language
 
     - run: |
-       make mvn-docker-build
+       cd dockerfile-image-update && mvn clean install
     #   make release
 
     - name: Perform CodeQL Analysis
