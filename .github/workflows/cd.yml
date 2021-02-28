@@ -38,7 +38,7 @@ jobs:
     steps:
       - name: checkout
         uses: actions/checkout@v2
-        run: git fetch --depth=1 origin +refs/tags/*:refs/tags/*
+      - run: git fetch --depth=1 origin +refs/tags/*:refs/tags/*
       - name: get version
         id:   version_tag
         run: |
