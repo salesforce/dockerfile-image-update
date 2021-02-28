@@ -32,5 +32,12 @@ get-itest-jar-from-maven-image:
 	mkdir -p ${DFIU_ITEST_TARGET}
 	docker run --rm -v $(CURDIR):/tmp/project local-maven-build /bin/bash -c "cp ${DFIU_ITEST_FULLPATH} /tmp/project/${DFIU_ITEST_FULLPATH}"
 
+get-new-version-from-tag:
+	# Get the latest patch revision
+	git describe --match "dockerfile-image-update-1.0.*" --abbrev=0 --tags | export LATEST_PATCH_VERSION=$(sed s/dockerfile-image-update-1.0.//)
+	echo "Latest patch version: ${LATEST_PATCH_VERSION}"
+	NEW_PATCH_VERSION=1.0.$((${LATEST_PATCH_VERSION} + 1))
+	echo ${NEW_PATCH_VERSION} > new_patch_version.txt
+
 deploy:
 	JDK_VERSION=${JDK_VERSION} ./.ci.deploy.sh

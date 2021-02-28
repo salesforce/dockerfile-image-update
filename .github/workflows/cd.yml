@@ -25,12 +25,8 @@ jobs:
       - name: get latest version
         id:   version_tag
         run: |
-            # Get the latest patch revision
-            git describe --match "dockerfile-image-update-1.0.*" --abbrev=0 --tags | export LATEST_PATCH_VERSION=$(sed s/dockerfile-image-update-1.0.//)
-            echo "Latest patch version: ${LATEST_PATCH_VERSION}"
-            export NEW_PATCH_VERSION=1.0.$((LATEST_PATCH_VERSION + 1))
-            echo "New version: ${NEW_PATCH_VERSION}"
-            echo "::set-output name=new_version::${NEW_PATCH_VERSION}"
+            make get-new-version-from-tag
+            echo "::set-output name=new_version::$(cat new_patch_version.txt)"
       - name: Upload main module
         uses: actions/upload-artifact@v1
         with:
