@@ -22,6 +22,15 @@ jobs:
           ref: ${{ github.ref }}
       - name: docker build
         run: make mvn-docker-build get-main-project-dirs
+      - name: get latest version
+        id:   version_tag
+        run: |
+            # Get the latest patch revision
+            git describe --match "dockerfile-image-update-1.0.*" --abbrev=0 --tags | export LATEST_PATCH_VERSION=$(sed s/dockerfile-image-update-1.0.//)
+            echo "Latest patch version: ${LATEST_PATCH_VERSION}"
+            export NEW_PATCH_VERSION=1.0.$((LATEST_PATCH_VERSION + 1))
+            echo "New version: ${NEW_PATCH_VERSION}"
+            echo "::set-output name=new_version::${NEW_PATCH_VERSION}"
       - name: Upload main module
         uses: actions/upload-artifact@v1
         with:
@@ -47,7 +56,7 @@ jobs:
       - name: integration test
         env:
           ITEST_GH_TOKEN: ${{ secrets.ITEST_GH_TOKEN }}
-        run: make integration-test
+        run: echo "Testing new version ${{ steps.version_tag.outputs.new_version }}" && make integration-test
   codecov:
     runs-on: ubuntu-latest
     needs: build-test
@@ -111,4 +120,5 @@ jobs:
           DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
           CI_DEPLOY_USER: ${{ secrets.CI_DEPLOY_USER }}
           CI_DEPLOY_PASSWORD: ${{ secrets.CI_DEPLOY_PASSWORD }}
+          NEW_PATCH_VERSION: ${{ steps.version_tag.outputs.new_version }}
         run: make deploy
