@@ -34,10 +34,10 @@ get-itest-jar-from-maven-image:
 
 get-new-version-from-tag:
 	# Get the latest patch revision
-	git describe --match "dockerfile-image-update-1.0.*" --abbrev=0 --tags | export LATEST_PATCH_VERSION=$(sed s/dockerfile-image-update-1.0.//)
-	echo "Latest patch version: ${LATEST_PATCH_VERSION}"
-	NEW_PATCH_VERSION=1.0.$((${LATEST_PATCH_VERSION} + 1))
-	echo ${NEW_PATCH_VERSION} > new_patch_version.txt
+	export LATEST_PATCH_VERSION=$$(git describe --match "dockerfile-image-update-1.0.*" --abbrev=0 --tags | sed s/dockerfile-image-update-1.0.// $<); \
+	NEW_PATCH_VERSION=1.0.$$(($${LATEST_PATCH_VERSION} + 1)); \
+	echo "New patch version: $${NEW_PATCH_VERSION}"; \
+	echo $${NEW_PATCH_VERSION} > new_patch_version.txt;
 
 deploy:
 	JDK_VERSION=${JDK_VERSION} ./.ci.deploy.sh
