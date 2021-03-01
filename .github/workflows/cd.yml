@@ -32,9 +32,24 @@ jobs:
         with:
           name: dockerfile-image-update-itest
           path: dockerfile-image-update-itest
+  get-next-version:
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'dockerfile-image-update-') == false
+    outputs:
+      version: ${{ steps.version_tag.outputs.new_version }}
+    steps:
+      - name: checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: get version
+        id:   version_tag
+        run: |
+          make get-new-version-from-tag
+          echo "::set-output name=new_version::$(cat new_patch_version.txt)"
   integration-test:
     runs-on: ubuntu-latest
-    needs: build-test
+    needs: [build-test, get-next-version]
     steps:
       - name: checkout
         uses: actions/checkout@master
@@ -47,7 +62,7 @@ jobs:
       - name: integration test
         env:
           ITEST_GH_TOKEN: ${{ secrets.ITEST_GH_TOKEN }}
-        run: make integration-test
+        run: echo "Testing new version ${{ needs.get-next-version.outputs.version }}" && make integration-test
   codecov:
     runs-on: ubuntu-latest
     needs: build-test
@@ -87,7 +102,7 @@ jobs:
           coverageLocations: |
             ${{github.workspace}}/dockerfile-image-update/target/site/jacoco/jacoco.xml:jacoco
   master-deploy:
-    needs: integration-test
+    needs: [integration-test, get-next-version]
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/master'
     steps:
@@ -111,4 +126,5 @@ jobs:
           DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
           CI_DEPLOY_USER: ${{ secrets.CI_DEPLOY_USER }}
           CI_DEPLOY_PASSWORD: ${{ secrets.CI_DEPLOY_PASSWORD }}
+          NEW_PATCH_VERSION: ${{ needs.get-next-version.outputs.version }}
         run: make deploy
