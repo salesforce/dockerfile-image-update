@@ -14,6 +14,10 @@ done
 
 set -ex
 
+# Set up git email / name for tagging
+git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
+git config --local user.name "github-actions[bot]"
+
 # Set up Maven settings and release
 mkdir -p "${HOME}/.m2"
 cp .ci.settings.xml "${HOME}"/.m2/settings.xml
