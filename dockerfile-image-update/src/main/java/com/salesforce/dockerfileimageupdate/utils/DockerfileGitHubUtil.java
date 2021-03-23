@@ -80,6 +80,15 @@ public class DockerfileGitHubUtil {
         if (query.substring(query.lastIndexOf(' ') + 1).length() <= 1) {
             throw new IOException("Invalid image name.");
         }
+        // When the query string is a combination of dashes and dots, github API search doesn't work properly and doesn't find the image
+        // ex: xyz-asndnkdk-ffwwwsw-deeeereer.jfrog.io/rv-python-runtime
+        // https://github.com/craftcms/cms/issues/3080
+        // To fix this, we need to replace the dashes with spaces in the search string and Github search can then find the image
+        // New string: xyz asndnkdk ffwwwsw deeeereer.jfrog.io/rv python runtime
+        // It doesn't effect other functions and works perfectly
+        if(query.contains("-")) {
+            query = query.replace('-', ' ');
+        }
         search.q("\"FROM " + query + "\"");
         log.debug("Searching for {}", query);
         PagedSearchIterable<GHContent> files = search.list();
