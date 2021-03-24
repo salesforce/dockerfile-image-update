@@ -87,7 +87,7 @@ public class DockerfileGitHubUtil {
         // New string: xyz asndnkdk ffwwwsw deeeereer.jfrog.io/rv python runtime
         // It doesn't effect other functions and works perfectly
         if(query.contains("-")) {
-            query = query.replaceAll('-', ' ');
+            query = query.replace('-', ' ');
         }
         search.q("\"FROM " + query + "\"");
         log.debug("Searching for {}", query);
