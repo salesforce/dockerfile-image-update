@@ -28,22 +28,47 @@ public class GitHubImageSearchTermList {
         ProcessingState state = processDomainPartOfImage(imageParts[0]);
         if (imageParts.length > 1) {
             for (int i = 1; i < imageParts.length - 1; i++) {
-                if (imageParts[i].contains("-")) {
-                    state.finalizeCurrentTerm();
-                } else {
-                    state.addToCurrentTerm("/");
-                }
-                state.addToCurrentTerm(imageParts[i]);
+                String imagePart = imageParts[i];
+                processIntermediateUrlSegment(state, imagePart);
             }
-            String leftoverTerm = state.getCurrentTerm();
-            if (leftoverTerm.contains("-")) {
-                state.finalizeCurrentTerm();
-            }
-            state.addToCurrentTerm("/");
-            state.addToCurrentTerm(imageParts[imageParts.length - 1]);
+            String finalImageSegment = imageParts[imageParts.length - 1];
+            processFinalUrlSegment(state, finalImageSegment);
         }
         state.finalizeCurrentTerm();
         return state.terms;
+    }
+
+    /**
+     * Intermediate URL segments will finalize the current search term if they have a dash and prep for
+     * a new search term. Otherwise, we'll add a slash and this {@code imagePart}.
+     *
+     * @param state processing state
+     * @param imagePart the current image segment
+     */
+    private static void processIntermediateUrlSegment(ProcessingState state, String imagePart) {
+        if (imagePart.contains("-")) {
+            state.finalizeCurrentTerm();
+        } else {
+            state.addToCurrentTerm("/");
+        }
+        state.addToCurrentTerm(imagePart);
+    }
+
+    /**
+     * The final URL segment will conclude the current search term if what is currently in the buffer has dashes.
+     * Regardless, the final search term should have a slash separator whether it's part of the current search
+     * term or at the beginning of a new term.
+     *
+     * @param state processing state
+     * @param finalImageSegment the final URL segment
+     */
+    private static void processFinalUrlSegment(ProcessingState state, String finalImageSegment) {
+        String leftoverTerm = state.getCurrentTerm();
+        if (leftoverTerm.contains("-")) {
+            state.finalizeCurrentTerm();
+        }
+        state.addToCurrentTerm("/");
+        state.addToCurrentTerm(finalImageSegment);
     }
 
     /**
@@ -61,18 +86,29 @@ public class GitHubImageSearchTermList {
             return state;
         } else {
             state.addToCurrentTerm("FROM ");
-            String leftoverDomain = domain;
             if (domain.contains("-")) {
-                String[] domainParts = domain.split("-");
-                for (int i = 0; i < domainParts.length - 1; i++) {
-                    state.addToCurrentTerm(domainParts[i]);
-                    state.finalizeCurrentTerm();
-                }
-                leftoverDomain = domainParts[domainParts.length - 1];
+                processDashedDomainParts(state, domain);
+            } else {
+                state.addToCurrentTerm(domain);
             }
-            state.addToCurrentTerm(leftoverDomain);
         }
         return state;
+    }
+
+    /**
+     * Dashed domain parts should simply by split by dashes and we'll leave the final domain part in the current search
+     * term buffer
+     *
+     * @param state processing state
+     * @param domain the full dashed domain
+     */
+    private static void processDashedDomainParts(ProcessingState state, String domain) {
+        String[] domainParts = domain.split("-");
+        for (int i = 0; i < domainParts.length - 1; i++) {
+            state.addToCurrentTerm(domainParts[i]);
+            state.finalizeCurrentTerm();
+        }
+        state.addToCurrentTerm(domainParts[domainParts.length - 1]);
     }
 
     /**
