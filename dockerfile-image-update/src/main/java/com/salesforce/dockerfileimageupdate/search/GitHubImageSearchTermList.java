@@ -116,7 +116,7 @@ public class GitHubImageSearchTermList {
      */
     static class ProcessingState {
         final List<String> terms = new ArrayList<>();
-        private StringBuffer termBuffer = new StringBuffer();
+        private final StringBuffer termBuffer = new StringBuffer();
 
         /**
          * Add to the current search term
@@ -139,7 +139,7 @@ public class GitHubImageSearchTermList {
          */
         void finalizeCurrentTerm() {
             terms.add(termBuffer.toString());
-            termBuffer = new StringBuffer();
+            termBuffer.setLength(0);
         }
     }
 }
