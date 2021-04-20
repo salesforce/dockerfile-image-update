@@ -71,6 +71,8 @@ public class CommandLine {
                 .help("additional commit message for the commits in pull requests");
         parser.addArgument("-e", "--" + Constants.GIT_REPO_EXCLUDES)
                 .help("regex of repository names to exclude from pull request generation");
+        parser.addArgument("-B")
+                .help("additional body text to include in pull requests");
         return parser;
     }
 

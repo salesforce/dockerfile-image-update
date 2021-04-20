@@ -2,5 +2,7 @@ ARG JDK_VERSION
 FROM maven:3.6-jdk-${JDK_VERSION} AS build
 
 COPY . .
+
 RUN mvn --version
-RUN mvn --quiet --batch-mode install
+RUN cd /dockerfile-image-update && mvn --quiet --batch-mode install && \
+    cd /dockerfile-image-update-itest && mvn --quiet --batch-mode install

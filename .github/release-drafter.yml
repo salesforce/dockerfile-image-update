@@ -23,6 +23,7 @@ categories:
     labels:
       - enhancement
       - feature
+      - improvement
       - rfe
   - title: 🐛 Bug Fixes
     labels:
@@ -53,6 +54,7 @@ exclude-labels:
   - invalid
 
 template: |
+  ## Changes
   <!-- Optional: add a release summary here -->
   $CHANGES
 replacers:

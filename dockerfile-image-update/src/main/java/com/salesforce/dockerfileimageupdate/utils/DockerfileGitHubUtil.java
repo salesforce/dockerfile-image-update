@@ -12,6 +12,7 @@ import com.google.common.collect.Multimap;
 import com.salesforce.dockerfileimageupdate.model.FromInstruction;
 import com.salesforce.dockerfileimageupdate.model.GitForkBranch;
 import com.salesforce.dockerfileimageupdate.model.PullRequestInfo;
+import com.salesforce.dockerfileimageupdate.search.GitHubImageSearchTermList;
 import com.salesforce.dockerfileimageupdate.storage.GitHubJsonStore;
 import org.kohsuke.github.*;
 import org.slf4j.Logger;
@@ -68,7 +69,7 @@ public class DockerfileGitHubUtil {
         return gitHubUtil.getRepo(repoName);
     }
 
-    public PagedSearchIterable<GHContent> findFilesWithImage(String query, String org) throws IOException {
+    public PagedSearchIterable<GHContent> findFilesWithImage(String image, String org) throws IOException {
         GHContentSearchBuilder search = gitHubUtil.startSearch();
         // Filename search appears to yield better / more results than language:Dockerfile
         // Root cause: linguist doesn't currently deal with prefixes of files:
@@ -77,17 +78,18 @@ public class DockerfileGitHubUtil {
         if (org != null) {
             search.user(org);
         }
-        if (query.substring(query.lastIndexOf(' ') + 1).length() <= 1) {
+        if (image.substring(image.lastIndexOf(' ') + 1).length() <= 1) {
             throw new IOException("Invalid image name.");
         }
-        search.q("\"FROM " + query + "\"");
-        log.debug("Searching for {}", query);
+        List<String> terms = GitHubImageSearchTermList.getSearchTerms(image);
+        log.info("Searching for {} with terms: {}", image, terms);
+        terms.forEach(search::q);
         PagedSearchIterable<GHContent> files = search.list();
         int totalCount = files.getTotalCount();
         if (totalCount > 1000) {
             log.warn("Number of search results is above 1000! The GitHub Search API will only return around 1000 results - https://developer.github.com/v3/search/#about-the-search-api");
         }
-        log.info("Number of files found for {}:{}", query, totalCount);
+        log.info("Number of files found for {}: {}", image, totalCount);
         return files;
     }
 
@@ -117,14 +119,18 @@ public class DockerfileGitHubUtil {
         for (int i = 0; i < 5; i++) {
             try {
                 tree = repo.getDirectoryContent(".", branch);
-                break;
+                if (tree != null) {
+                    break;
+                }
             } catch (FileNotFoundException e1) {
                 log.warn("Content in repository not created yet. Retrying connection to fork...");
                 getGitHubUtil().waitFor(TimeUnit.SECONDS.toMillis(1));
             }
         }
-        for (GHContent con : tree) {
-            modifyOnGithubRecursive(repo, con, branch, img, tag);
+        if (tree != null) {
+            for (GHContent con : tree) {
+                modifyOnGithubRecursive(repo, con, branch, img, tag);
+            }
         }
     }
 
