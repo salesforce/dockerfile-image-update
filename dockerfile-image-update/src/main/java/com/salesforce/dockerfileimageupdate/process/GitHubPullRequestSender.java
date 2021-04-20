@@ -57,7 +57,7 @@ public class GitHubPullRequestSender {
             parent = ghContent.getOwner();
             parentRepoName = parent.getFullName();
             if (excludes != null && excludes.matcher(parent.getName()).matches()) {
-                log.info("Skipping repository {} as it name ({}) matches the excludes regex",
+                log.info("Skipping repository {} as its name ({}) matches the excludes regex",
                         parentRepoName, parent.getName());
                 continue;
             }
