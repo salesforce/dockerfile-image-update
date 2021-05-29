@@ -1,7 +1,12 @@
 version: 2
 updates:
 - package-ecosystem: maven
-  directory: "/"
+  directory: "/dockerfile-image-update"
+  schedule:
+    interval: daily
+  open-pull-requests-limit: 10
+- package-ecosystem: maven
+  directory: "/dockerfile-image-update-itest"
   schedule:
     interval: daily
   open-pull-requests-limit: 10
