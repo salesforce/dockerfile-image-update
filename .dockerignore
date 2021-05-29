@@ -1,1 +1,26 @@
+# CI files
 .git
+.github
+.ci*
+id_rsa_dockerfile_image_update.enc
+Makefile
+
+# Docker
+Dockerfile
+.dockerignore
+docker-compose.yml
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Icon?
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# JetBrains / user
+.idea/
