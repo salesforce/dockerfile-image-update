@@ -50,12 +50,55 @@ public class GitHubPullRequestSenderTest {
         ForkableRepoValidator forkableRepoValidator = mock(ForkableRepoValidator.class);
         when(forkableRepoValidator.shouldFork(any(), any(), any())).thenReturn(ShouldForkResult.shouldForkResult());
 
-        GitHubPullRequestSender pullRequestSender = new GitHubPullRequestSender(dockerfileGitHubUtil, forkableRepoValidator);
+        GitHubPullRequestSender pullRequestSender = new GitHubPullRequestSender(dockerfileGitHubUtil, forkableRepoValidator, null);
         Multimap<String, GitHubContentToProcess> repoMap =
                 pullRequestSender.forkRepositoriesFoundAndGetPathToDockerfiles(contentsWithImage, null);
 
         verify(dockerfileGitHubUtil, times(3)).getOrCreateFork(any());
         assertEquals(repoMap.size(), 3);
+    }
+
+    @Test
+    public void testForkRepositoriesFoundWithExcludes() throws Exception {
+        DockerfileGitHubUtil dockerfileGitHubUtil = mock(DockerfileGitHubUtil.class);
+
+        GHRepository contentRepo1 = mock(GHRepository.class);
+        when(contentRepo1.getFullName()).thenReturn("user//1");
+        when(contentRepo1.getName()).thenReturn("1");
+        GHRepository contentRepo2 = mock(GHRepository.class);
+        when(contentRepo2.getFullName()).thenReturn("user/2");
+        when(contentRepo2.getName()).thenReturn("2");
+        GHRepository contentRepo3 = mock(GHRepository.class);
+        when(contentRepo3.getFullName()).thenReturn("user/3");
+        when(contentRepo3.getName()).thenReturn("3");
+
+
+        GHContent content1 = mock(GHContent.class);
+        when(content1.getOwner()).thenReturn(contentRepo1);
+        GHContent content2 = mock(GHContent.class);
+        when(content2.getOwner()).thenReturn(contentRepo2);
+        GHContent content3 = mock(GHContent.class);
+        when(content3.getOwner()).thenReturn(contentRepo3);
+
+        PagedSearchIterable<GHContent> contentsWithImage = mock(PagedSearchIterable.class);
+
+        PagedIterator<GHContent> contentsWithImageIterator = mock(PagedIterator.class);
+        when(contentsWithImageIterator.hasNext()).thenReturn(true, true, true, false);
+        when(contentsWithImageIterator.next()).thenReturn(content1, content2, content3, null);
+        when(contentsWithImage.iterator()).thenReturn(contentsWithImageIterator);
+
+        when(dockerfileGitHubUtil.getOrCreateFork(Mockito.any())).thenReturn(new GHRepository());
+        when(dockerfileGitHubUtil.getRepo(any())).thenReturn(mock(GHRepository.class));
+
+        ForkableRepoValidator forkableRepoValidator = mock(ForkableRepoValidator.class);
+        when(forkableRepoValidator.shouldFork(any(), any(), any())).thenReturn(ShouldForkResult.shouldForkResult());
+
+        GitHubPullRequestSender pullRequestSender = new GitHubPullRequestSender(dockerfileGitHubUtil, forkableRepoValidator, "^2$");
+        Multimap<String, GitHubContentToProcess> repoMap =
+                pullRequestSender.forkRepositoriesFoundAndGetPathToDockerfiles(contentsWithImage, null);
+
+        verify(dockerfileGitHubUtil, times(2)).getOrCreateFork(any());
+        assertEquals(repoMap.size(), 2);
     }
 
     @Test
@@ -107,7 +150,7 @@ public class GitHubPullRequestSenderTest {
         ForkableRepoValidator forkableRepoValidator = mock(ForkableRepoValidator.class);
         when(forkableRepoValidator.shouldFork(any(), any(), any())).thenReturn(ShouldForkResult.shouldForkResult());
 
-        GitHubPullRequestSender pullRequestSender = new GitHubPullRequestSender(dockerfileGitHubUtil, forkableRepoValidator);
+        GitHubPullRequestSender pullRequestSender = new GitHubPullRequestSender(dockerfileGitHubUtil, forkableRepoValidator, null);
         Multimap<String, GitHubContentToProcess> repoMap =
                 pullRequestSender.forkRepositoriesFoundAndGetPathToDockerfiles(contentsWithImage, null);
 
@@ -139,7 +182,7 @@ public class GitHubPullRequestSenderTest {
         ForkableRepoValidator forkableRepoValidator = mock(ForkableRepoValidator.class);
         when(forkableRepoValidator.shouldFork(any(), any(), any())).thenReturn(ShouldForkResult.shouldNotForkResult(""));
 
-        GitHubPullRequestSender pullRequestSender = new GitHubPullRequestSender(dockerfileGitHubUtil, forkableRepoValidator);
+        GitHubPullRequestSender pullRequestSender = new GitHubPullRequestSender(dockerfileGitHubUtil, forkableRepoValidator, null);
         Multimap<String, GitHubContentToProcess> repoMap =
                 pullRequestSender.forkRepositoriesFoundAndGetPathToDockerfiles(contentsWithImage, null);
 
@@ -151,7 +194,7 @@ public class GitHubPullRequestSenderTest {
     public void testGetForkFromExistingRecordToProcess() {
         String reponame = "reponame";
         DockerfileGitHubUtil dockerfileGitHubUtil = mock(DockerfileGitHubUtil.class);
-        GitHubPullRequestSender gitHubPullRequestSender = new GitHubPullRequestSender(dockerfileGitHubUtil, mock(ForkableRepoValidator.class));
+        GitHubPullRequestSender gitHubPullRequestSender = new GitHubPullRequestSender(dockerfileGitHubUtil, mock(ForkableRepoValidator.class), null);
         GHRepository fork = mock(GHRepository.class);
         GHRepository parent = mock(GHRepository.class);
         Multimap<String, GitHubContentToProcess> processMultimap = HashMultimap.create();
@@ -163,7 +206,7 @@ public class GitHubPullRequestSenderTest {
     public void testGetForkNotFoundFromExistingRecords() {
         String reponame = "reponame";
         DockerfileGitHubUtil dockerfileGitHubUtil = mock(DockerfileGitHubUtil.class);
-        GitHubPullRequestSender gitHubPullRequestSender = new GitHubPullRequestSender(dockerfileGitHubUtil, mock(ForkableRepoValidator.class));
+        GitHubPullRequestSender gitHubPullRequestSender = new GitHubPullRequestSender(dockerfileGitHubUtil, mock(ForkableRepoValidator.class), null);
         Multimap<String, GitHubContentToProcess> processMultimap = HashMultimap.create();
         assertNull(gitHubPullRequestSender.getForkFromExistingRecordToProcess(processMultimap, reponame));
     }
