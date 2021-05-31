@@ -94,7 +94,7 @@ jobs:
       - name: Upload coverage to Code Climate
         uses: paambaati/codeclimate-action@v2.6.0
         env:
-          CC_TEST_REPORTER_ID: ${{ secrets.CODE_CLIMATE_REPORTER_ID }}
+          CC_TEST_REPORTER_ID: 873529a2ad74a48f14a73b29dd3f392c7da63902534ac0fd224746f32ba77ac5
           JACOCO_SOURCE_PATH: "${{github.workspace}}/dockerfile-image-update/src/main/java"
         with:
           # The report file must be there, otherwise Code Climate won't find it
