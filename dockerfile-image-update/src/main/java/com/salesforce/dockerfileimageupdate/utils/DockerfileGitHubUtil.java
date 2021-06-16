@@ -81,6 +81,12 @@ public class DockerfileGitHubUtil {
         if (image.substring(image.lastIndexOf(' ') + 1).length() <= 1) {
             throw new IOException("Invalid image name.");
         }
+
+        // replace dots with spaces in image name, for github search to work
+        if(image.contains(".")) {
+            image = image.replace('.', ' ');
+        }
+
         List<String> terms = GitHubImageSearchTermList.getSearchTerms(image);
         log.info("Searching for {} with terms: {}", image, terms);
         terms.forEach(search::q);
