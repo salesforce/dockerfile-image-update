@@ -30,3 +30,4 @@ test-results/
 dependency-reduced-pom.xml
 new_patch_version.txt
 .env
+.vscode/
