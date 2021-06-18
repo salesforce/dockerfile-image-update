@@ -1,4 +1,4 @@
-name: 'Build / Integration Test'
+name: 'Build + Integration Test'
 on:
   push:
     paths-ignore:
