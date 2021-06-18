@@ -1,0 +1,103 @@
+name: 'Build / Integration Test'
+on:
+  push:
+    paths-ignore:
+    - 'CODE_OF_CONDUCT.md'
+    - 'LICENSE.txt'
+    - 'README.md'
+    - 'SECURITY.md'
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'dockerfile-image-update-') == false
+    steps:
+      - name: checkout
+        uses: actions/checkout@master
+        with:
+          ref: ${{ github.ref }}
+      - name: docker build
+        run: make mvn-docker-build get-main-project-dirs
+      - name: Upload main module
+        uses: actions/upload-artifact@v1
+        with:
+          name: dockerfile-image-update
+          path: dockerfile-image-update
+      - name: Upload itest module
+        uses: actions/upload-artifact@v1
+        with:
+          name: dockerfile-image-update-itest
+          path: dockerfile-image-update-itest
+  get-next-version:
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'dockerfile-image-update-') == false
+    outputs:
+      version: ${{ steps.version_tag.outputs.new_version }}
+    steps:
+      - name: checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: get version
+        id:   version_tag
+        run: |
+          make get-new-version-from-tag
+          echo "::set-output name=new_version::$(cat new_patch_version.txt)"
+  integration-test:
+    runs-on: ubuntu-latest
+    needs: [build-test, get-next-version]
+    steps:
+      - name: checkout
+        uses: actions/checkout@master
+        with:
+          ref: ${{ github.ref }}
+      - name: Download itest dir
+        uses: actions/download-artifact@v1
+        with:
+          name: dockerfile-image-update-itest
+      - name: integration test
+        env:
+          ITEST_GH_TOKEN: ${{ secrets.ITEST_GH_TOKEN }}
+        run: echo "Testing new version ${{ needs.get-next-version.outputs.version }}" && make integration-test
+  codecov:
+    runs-on: ubuntu-latest
+    needs: build-test
+    steps:
+      - name: Download main project dir
+        uses: actions/download-artifact@v1
+        with:
+          name: dockerfile-image-update
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v1.0.10
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          file: ./dockerfile-image-update/target/site/jacoco/jacoco.xml
+          # flags: unittests
+          # yml: ./codecov.yml
+          fail_ci_if_error: true
+  codeclimate:
+    runs-on: ubuntu-latest
+    needs: build-test
+    steps:
+      - name: checkout
+        uses: actions/checkout@master
+        with:
+          ref: ${{ github.ref }}
+      - name: Download main project dir
+        uses: actions/download-artifact@v1
+        with:
+          name: dockerfile-image-update
+      - name: Upload coverage to Code Climate
+        uses: paambaati/codeclimate-action@v2.6.0
+        env:
+          CC_TEST_REPORTER_ID: 873529a2ad74a48f14a73b29dd3f392c7da63902534ac0fd224746f32ba77ac5
+          JACOCO_SOURCE_PATH: "${{github.workspace}}/dockerfile-image-update/src/main/java"
+        with:
+          # The report file must be there, otherwise Code Climate won't find it
+          coverageCommand: echo "already done"
+          coverageLocations: |
+            ${{github.workspace}}/dockerfile-image-update/target/site/jacoco/jacoco.xml:jacoco
