@@ -182,7 +182,7 @@ Before you run the integration tests (locally):
     make itest-local-changes
     ```
     
-#### Release Process
+### Release Process
 
 We currently use GitHub Actions and Releases. In order to collect dependency
 updates from dependabot and any other minor changes, we've switched to a process
