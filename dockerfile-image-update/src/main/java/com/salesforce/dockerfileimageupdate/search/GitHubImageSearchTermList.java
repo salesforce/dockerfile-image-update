@@ -7,7 +7,7 @@ import java.util.List;
 
 public class GitHubImageSearchTermList {
     /**
-     * We need to split out search terms to accomodate how GitHub code search works
+     * We need to split out search terms to accommodate how GitHub code search works
      * https://docs.github.com/en/github/searching-for-information-on-github/searching-code#considerations-for-code-search
      *
      * Essentially we'll split out any dashes in the registry domain and split out any url segments with dashes by
@@ -68,7 +68,17 @@ public class GitHubImageSearchTermList {
             state.finalizeCurrentTerm();
         }
         state.addToCurrentTerm("/");
-        state.addToCurrentTerm(finalImageSegment);
+        if (finalImageSegment.contains(".")) {
+            String[] finalSegments = finalImageSegment.split("\\.");
+            for (int index = 0; index < finalSegments.length; index++) {
+                state.addToCurrentTerm(finalSegments[index]);
+                if (index < finalSegments.length - 1) {
+                    state.finalizeCurrentTerm();
+                }
+            }
+        } else {
+            state.addToCurrentTerm(finalImageSegment);
+        }
     }
 
     /**
