@@ -4,10 +4,15 @@
 # To use this workflow, you will need to set up a .github/labeler.yml
 # file with configuration.  For more information, see:
 # https://github.com/actions/labeler/blob/master/README.md
-
+#
+# Runs on `pull_request_target` to get a write token. This is safe since we're not checking
+# out any arbitrary git repos.
+# References:
+# https://securitylab.github.com/research/github-actions-preventing-pwn-requests/
+# https://github.com/dependabot/dependabot-core/issues/3253#issuecomment-797125425
 name: "Pull Request Labeler"
 on:
-  pull_request:
+  pull_request_target:
     branches:
       - master
 
