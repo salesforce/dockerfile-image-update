@@ -27,6 +27,8 @@ public class GitHubImageSearchTermListTest {
                 {"this-registry-has-dashes.some-company.with-dashes.io/rv-python-runtime", ImmutableList.of("FROM this", "registry", "has", "dashes.some", "company.with", "dashes.io/rv-python-runtime")},
                 {"this-registry-has-dashes.some-company.with-dashes.io/some-path/with-more-dashes/rv-python-runtime", ImmutableList.of("FROM this", "registry", "has", "dashes.some", "company.with", "dashes.io", "some-path", "with-more-dashes", "/rv-python-runtime")},
                 {"this-registry-has-dashes.some-company.with-dashes.io/somepath/with-more-dashes/rv-python-runtime", ImmutableList.of("FROM this", "registry", "has", "dashes.some", "company.with", "dashes.io/somepath", "with-more-dashes", "/rv-python-runtime")},
+                {"this-registry-has-dashes.some-company.with-dashes.io/somepath/with-more-dashes/rv-python-3.9-runtime", ImmutableList.of("FROM this", "registry", "has", "dashes.some", "company.with", "dashes.io/somepath", "with-more-dashes", "/rv-python-3", "9-runtime")},
+                {"this-registry-has-dashes.some-company.with-dashes.io/somepath/with-more-dashes/rv.python.3-9.runtime", ImmutableList.of("FROM this", "registry", "has", "dashes.some", "company.with", "dashes.io/somepath", "with-more-dashes", "/rv", "python", "3-9", "runtime")},
         };
     }
 
