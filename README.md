@@ -269,6 +269,19 @@ to manually trigger the release process. For now, that looks like the following:
   and select the latest tag to associate with that release. Change the
   version to reflect the same version as the tag (`1.0.${NEW_VERSION}`).
   Ideally we'll automate this to run at the end of the triggered workflow.
+  
+### Checking Code Climate Locally
+
+If you'd like to check [Code Climate](https://codeclimate.com/quality/) results locally you can run the following: 
+
+```
+docker run --interactive --tty --rm \
+ --env CODECLIMATE_CODE="$(pwd)" \
+ --volume "$(pwd)":/code \
+ --volume /var/run/docker.sock:/var/run/docker.sock \
+ --volume /tmp/cc:/tmp/cc \
+ codeclimate/codeclimate analyze README.md
+```
 
 # Blogs / Slides
 
