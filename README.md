@@ -272,7 +272,7 @@ to manually trigger the release process. For now, that looks like the following:
 
 ### Checking Code Climate Locally
 
-If you'd like to check [Code Climate](https://codeclimate.com/quality/) 
+If you'd like to check [Code Climate](https://codeclimate.com/quality/)
 results locally you can run the following:
 
 ```
