@@ -270,6 +270,20 @@ to manually trigger the release process. For now, that looks like the following:
   version to reflect the same version as the tag (`1.0.${NEW_VERSION}`).
   Ideally we'll automate this to run at the end of the triggered workflow.
 
+### Checking Code Climate Locally
+
+If you'd like to check [Code Climate](https://codeclimate.com/quality/)
+results locally you can run the following:
+
+```
+docker run --interactive --tty --rm \
+ --env CODECLIMATE_CODE="$(pwd)" \
+ --volume "$(pwd)":/code \
+ --volume /var/run/docker.sock:/var/run/docker.sock \
+ --volume /tmp/cc:/tmp/cc \
+ codeclimate/codeclimate analyze README.md
+```
+
 # Blogs / Slides
 
 * [2018-03-13 Salesforce Engineering Blog - Open Sourcing Dockerfile Image Update](https://engineering.salesforce.com/open-sourcing-dockerfile-image-update-6400121c1a75)
