@@ -21,7 +21,6 @@ import java.io.InputStream;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 
 import static com.salesforce.dockerfileimageupdate.model.PullRequestInfo.DEFAULT_TITLE;
 import static org.mockito.Matchers.*;
@@ -49,6 +48,8 @@ public class DockerfileGitHubUtilTest {
         gitHubUtil = mock(GitHubUtil.class);
 
         GHRepository parent = mock(GHRepository.class);
+        GHBranch branch = mock(GHBranch.class);
+        when(parent.getBranch(anyString())).thenReturn(branch);
         GHRepository fork = mock(GHRepository.class);
         when(fork.getOwnerName()).thenReturn("me");
 
