@@ -58,7 +58,7 @@ public class DockerfileGitHubUtil {
                     // https://docs.github.com/enterprise/2.22/rest/reference/git#update-a-reference
                     // Confirmed that this does not occur for another similarly old fork
                     if (GitHub.isForkStale(parent, fork)) {
-                        log.info("Fork's commit graph is inconsistent," +
+                        log.warn("Fork's commit graph is inconsistent," +
                                 " you'll likely see a 422 error. Fork info: {}", fork);
                     } else {
                         log.info("Fork exists, so we'll reuse it. Fork info: {}", fork);

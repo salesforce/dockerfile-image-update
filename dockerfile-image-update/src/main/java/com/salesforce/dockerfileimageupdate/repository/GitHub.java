@@ -51,7 +51,7 @@ public class GitHub {
         try {
             fork.getTree(sha1);
         } catch (GHFileNotFoundException e) {
-            log.info("fork {} is stale... A GitHub administrator will need to rebuild the network graph.",
+            log.warn("fork {} is stale... A GitHub administrator will need to rebuild the network graph.",
                     fork.getFullName());
             return true;
         }
