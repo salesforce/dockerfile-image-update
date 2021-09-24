@@ -9,6 +9,8 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 
 public class GitHub {
+    public static final String FORK_STALE_WARNING_MESSAGE =
+            "fork {} is stale... A GitHub administrator will need to rebuild the network graph.";
     private static final Logger log = LoggerFactory.getLogger(GitHub.class);
 
     /**
@@ -51,7 +53,7 @@ public class GitHub {
         try {
             fork.getTree(sha1);
         } catch (GHFileNotFoundException e) {
-            log.warn("fork {} is stale... A GitHub administrator will need to rebuild the network graph.",
+            log.warn(FORK_STALE_WARNING_MESSAGE,
                     fork.getFullName());
             return true;
         }
