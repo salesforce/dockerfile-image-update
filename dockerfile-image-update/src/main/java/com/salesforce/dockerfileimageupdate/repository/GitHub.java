@@ -44,7 +44,7 @@ public class GitHub {
      * @param fork the fork associated with parent
      * @return the fork is stale for some reason
      * @throws IOException general issues trying to get information about the parent's branch
-     * will throw an IOException
+     *     will throw an IOException
      */
     public static boolean isForkStale(GHRepository parent, GHRepository fork) throws IOException {
         String sha1 = parent.getBranch(parent.getDefaultBranch()).getSHA1();
