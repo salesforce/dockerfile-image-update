@@ -49,15 +49,17 @@ public class DockerfileGitHubUtil {
         for (GHRepository fork : parent.listForks()) {
             try {
                 if (thisUserIsOwner(fork)) {
-                    // Check to see if latest sha from parent is in the tree of the fork. If not, it is stale.
-                    // If stale, delete the fork. If we don't do that, we get a 422 Reference update failed
+                    // Check to see if latest sha from parent is in the tree of the fork. If not,
+                    // it is stale. If stale, an administrator will need to rebuild the commit
+                    // graph. If they don't do that, we get a 422 Reference update failed
                     // https://docs.github.com/enterprise/2.22/rest/reference/git#create-a-reference
-                    // Updating the default branch of the fork to the sha results in 422 Object does not exist
+                    // Updating the default branch of the fork to the sha results in:
+                    // `422 Object does not exist`
                     // https://docs.github.com/enterprise/2.22/rest/reference/git#update-a-reference
                     // Confirmed that this does not occur for another similarly old fork
                     if (GitHub.isForkStale(parent, fork)) {
-                        log.info("Fork's commit graph is inconsistent, you'll likely see a 422 error. Fork info: {}",
-                                fork);
+                        log.info("Fork's commit graph is inconsistent," +
+                                " you'll likely see a 422 error. Fork info: {}", fork);
                     } else {
                         log.info("Fork exists, so we'll reuse it. Fork info: {}", fork);
                     }
