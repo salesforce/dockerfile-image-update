@@ -12,6 +12,7 @@ import com.google.common.collect.Multimap;
 import com.salesforce.dockerfileimageupdate.model.FromInstruction;
 import com.salesforce.dockerfileimageupdate.model.GitForkBranch;
 import com.salesforce.dockerfileimageupdate.model.PullRequestInfo;
+import com.salesforce.dockerfileimageupdate.repository.GitHub;
 import com.salesforce.dockerfileimageupdate.search.GitHubImageSearchTermList;
 import com.salesforce.dockerfileimageupdate.storage.GitHubJsonStore;
 import org.kohsuke.github.*;
@@ -48,7 +49,20 @@ public class DockerfileGitHubUtil {
         for (GHRepository fork : parent.listForks()) {
             try {
                 if (thisUserIsOwner(fork)) {
-                    log.info("Fork exists, retrieving full info: {}", fork);
+                    // Check to see if latest sha from parent is in the tree of the fork. If not,
+                    // it is stale. If stale, an administrator will need to rebuild the commit
+                    // graph. If they don't do that, we get a 422 Reference update failed
+                    // https://docs.github.com/enterprise/2.22/rest/reference/git#create-a-reference
+                    // Updating the default branch of the fork to the sha results in:
+                    // `422 Object does not exist`
+                    // https://docs.github.com/enterprise/2.22/rest/reference/git#update-a-reference
+                    // Confirmed that this does not occur for another similarly old fork
+                    if (GitHub.isForkStale(parent, fork)) {
+                        log.warn("Fork's commit graph is inconsistent," +
+                                " you'll likely see a 422 error. Fork info: {}", fork);
+                    } else {
+                        log.info("Fork exists, so we'll reuse it. Fork info: {}", fork);
+                    }
                     // NOTE: listForks() appears to miss information like parent data and GHContent parent doesn't have isArchived()
                     return fork;
                 }

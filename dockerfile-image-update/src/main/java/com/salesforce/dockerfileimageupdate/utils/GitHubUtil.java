@@ -88,6 +88,8 @@ public class GitHubUtil {
                 throw new IOException("Please verify that the GitHub token " +
                         "provided has access to deleting repositories.");
             }
+        } else {
+            log.info("Fork has open pull requests. So we will not delete it: {}", repo);
         }
     }
 
