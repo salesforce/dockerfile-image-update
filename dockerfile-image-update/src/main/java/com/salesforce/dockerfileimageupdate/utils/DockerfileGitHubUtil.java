@@ -20,8 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -83,7 +82,7 @@ public class DockerfileGitHubUtil {
         return gitHubUtil.getRepo(repoName);
     }
 
-    public PagedSearchIterable<GHContent> findFilesWithImage(String image, String org) throws IOException {
+    public List<PagedSearchIterable<GHContent>> findFilesWithImage(String image, String org) throws IOException {
         GHContentSearchBuilder search = gitHubUtil.startSearch();
         // Filename search appears to yield better / more results than language:Dockerfile
         // Root cause: linguist doesn't currently deal with prefixes of files:
@@ -92,6 +91,7 @@ public class DockerfileGitHubUtil {
         if (org != null) {
             search.user(org);
         }
+
         if (image.substring(image.lastIndexOf(' ') + 1).length() <= 1) {
             throw new IOException("Invalid image name.");
         }
@@ -99,12 +99,35 @@ public class DockerfileGitHubUtil {
         log.info("Searching for {} with terms: {}", image, terms);
         terms.forEach(search::q);
         PagedSearchIterable<GHContent> files = search.list();
+        List<PagedSearchIterable<GHContent>> allFiles = new ArrayList<>();
         int totalCount = files.getTotalCount();
-        if (totalCount > 1000) {
+        log.info("Number of files found for {}: {}", image, totalCount);
+        if (totalCount > 1000 && org == null) {
+            return getSearchResultsForEachOrg(image, files);
+        }
+        else if (totalCount > 1000) {
             log.warn("Number of search results is above 1000! The GitHub Search API will only return around 1000 results - https://developer.github.com/v3/search/#about-the-search-api");
         }
-        log.info("Number of files found for {}: {}", image, totalCount);
-        return files;
+        allFiles.add(files);
+        return allFiles;
+    }
+
+    protected List<PagedSearchIterable<GHContent>> getSearchResultsForEachOrg(String image, PagedSearchIterable<GHContent> files) throws IOException {
+        GHRepository org;
+        String orgName;
+        List<String> orgs = new ArrayList<>();
+        List<PagedSearchIterable<GHContent>> contentsWithImage;
+        List<PagedSearchIterable<GHContent>> allContentsWithImage = new ArrayList<>();
+        for (GHContent ghContent : files) {
+            org = ghContent.getOwner();
+            orgName = org.getOwnerName();
+            orgs.add(orgName);
+        }
+        for(String gitOrg : orgs) {
+            contentsWithImage = findFilesWithImage(image, gitOrg);
+            allContentsWithImage.add(contentsWithImage.get(0));
+        }
+        return allContentsWithImage;
     }
 
     /* Workaround: The GitHub API caches API calls for up to 60 seconds, so back-to-back API calls with the same
@@ -319,19 +342,21 @@ public class DockerfileGitHubUtil {
      * @param org GitHub organization
      * @param img image to find
      */
-    public Optional<PagedSearchIterable<GHContent>> getGHContents(String org, String img)
+    public Optional<List<PagedSearchIterable<GHContent>>> getGHContents(String org, String img)
             throws IOException, InterruptedException {
-        PagedSearchIterable<GHContent> contentsWithImage = null;
+        List<PagedSearchIterable<GHContent>> contentsWithImage = null;
         for (int i = 0; i < 5; i++) {
             contentsWithImage = findFilesWithImage(img, org);
-            if (contentsWithImage.getTotalCount() > 0) {
+            if (contentsWithImage.get(0).getTotalCount() > 0) {
                 break;
             } else {
                 getGitHubUtil().waitFor(TimeUnit.SECONDS.toMillis(1));
             }
         }
-
-        int numOfContentsFound = contentsWithImage.getTotalCount();
+        int numOfContentsFound = 0;
+        for (int i = 0; i < contentsWithImage.size(); i++) {
+            numOfContentsFound += contentsWithImage.get(i).getTotalCount();
+        }
         if (numOfContentsFound <= 0) {
             log.info("Could not find any repositories with given image: {}", img);
             return Optional.empty();

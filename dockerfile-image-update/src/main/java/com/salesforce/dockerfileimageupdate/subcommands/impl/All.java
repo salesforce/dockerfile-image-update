@@ -52,10 +52,12 @@ public class All implements ExecutableWithNamespace {
             String image = imageToTag.getKey();
             log.info("Repositories with image {} being forked.", image);
             imageToTagMap.put(image, imageToTag.getValue().getAsString());
-            PagedSearchIterable<GHContent> contentsWithImage =
+            List<PagedSearchIterable<GHContent>> contentsWithImage =
                     this.dockerfileGitHubUtil.findFilesWithImage(image, ns.get(Constants.GIT_ORG));
-            forkRepositoriesFound(pathToDockerfilesInParentRepo,
-                    imagesFoundInParentRepo, contentsWithImage, image);
+            for (int i = 0; i < contentsWithImage.size(); i++) {
+                forkRepositoriesFound(pathToDockerfilesInParentRepo,
+                        imagesFoundInParentRepo, contentsWithImage.get(i), image);
+            }
         }
 
         GHMyself currentUser = this.dockerfileGitHubUtil.getMyself();
