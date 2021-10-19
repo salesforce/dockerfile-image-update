@@ -48,12 +48,18 @@ public class All implements ExecutableWithNamespace {
         Multimap<String, String> pathToDockerfilesInParentRepo = ArrayListMultimap.create();
 
         Set<Map.Entry<String, JsonElement>> imageToTagStore = parseStoreToImagesMap(ns.get(Constants.STORE));
+        Integer gitApiSearchLimit;
+        if (ns.get(Constants.GIT_API_SEARCH_LIMIT) == null || Integer.parseInt(ns.get(Constants.GIT_API_SEARCH_LIMIT)) > Constants.GIT_API_SEARCH_LIMIT_NUMBER) {
+            gitApiSearchLimit = Constants.GIT_API_SEARCH_LIMIT_NUMBER;
+        } else {
+            gitApiSearchLimit = Integer.parseInt(ns.get(Constants.GIT_API_SEARCH_LIMIT));
+        }
         for (Map.Entry<String, JsonElement> imageToTag : imageToTagStore) {
             String image = imageToTag.getKey();
             log.info("Repositories with image {} being forked.", image);
             imageToTagMap.put(image, imageToTag.getValue().getAsString());
             List<PagedSearchIterable<GHContent>> contentsWithImage =
-                    this.dockerfileGitHubUtil.findFilesWithImage(image, ns.get(Constants.GIT_ORG));
+                    this.dockerfileGitHubUtil.findFilesWithImage(image, ns.get(Constants.GIT_ORG), null, gitApiSearchLimit);
             for (int i = 0; i < contentsWithImage.size(); i++) {
                 forkRepositoriesFound(pathToDockerfilesInParentRepo,
                         imagesFoundInParentRepo, contentsWithImage.get(i), image);

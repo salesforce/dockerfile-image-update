@@ -82,14 +82,18 @@ public class DockerfileGitHubUtil {
         return gitHubUtil.getRepo(repoName);
     }
 
-    public List<PagedSearchIterable<GHContent>> findFilesWithImage(String image, String org) throws IOException {
+    public List<PagedSearchIterable<GHContent>> findFilesWithImage(String image, String orgToInclude, String orgToExclude, Integer gitApiSearchLimit) throws IOException {
         GHContentSearchBuilder search = gitHubUtil.startSearch();
         // Filename search appears to yield better / more results than language:Dockerfile
         // Root cause: linguist doesn't currently deal with prefixes of files:
         // https://github.com/github/linguist/issues/4566
         search.filename("Dockerfile");
-        if (org != null) {
-            search.user(org);
+        if (orgToInclude != null) {
+            search.user(orgToInclude);
+        }
+        if (orgToExclude != null) {
+            String queryExcludingOrg = String.format("-org:{}", orgToExclude);
+            search.q(queryExcludingOrg);
         }
 
         if (image.substring(image.lastIndexOf(' ') + 1).length() <= 1) {
@@ -102,31 +106,53 @@ public class DockerfileGitHubUtil {
         List<PagedSearchIterable<GHContent>> allFiles = new ArrayList<>();
         int totalCount = files.getTotalCount();
         log.info("Number of files found for {}: {}", image, totalCount);
-        if (totalCount > 1000 && org == null) {
-            return getSearchResultsForEachOrg(image, files);
+        if (totalCount > gitApiSearchLimit && orgToInclude != null) {
+            log.warn("Number of search results is above {}! The GitHub Search API will only return around 1000 results - https://developer.github.com/v3/search/#about-the-search-api", Constants.GIT_API_SEARCH_LIMIT_NUMBER.toString());
         }
-        else if (totalCount > 1000) {
-            log.warn("Number of search results is above 1000! The GitHub Search API will only return around 1000 results - https://developer.github.com/v3/search/#about-the-search-api");
+        else if (totalCount > gitApiSearchLimit) {
+            return getSearchResultsExcludingOrgWithMostHits(image, files, gitApiSearchLimit);
         }
         allFiles.add(files);
         return allFiles;
     }
 
-    protected List<PagedSearchIterable<GHContent>> getSearchResultsForEachOrg(String image, PagedSearchIterable<GHContent> files) throws IOException {
+    protected String getOrgNameWithMaximumHits(PagedSearchIterable<GHContent> files) {
         GHRepository org;
         String orgName;
-        List<String> orgs = new ArrayList<>();
-        List<PagedSearchIterable<GHContent>> contentsWithImage;
-        List<PagedSearchIterable<GHContent>> allContentsWithImage = new ArrayList<>();
+        String orgWithMaximumHits = "";
+        int maxCount = 0;
+        HashMap<String, Integer> orgHitsMap = new HashMap<>();
         for (GHContent ghContent : files) {
             org = ghContent.getOwner();
             orgName = org.getOwnerName();
-            orgs.add(orgName);
+            if (orgHitsMap.containsKey(orgName)) {
+                int hits = orgHitsMap.get(orgName);
+                orgHitsMap.put(orgName, hits + 1);
+            } else {
+                orgHitsMap.put(orgName, 1);
+            }
         }
-        for(String gitOrg : orgs) {
-            contentsWithImage = findFilesWithImage(image, gitOrg);
-            allContentsWithImage.add(contentsWithImage.get(0));
+        for (Map.Entry<String, Integer> orgNameHits : orgHitsMap.entrySet()) {
+            orgName = orgNameHits.getKey();
+            int numberOfHits = orgNameHits.getValue();
+            if (numberOfHits > maxCount) {
+                orgWithMaximumHits = orgName;
+                maxCount = numberOfHits;
+            }
         }
+        return orgWithMaximumHits;
+    }
+
+    protected List<PagedSearchIterable<GHContent>> getSearchResultsExcludingOrgWithMostHits(String image, PagedSearchIterable<GHContent> files, Integer gitApiSearchLimit) throws IOException {
+        List<PagedSearchIterable<GHContent>> contentsForOrgWithMaximumHits;
+        List<PagedSearchIterable<GHContent>> contentsExcludingOrgWithMaximumHits;
+        List<PagedSearchIterable<GHContent>> allContentsWithImage = new ArrayList<>();
+        String orgWithMaximumHits = getOrgNameWithMaximumHits(files);
+        contentsForOrgWithMaximumHits = findFilesWithImage(image, orgWithMaximumHits, null, gitApiSearchLimit);
+        contentsExcludingOrgWithMaximumHits = findFilesWithImage(image, null, orgWithMaximumHits, gitApiSearchLimit);
+        allContentsWithImage.add(contentsForOrgWithMaximumHits.get(0));
+        allContentsWithImage.add(contentsExcludingOrgWithMaximumHits.get(0));
+
         return allContentsWithImage;
     }
 
@@ -342,11 +368,11 @@ public class DockerfileGitHubUtil {
      * @param org GitHub organization
      * @param img image to find
      */
-    public Optional<List<PagedSearchIterable<GHContent>>> getGHContents(String org, String img)
+    public Optional<List<PagedSearchIterable<GHContent>>> getGHContents(String org, String img, Integer gitApiSearchLimit)
             throws IOException, InterruptedException {
         List<PagedSearchIterable<GHContent>> contentsWithImage = null;
         for (int i = 0; i < 5; i++) {
-            contentsWithImage = findFilesWithImage(img, org);
+            contentsWithImage = findFilesWithImage(img, org, null, gitApiSearchLimit);
             if (contentsWithImage.get(0).getTotalCount() > 0) {
                 break;
             } else {

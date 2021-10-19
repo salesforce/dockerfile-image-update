@@ -34,4 +34,6 @@ public class Constants {
     public static final String GIT_PR_BODY = "B";
     public static final String GIT_ADDITIONAL_COMMIT_MESSAGE = "c";
     public static final String GIT_REPO_EXCLUDES = "excludes";
+    public static final String GIT_API_SEARCH_LIMIT = "git-api-search-limit";
+    public static final Integer GIT_API_SEARCH_LIMIT_NUMBER = 1000;
 }

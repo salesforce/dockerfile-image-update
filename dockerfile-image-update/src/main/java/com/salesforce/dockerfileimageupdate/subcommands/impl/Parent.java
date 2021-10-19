@@ -30,7 +30,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 
 @SubCommand(help="updates all repositories' Dockerfiles with given base image",
         requiredParams = {Constants.IMG, Constants.TAG, Constants.STORE})
@@ -59,7 +58,14 @@ public class Parent implements ExecutableWithNamespace {
                 new GitForkBranch(ns.get(Constants.IMG), ns.get(Constants.TAG), ns.get(Constants.GIT_BRANCH));
 
         log.info("Finding Dockerfiles with the given image...");
-        Optional<List<PagedSearchIterable<GHContent>>> contentsWithImage = dockerfileGitHubUtil.getGHContents(ns.get(Constants.GIT_ORG), img);
+
+        Integer gitApiSearchLimit;
+        if (ns.get(Constants.GIT_API_SEARCH_LIMIT) == null || Integer.parseInt(ns.get(Constants.GIT_API_SEARCH_LIMIT)) > Constants.GIT_API_SEARCH_LIMIT_NUMBER) {
+            gitApiSearchLimit = Constants.GIT_API_SEARCH_LIMIT_NUMBER;
+        } else {
+            gitApiSearchLimit = Integer.parseInt(ns.get(Constants.GIT_API_SEARCH_LIMIT));
+        }
+        Optional<List<PagedSearchIterable<GHContent>>> contentsWithImage = dockerfileGitHubUtil.getGHContents(ns.get(Constants.GIT_ORG), img, gitApiSearchLimit);
         if (contentsWithImage.isPresent()) {
             List<PagedSearchIterable<GHContent>> contentsFoundWithImage = contentsWithImage.get();
             for (int i = 0; i < contentsFoundWithImage.size(); i++ ) {
@@ -106,7 +112,6 @@ public class Parent implements ExecutableWithNamespace {
         String parentName = parent.getFullName();
 
         log.info("Fixing Dockerfiles in {} to PR to {}", forkedRepo.getFullName(), parent.getFullName());
-        TimeUnit.SECONDS.sleep(10);
         GitForkBranch gitForkBranch = new GitForkBranch(ns.get(Constants.IMG), ns.get(Constants.TAG), ns.get(Constants.GIT_BRANCH));
 
         dockerfileGitHubUtil.createOrUpdateForkBranchToParentDefault(parent, forkedRepo, gitForkBranch);

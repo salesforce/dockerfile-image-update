@@ -227,7 +227,7 @@ public class DockerfileGitHubUtilTest {
         when(gitHubUtil.startSearch()).thenReturn(ghContentSearchBuilder);
 
         dockerfileGitHubUtil = new DockerfileGitHubUtil(gitHubUtil);
-        dockerfileGitHubUtil.findFilesWithImage(query, org);
+        dockerfileGitHubUtil.findFilesWithImage(query, org, null, Constants.GIT_API_SEARCH_LIMIT_NUMBER);
     }
 
     @Test
@@ -244,11 +244,11 @@ public class DockerfileGitHubUtilTest {
         when(gitHubUtil.startSearch()).thenReturn(ghContentSearchBuilder);
 
         dockerfileGitHubUtil = new DockerfileGitHubUtil(gitHubUtil);
-        assertEquals(dockerfileGitHubUtil.findFilesWithImage("test", "test"), contentsWithImageList);
+        assertEquals(dockerfileGitHubUtil.findFilesWithImage("test", "test", null, Constants.GIT_API_SEARCH_LIMIT_NUMBER), contentsWithImageList);
     }
 
     @Test
-    public void testGetSearchResultsForEachOrg() throws Exception {
+    public void getSearchResultsExcludingOrgWithMostHits() throws Exception {
         gitHubUtil = mock(GitHubUtil.class);
         GHContentSearchBuilder ghContentSearchBuilder = mock(GHContentSearchBuilder.class);
 
@@ -279,7 +279,38 @@ public class DockerfileGitHubUtilTest {
 
         dockerfileGitHubUtil = new DockerfileGitHubUtil(gitHubUtil);
 
-        assertEquals((dockerfileGitHubUtil.getSearchResultsForEachOrg("image", contentsWithImage)).size(), 3);
+        assertEquals((dockerfileGitHubUtil.getSearchResultsExcludingOrgWithMostHits("image", contentsWithImage, 1000)).size(), 2);
+    }
+
+    @Test
+    public void getOrgNameWithMaximumHits() throws Exception {
+        gitHubUtil = mock(GitHubUtil.class);
+        GHContentSearchBuilder ghContentSearchBuilder = mock(GHContentSearchBuilder.class);
+
+        GHRepository contentRepo1 = mock(GHRepository.class);
+        when(contentRepo1.getOwnerName()).thenReturn("org-1");
+        GHRepository contentRepo2 = mock(GHRepository.class);
+        when(contentRepo2.getOwnerName()).thenReturn("org-1");
+        GHRepository contentRepo3 = mock(GHRepository.class);
+        when(contentRepo3.getOwnerName()).thenReturn("org-2");
+
+
+        GHContent content1 = mock(GHContent.class);
+        when(content1.getOwner()).thenReturn(contentRepo1);
+        GHContent content2 = mock(GHContent.class);
+        when(content2.getOwner()).thenReturn(contentRepo2);
+        GHContent content3 = mock(GHContent.class);
+        when(content3.getOwner()).thenReturn(contentRepo3);
+        PagedSearchIterable<GHContent> contentsWithImage = mock(PagedSearchIterable.class);
+
+        PagedIterator<GHContent> contentsWithImageIterator = mock(PagedIterator.class);
+        when(contentsWithImageIterator.hasNext()).thenReturn(true, true, true, false);
+        when(contentsWithImageIterator.next()).thenReturn(content1, content2, content3, null);
+        when(contentsWithImage.iterator()).thenReturn(contentsWithImageIterator);
+
+        dockerfileGitHubUtil = new DockerfileGitHubUtil(gitHubUtil);
+
+        assertEquals((dockerfileGitHubUtil.getOrgNameWithMaximumHits(contentsWithImage)), "org-1");
     }
 
     @Test(dependsOnMethods = "testFindImagesAndFix")
@@ -568,10 +599,10 @@ public class DockerfileGitHubUtilTest {
         when(contentsWithImageIterator.next()).thenReturn(content1, content2, content3, null);
         when(contentsWithImage.iterator()).thenReturn(contentsWithImageIterator);
 
-        when(dockerfileGitHubUtil.findFilesWithImage(anyString(), eq("org"))).thenReturn(contentsWithImageList);
-        when(dockerfileGitHubUtil.getGHContents("org", "image")).thenCallRealMethod();
+        when(dockerfileGitHubUtil.findFilesWithImage(anyString(), eq("org"), anyString(), anyInt())).thenReturn(contentsWithImageList);
+        when(dockerfileGitHubUtil.getGHContents("org", "image", Constants.GIT_API_SEARCH_LIMIT_NUMBER)).thenCallRealMethod();
 
-        assertEquals(dockerfileGitHubUtil.getGHContents("org", "image"), Optional.of(contentsWithImageList));
+        assertEquals(dockerfileGitHubUtil.getGHContents("org", "image", Constants.GIT_API_SEARCH_LIMIT_NUMBER), Optional.of(contentsWithImageList));
     }
 
     @Test
@@ -585,10 +616,10 @@ public class DockerfileGitHubUtilTest {
         GitHubUtil gitHubUtil = mock(GitHubUtil.class);
         DockerfileGitHubUtil dockerfileGitHubUtil = mock(DockerfileGitHubUtil.class);
         when(dockerfileGitHubUtil.getGitHubUtil()).thenReturn(gitHubUtil);
-        when(dockerfileGitHubUtil.findFilesWithImage(anyString(), eq("org"))).thenReturn(contentsWithImageList);
-        when(dockerfileGitHubUtil.getGHContents("org", "image")).thenCallRealMethod();
+        when(dockerfileGitHubUtil.findFilesWithImage(anyString(), eq("org"), anyString(), anyInt())).thenReturn(contentsWithImageList);
+        when(dockerfileGitHubUtil.getGHContents("org", "image", Constants.GIT_API_SEARCH_LIMIT_NUMBER)).thenCallRealMethod();
 
-        assertEquals(dockerfileGitHubUtil.getGHContents("org", "image"), Optional.empty());
+        assertEquals(dockerfileGitHubUtil.getGHContents("org", "image", Constants.GIT_API_SEARCH_LIMIT_NUMBER), Optional.empty());
     }
 
     @Test
