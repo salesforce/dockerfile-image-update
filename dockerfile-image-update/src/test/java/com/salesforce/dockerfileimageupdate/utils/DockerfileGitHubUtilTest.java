@@ -18,10 +18,7 @@ import org.testng.annotations.Test;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import static com.salesforce.dockerfileimageupdate.model.PullRequestInfo.DEFAULT_TITLE;
 import static org.mockito.Matchers.*;
@@ -227,7 +224,9 @@ public class DockerfileGitHubUtilTest {
         when(gitHubUtil.startSearch()).thenReturn(ghContentSearchBuilder);
 
         dockerfileGitHubUtil = new DockerfileGitHubUtil(gitHubUtil);
-        dockerfileGitHubUtil.findFilesWithImage(query, org, null, Constants.GIT_API_SEARCH_LIMIT_NUMBER);
+        Map<String, Boolean> orgs = new HashMap<>();
+        orgs.put(org, true);
+        dockerfileGitHubUtil.findFilesWithImage(query, orgs,1000);
     }
 
     @Test
@@ -238,13 +237,16 @@ public class DockerfileGitHubUtilTest {
         PagedSearchIterable<GHContent> contentsWithImage = mock(PagedSearchIterable.class);
         List<PagedSearchIterable<GHContent>> contentsWithImageList = new ArrayList<>();
         contentsWithImageList.add(contentsWithImage);
+        Optional<List<PagedSearchIterable<GHContent>>> optionalContentsWithImageList = Optional.of(contentsWithImageList);
         when(contentsWithImage.getTotalCount()).thenReturn(100);
 
         when(ghContentSearchBuilder.list()).thenReturn(contentsWithImage);
         when(gitHubUtil.startSearch()).thenReturn(ghContentSearchBuilder);
 
         dockerfileGitHubUtil = new DockerfileGitHubUtil(gitHubUtil);
-        assertEquals(dockerfileGitHubUtil.findFilesWithImage("test", "test", null, Constants.GIT_API_SEARCH_LIMIT_NUMBER), contentsWithImageList);
+        Map<String, Boolean> orgs = new HashMap<>();
+        orgs.put("test", true);
+        assertEquals(dockerfileGitHubUtil.findFilesWithImage("test", orgs, 1000), optionalContentsWithImageList);
     }
 
     @Test
@@ -268,25 +270,26 @@ public class DockerfileGitHubUtilTest {
         when(content3.getOwner()).thenReturn(contentRepo3);
         PagedSearchIterable<GHContent> contentsWithImage = mock(PagedSearchIterable.class);
 
-        PagedIterator<GHContent> contentsWithImageIterator = mock(PagedIterator.class);
-        when(contentsWithImageIterator.hasNext()).thenReturn(true, true, true, false);
-        when(contentsWithImageIterator.next()).thenReturn(content1, content2, content3, null);
-        when(contentsWithImage.iterator()).thenReturn(contentsWithImageIterator);
+        List<GHContent> ghContentList = new ArrayList<>();
+        ghContentList.add(content1);
+        ghContentList.add(content2);
+        ghContentList.add(content3);
+
+        when(contentsWithImage.toList()).thenReturn(ghContentList);
 
         when(contentsWithImage.getTotalCount()).thenReturn(100);
         when(ghContentSearchBuilder.list()).thenReturn(contentsWithImage);
         when(gitHubUtil.startSearch()).thenReturn(ghContentSearchBuilder);
 
         dockerfileGitHubUtil = new DockerfileGitHubUtil(gitHubUtil);
+        Map<String, Boolean> orgsToIncludeOrExclude = new HashMap<>();
 
-        assertEquals((dockerfileGitHubUtil.getSearchResultsExcludingOrgWithMostHits("image", contentsWithImage, 1000)).size(), 2);
+        assertEquals((dockerfileGitHubUtil.getSearchResultsExcludingOrgWithMostHits("image", contentsWithImage, orgsToIncludeOrExclude, 1000)).get().size(), 2);
     }
 
     @Test
     public void getOrgNameWithMaximumHits() throws Exception {
         gitHubUtil = mock(GitHubUtil.class);
-        GHContentSearchBuilder ghContentSearchBuilder = mock(GHContentSearchBuilder.class);
-
         GHRepository contentRepo1 = mock(GHRepository.class);
         when(contentRepo1.getOwnerName()).thenReturn("org-1");
         GHRepository contentRepo2 = mock(GHRepository.class);
@@ -303,10 +306,12 @@ public class DockerfileGitHubUtilTest {
         when(content3.getOwner()).thenReturn(contentRepo3);
         PagedSearchIterable<GHContent> contentsWithImage = mock(PagedSearchIterable.class);
 
-        PagedIterator<GHContent> contentsWithImageIterator = mock(PagedIterator.class);
-        when(contentsWithImageIterator.hasNext()).thenReturn(true, true, true, false);
-        when(contentsWithImageIterator.next()).thenReturn(content1, content2, content3, null);
-        when(contentsWithImage.iterator()).thenReturn(contentsWithImageIterator);
+        List<GHContent> ghContentList = new ArrayList<>();
+        ghContentList.add(content1);
+        ghContentList.add(content2);
+        ghContentList.add(content3);
+
+        when(contentsWithImage.toList()).thenReturn(ghContentList);
 
         dockerfileGitHubUtil = new DockerfileGitHubUtil(gitHubUtil);
 
@@ -592,17 +597,19 @@ public class DockerfileGitHubUtilTest {
         PagedSearchIterable<GHContent> contentsWithImage = mock(PagedSearchIterable.class);
         List<PagedSearchIterable<GHContent>> contentsWithImageList = new ArrayList<>();
         contentsWithImageList.add(contentsWithImage);
+        Optional<List<PagedSearchIterable<GHContent>>> optionalContentsWithImageList = Optional.of(contentsWithImageList);
         when(contentsWithImage.getTotalCount()).thenReturn(3);
 
         PagedIterator<GHContent> contentsWithImageIterator = mock(PagedIterator.class);
         when(contentsWithImageIterator.hasNext()).thenReturn(true, true, true, false);
         when(contentsWithImageIterator.next()).thenReturn(content1, content2, content3, null);
         when(contentsWithImage.iterator()).thenReturn(contentsWithImageIterator);
+        Map<String, Boolean> orgs = new HashMap<>();
+        orgs.put("org", true);
+        when(dockerfileGitHubUtil.findFilesWithImage(anyString(), eq(orgs), anyInt())).thenReturn(optionalContentsWithImageList);
+        when(dockerfileGitHubUtil.getGHContents("org", "image", 1000)).thenCallRealMethod();
 
-        when(dockerfileGitHubUtil.findFilesWithImage(anyString(), eq("org"), anyString(), anyInt())).thenReturn(contentsWithImageList);
-        when(dockerfileGitHubUtil.getGHContents("org", "image", Constants.GIT_API_SEARCH_LIMIT_NUMBER)).thenCallRealMethod();
-
-        assertEquals(dockerfileGitHubUtil.getGHContents("org", "image", Constants.GIT_API_SEARCH_LIMIT_NUMBER), Optional.of(contentsWithImageList));
+        assertEquals(dockerfileGitHubUtil.getGHContents("org", "image", 1000), Optional.of(contentsWithImageList));
     }
 
     @Test
@@ -611,15 +618,18 @@ public class DockerfileGitHubUtilTest {
         PagedSearchIterable<GHContent> contentsWithImage = mock(PagedSearchIterable.class);
         List<PagedSearchIterable<GHContent>> contentsWithImageList = new ArrayList<>();
         contentsWithImageList.add(contentsWithImage);
+        Optional<List<PagedSearchIterable<GHContent>>> optionalContentsWithImageList = Optional.of(contentsWithImageList);
         when(contentsWithImage.getTotalCount()).thenReturn(0);
 
         GitHubUtil gitHubUtil = mock(GitHubUtil.class);
         DockerfileGitHubUtil dockerfileGitHubUtil = mock(DockerfileGitHubUtil.class);
         when(dockerfileGitHubUtil.getGitHubUtil()).thenReturn(gitHubUtil);
-        when(dockerfileGitHubUtil.findFilesWithImage(anyString(), eq("org"), anyString(), anyInt())).thenReturn(contentsWithImageList);
-        when(dockerfileGitHubUtil.getGHContents("org", "image", Constants.GIT_API_SEARCH_LIMIT_NUMBER)).thenCallRealMethod();
+        Map<String, Boolean> orgs = new HashMap<>();
+        orgs.put("org", true);
+        when(dockerfileGitHubUtil.findFilesWithImage(anyString(), eq(orgs), anyInt())).thenReturn(optionalContentsWithImageList);
+        when(dockerfileGitHubUtil.getGHContents("org", "image", 1000)).thenCallRealMethod();
 
-        assertEquals(dockerfileGitHubUtil.getGHContents("org", "image", Constants.GIT_API_SEARCH_LIMIT_NUMBER), Optional.empty());
+        assertEquals(dockerfileGitHubUtil.getGHContents("org", "image", 1000), Optional.empty());
     }
 
     @Test

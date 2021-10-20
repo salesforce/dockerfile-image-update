@@ -74,7 +74,9 @@ public class CommandLine {
         parser.addArgument("-B")
                 .help("additional body text to include in pull requests");
         parser.addArgument("-l", "--" + Constants.GIT_API_SEARCH_LIMIT)
-                .help("limit the search results for github api (default: 1000)");
+                .help("limit the search results for github api (default: 1000)")
+                .type(Integer.class)
+                .setDefault(1000);
         return parser;
     }
 

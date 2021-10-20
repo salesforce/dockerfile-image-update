@@ -59,12 +59,7 @@ public class Parent implements ExecutableWithNamespace {
 
         log.info("Finding Dockerfiles with the given image...");
 
-        Integer gitApiSearchLimit;
-        if (ns.get(Constants.GIT_API_SEARCH_LIMIT) == null || Integer.parseInt(ns.get(Constants.GIT_API_SEARCH_LIMIT)) > Constants.GIT_API_SEARCH_LIMIT_NUMBER) {
-            gitApiSearchLimit = Constants.GIT_API_SEARCH_LIMIT_NUMBER;
-        } else {
-            gitApiSearchLimit = Integer.parseInt(ns.get(Constants.GIT_API_SEARCH_LIMIT));
-        }
+        Integer gitApiSearchLimit = ns.get(Constants.GIT_API_SEARCH_LIMIT);
         Optional<List<PagedSearchIterable<GHContent>>> contentsWithImage = dockerfileGitHubUtil.getGHContents(ns.get(Constants.GIT_ORG), img, gitApiSearchLimit);
         if (contentsWithImage.isPresent()) {
             List<PagedSearchIterable<GHContent>> contentsFoundWithImage = contentsWithImage.get();
