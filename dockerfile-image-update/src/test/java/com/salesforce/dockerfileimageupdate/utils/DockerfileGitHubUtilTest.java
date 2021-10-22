@@ -277,10 +277,7 @@ public class DockerfileGitHubUtilTest {
 
         PagedSearchIterable<GHContent> contentsWithImage = mock(PagedSearchIterable.class);
 
-        List<PagedSearchIterable<GHContent>> contentsWithImageList = new ArrayList<>();
-        contentsWithImageList.add(contentsWithImage);
-        contentsWithImageList.add(contentsWithImage);
-        contentsWithImageList.add(contentsWithImage);
+        List<PagedSearchIterable<GHContent>> contentsWithImageList = Arrays.asList(contentsWithImage, contentsWithImage, contentsWithImage);
         Optional<List<PagedSearchIterable<GHContent>>> optionalContentsWithImageList = Optional.of(contentsWithImageList);
 
         when(contentsWithImage.toList()).thenReturn(ghContentList);
@@ -638,8 +635,7 @@ public class DockerfileGitHubUtilTest {
         GHContent content3 = mock(GHContent.class);
 
         PagedSearchIterable<GHContent> contentsWithImage = mock(PagedSearchIterable.class);
-        List<PagedSearchIterable<GHContent>> contentsWithImageList = new ArrayList<>();
-        contentsWithImageList.add(contentsWithImage);
+        List<PagedSearchIterable<GHContent>> contentsWithImageList = Collections.singletonList(contentsWithImage);
         Optional<List<PagedSearchIterable<GHContent>>> optionalContentsWithImageList = Optional.of(contentsWithImageList);
         when(contentsWithImage.getTotalCount()).thenReturn(3);
 
@@ -658,8 +654,7 @@ public class DockerfileGitHubUtilTest {
     public void testGHContentsNoOutput() throws Exception {
 
         PagedSearchIterable<GHContent> contentsWithImage = mock(PagedSearchIterable.class);
-        List<PagedSearchIterable<GHContent>> contentsWithImageList = new ArrayList<>();
-        contentsWithImageList.add(contentsWithImage);
+        List<PagedSearchIterable<GHContent>> contentsWithImageList = Collections.singletonList(contentsWithImage);
         Optional<List<PagedSearchIterable<GHContent>>> optionalContentsWithImageList = Optional.of(contentsWithImageList);
         when(contentsWithImage.getTotalCount()).thenReturn(0);
 

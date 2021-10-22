@@ -117,11 +117,12 @@ public class DockerfileGitHubUtil {
         int totalCount = files.getTotalCount();
         log.info("Number of files found for {}: {}", image, totalCount);
         if (totalCount > gitApiSearchLimit && orgsToIncludeOrExclude.size() == 1 && orgsToIncludeOrExclude.entrySet().stream().findFirst().get().getValue()) {
-            log.warn("Number of search results for a single org {} is above 1000! The GitHub Search API will only return around 1000 results - https://developer.github.com/v3/search/#about-the-search-api",
-                    orgsToIncludeOrExclude.entrySet().stream().findFirst().get().getKey());
-        }
-        else if (totalCount > gitApiSearchLimit) {
+            log.warn("Number of search results for a single org {} is above {}! The GitHub Search API will only return around 1000 results - https://developer.github.com/v3/search/#about-the-search-api",
+                    orgsToIncludeOrExclude.entrySet().stream().findFirst().get().getKey(), gitApiSearchLimit);
+        } else if (totalCount > gitApiSearchLimit) {
             return getSearchResultsExcludingOrgWithMostHits(image, files, orgsToIncludeOrExclude, gitApiSearchLimit);
+        } else{
+            log.warn("This is an unexpected path. Something went wrong while searching for files.");
         }
         filesList.add(files);
         return Optional.of(filesList);
