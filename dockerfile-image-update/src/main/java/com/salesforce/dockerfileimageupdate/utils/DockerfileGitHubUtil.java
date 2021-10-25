@@ -156,8 +156,12 @@ public class DockerfileGitHubUtil {
         orgsToExclude.put(orgWithMaximumHits, false);
         log.info("Running search by excluding the orgs {}.", orgsToExclude.keySet().toString());
         Optional<List<PagedSearchIterable<GHContent>>> contentsExcludingOrgWithMaximumHits = findFilesWithImage(image, orgsToExclude, gitApiSearchLimit);
-        allContentsWithImage.addAll(contentsForOrgWithMaximumHits.get());
-        allContentsWithImage.addAll(contentsExcludingOrgWithMaximumHits.get());
+        if (contentsForOrgWithMaximumHits.isPresent()) {
+            allContentsWithImage.addAll(contentsForOrgWithMaximumHits.get());
+        }
+        if (contentsExcludingOrgWithMaximumHits.isPresent()) {
+            allContentsWithImage.addAll(contentsExcludingOrgWithMaximumHits.get());
+        }
         return Optional.of(allContentsWithImage);
     }
 
@@ -379,16 +383,20 @@ public class DockerfileGitHubUtil {
         Map<String, Boolean> orgsToIncludeInSearch = Collections.unmodifiableMap(Collections.singletonMap(org, true));
         for (int i = 0; i < 5; i++) {
             contentsWithImage = findFilesWithImage(img, orgsToIncludeInSearch, gitApiSearchLimit);
-            if (contentsWithImage.get().stream().findAny().get().getTotalCount() > 0) {
-                break;
-            } else {
-                getGitHubUtil().waitFor(TimeUnit.SECONDS.toMillis(1));
+            if (contentsWithImage.isPresent()) {
+                if (contentsWithImage.get().stream().findAny().get().getTotalCount() > 0) {
+                    break;
+                } else {
+                    getGitHubUtil().waitFor(TimeUnit.SECONDS.toMillis(1));
+                }
             }
         }
-        int numOfContentsFound = contentsWithImage.get().stream().mapToInt(PagedSearchIterable::getTotalCount).sum();
-        if (numOfContentsFound <= 0) {
-            log.info("Could not find any repositories with given image: {}", img);
-            return Optional.empty();
+        if (contentsWithImage.isPresent()) {
+            int numOfContentsFound = contentsWithImage.get().stream().mapToInt(PagedSearchIterable::getTotalCount).sum();
+            if (numOfContentsFound <= 0) {
+                log.info("Could not find any repositories with given image: {}", img);
+                return Optional.empty();
+            }
         }
         return contentsWithImage;
     }
