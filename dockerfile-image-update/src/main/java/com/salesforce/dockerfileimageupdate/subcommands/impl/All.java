@@ -58,15 +58,17 @@ public class All implements ExecutableWithNamespace {
             imageToTagMap.put(image, imageToTag.getValue().getAsString());
             Optional<List<PagedSearchIterable<GHContent>>> contentsWithImage =
                     this.dockerfileGitHubUtil.findFilesWithImage(image, orgsToIncludeInSearch, gitApiSearchLimit);
-            contentsWithImage.get().forEach(pagedSearchIterable -> {
-                try {
-                    forkRepositoriesFound(pathToDockerfilesInParentRepo,
-                            imagesFoundInParentRepo, pagedSearchIterable, image);
-                } catch (IOException e) {
-                    log.error(String.format("Error while creating a fork"));
-                    exceptions.add(e);
-                }
-            });
+            if (contentsWithImage.isPresent()) {
+                contentsWithImage.get().forEach(pagedSearchIterable -> {
+                    try {
+                        forkRepositoriesFound(pathToDockerfilesInParentRepo,
+                                imagesFoundInParentRepo, pagedSearchIterable, image);
+                    } catch (IOException e) {
+                        log.error("Error while creating a fork");
+                        exceptions.add(e);
+                    }
+                });
+            }
         }
 
         GHMyself currentUser = this.dockerfileGitHubUtil.getMyself();

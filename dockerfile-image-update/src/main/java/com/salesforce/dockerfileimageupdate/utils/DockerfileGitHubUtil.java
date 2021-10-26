@@ -17,13 +17,12 @@ import com.salesforce.dockerfileimageupdate.search.GitHubImageSearchTermList;
 import com.salesforce.dockerfileimageupdate.storage.GitHubJsonStore;
 import org.kohsuke.github.*;
 import org.slf4j.Logger;
+import java.util.stream.Collectors;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Collectors;
 
 /**
  * Created by minho.park on 7/22/16.
@@ -89,7 +88,6 @@ public class DockerfileGitHubUtil {
             Map<String, Boolean> orgsToIncludeOrExclude,
             Integer gitApiSearchLimit) throws IOException {
         GHContentSearchBuilder search = gitHubUtil.startSearch();
-        List<PagedSearchIterable<GHContent>> filesList = new ArrayList<>();
         // Filename search appears to yield better / more results than language:Dockerfile
         // Root cause: linguist doesn't currently deal with prefixes of files:
         // https://github.com/github/linguist/issues/4566
@@ -116,14 +114,27 @@ public class DockerfileGitHubUtil {
         PagedSearchIterable<GHContent> files = search.list();
         int totalCount = files.getTotalCount();
         log.info("Number of files found for {}: {}", image, totalCount);
-        if (totalCount > gitApiSearchLimit && orgsToIncludeOrExclude.size() == 1 && orgsToIncludeOrExclude.entrySet().stream().findFirst().get().getValue()) {
+        if (totalCount > gitApiSearchLimit
+                && orgsToIncludeOrExclude.size() == 1
+                && orgsToIncludeOrExclude.entrySet()
+                .stream()
+                .findFirst()
+                .get()
+                .getValue()) {
+            String orgName = orgsToIncludeOrExclude
+                    .entrySet()
+                    .stream()
+                    .findFirst()
+                    .get()
+                    .getKey();
             log.warn("Number of search results for a single org {} is above {}! The GitHub Search API will only return around 1000 results - https://developer.github.com/v3/search/#about-the-search-api",
-                    orgsToIncludeOrExclude.entrySet().stream().findFirst().get().getKey(), gitApiSearchLimit);
+                    orgName, gitApiSearchLimit);
         } else if (totalCount > gitApiSearchLimit) {
             return getSearchResultsExcludingOrgWithMostHits(image, files, orgsToIncludeOrExclude, gitApiSearchLimit);
         } else{
             log.warn("This is an unexpected path. Something went wrong while searching for files.");
         }
+        List<PagedSearchIterable<GHContent>> filesList = new ArrayList<>();
         filesList.add(files);
         return Optional.of(filesList);
     }
@@ -151,11 +162,13 @@ public class DockerfileGitHubUtil {
         Map<String, Boolean> orgsToInclude = new HashMap<>();
         orgsToInclude.put(orgWithMaximumHits, true);
         log.info("Running search only for the org with maximum hits.");
-        Optional<List<PagedSearchIterable<GHContent>>> contentsForOrgWithMaximumHits = findFilesWithImage(image, orgsToInclude, gitApiSearchLimit);
+        Optional<List<PagedSearchIterable<GHContent>>> contentsForOrgWithMaximumHits;
+        contentsForOrgWithMaximumHits = findFilesWithImage(image, orgsToInclude, gitApiSearchLimit);
 
         orgsToExclude.put(orgWithMaximumHits, false);
         log.info("Running search by excluding the orgs {}.", orgsToExclude.keySet().toString());
-        Optional<List<PagedSearchIterable<GHContent>>> contentsExcludingOrgWithMaximumHits = findFilesWithImage(image, orgsToExclude, gitApiSearchLimit);
+        Optional<List<PagedSearchIterable<GHContent>>> contentsExcludingOrgWithMaximumHits;
+        contentsExcludingOrgWithMaximumHits = findFilesWithImage(image, orgsToExclude, gitApiSearchLimit);
         if (contentsForOrgWithMaximumHits.isPresent()) {
             allContentsWithImage.addAll(contentsForOrgWithMaximumHits.get());
         }
@@ -383,20 +396,25 @@ public class DockerfileGitHubUtil {
         Map<String, Boolean> orgsToIncludeInSearch = Collections.unmodifiableMap(Collections.singletonMap(org, true));
         for (int i = 0; i < 5; i++) {
             contentsWithImage = findFilesWithImage(img, orgsToIncludeInSearch, gitApiSearchLimit);
-            if (contentsWithImage.isPresent()) {
-                if (contentsWithImage.get().stream().findAny().get().getTotalCount() > 0) {
-                    break;
-                } else {
-                    getGitHubUtil().waitFor(TimeUnit.SECONDS.toMillis(1));
-                }
+            if (contentsWithImage
+                    .orElseThrow(IOException::new)
+                    .stream()
+                    .findAny()
+                    .get()
+                    .getTotalCount() > 0) {
+                break;
+            } else {
+                getGitHubUtil().waitFor(TimeUnit.SECONDS.toMillis(1));
             }
         }
-        if (contentsWithImage.isPresent()) {
-            int numOfContentsFound = contentsWithImage.get().stream().mapToInt(PagedSearchIterable::getTotalCount).sum();
-            if (numOfContentsFound <= 0) {
-                log.info("Could not find any repositories with given image: {}", img);
-                return Optional.empty();
-            }
+        int numOfContentsFound = contentsWithImage
+                .orElseThrow(IOException::new)
+                .stream()
+                .mapToInt(PagedSearchIterable::getTotalCount)
+                .sum();
+        if (numOfContentsFound <= 0) {
+            log.info("Could not find any repositories with given image: {}", img);
+            return Optional.empty();
         }
         return contentsWithImage;
     }
