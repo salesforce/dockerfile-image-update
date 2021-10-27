@@ -16,8 +16,8 @@ import com.salesforce.dockerfileimageupdate.repository.GitHub;
 import com.salesforce.dockerfileimageupdate.search.GitHubImageSearchTermList;
 import com.salesforce.dockerfileimageupdate.storage.GitHubJsonStore;
 import org.kohsuke.github.*;
-import org.slf4j.Logger;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
