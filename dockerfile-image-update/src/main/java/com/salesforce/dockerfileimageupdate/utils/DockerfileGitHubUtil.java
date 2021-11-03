@@ -116,35 +116,16 @@ public class DockerfileGitHubUtil {
         PagedSearchIterable<GHContent> files = search.list();
         int totalCount = files.getTotalCount();
         log.info("Number of files found for {}: {}", image, totalCount);
-        log.info("--Debug--");
-        log.info(String.valueOf(orgsToIncludeOrExclude
-                .entrySet()
-                .stream()
-                .findFirst()
-                .get()
-                .getKey() != null));
-        log.info(String.valueOf(orgsToIncludeOrExclude
-                .entrySet()
-                .stream()
-                .findFirst()
-                .get()
-                .getValue()));
-        if (totalCount > gitApiSearchLimit
-            && orgsToIncludeOrExclude.size() == 1
-            && orgsToIncludeOrExclude
-                .entrySet()
-                .stream()
-                .findFirst()
-                .get()
-                .getKey() != null
-            && orgsToIncludeOrExclude
-                .entrySet()
-                .stream()
-                .findFirst()
-                .get()
-                .getValue()
-                ) {
-            log.info("--Debug--");
+
+        Boolean includeOrExclude = false;
+        if (!orgsToIncludeOrExclude.isEmpty()) {
+            for (Map.Entry<String, Boolean> org : orgsToIncludeOrExclude.entrySet()){
+                if (org.getKey() != null) {
+                    includeOrExclude = org.getValue();
+                }
+            }
+        }
+        if (totalCount > gitApiSearchLimit && orgsToIncludeOrExclude.size() == 1 && includeOrExclude) {
             String orgName = orgsToIncludeOrExclude
                     .entrySet()
                     .stream()
