@@ -51,7 +51,9 @@ public class All implements ExecutableWithNamespace {
         Integer gitApiSearchLimit = ns.get(Constants.GIT_API_SEARCH_LIMIT);
         List<IOException> exceptions = new ArrayList<>();
         Map<String, Boolean> orgsToIncludeInSearch = new HashMap<>();
-        orgsToIncludeInSearch.put(ns.get(Constants.GIT_ORG), true);
+        if (!ns.get(Constants.GIT_ORG).toString().isEmpty()) {
+            orgsToIncludeInSearch.put(ns.get(Constants.GIT_ORG), true);
+        }
         for (Map.Entry<String, JsonElement> imageToTag : imageToTagStore) {
             String image = imageToTag.getKey();
             log.info("Repositories with image {} being forked.", image);

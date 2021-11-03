@@ -93,17 +93,17 @@ public class DockerfileGitHubUtil {
         // https://github.com/github/linguist/issues/4566
         search.filename("Dockerfile");
         if (!orgsToIncludeOrExclude.isEmpty()) {
-            StringBuilder includeOrexcludeOrgsQuery = new StringBuilder();
+            StringBuilder includeOrExcludeOrgsQuery = new StringBuilder();
             for (Map.Entry<String, Boolean> org : orgsToIncludeOrExclude.entrySet()){
                 if (org.getValue()) {
                     log.info("Including the org {} in the search.", org.getKey());
-                    includeOrexcludeOrgsQuery.append(String.format("user:%s ", org.getKey()));
+                    includeOrExcludeOrgsQuery.append(String.format("user:%s ", org.getKey()));
                 } else {
                     log.info("Excluding the org {} from the search.", org.getKey());
-                    includeOrexcludeOrgsQuery.append(String.format("-org:%s ", org.getKey()));
+                    includeOrExcludeOrgsQuery.append(String.format("-org:%s ", org.getKey()));
                 }
             }
-            search.q(includeOrexcludeOrgsQuery.toString());
+            search.q(includeOrExcludeOrgsQuery.toString());
         }
         if (image.substring(image.lastIndexOf(' ') + 1).length() <= 1) {
             throw new IOException("Invalid image name.");
