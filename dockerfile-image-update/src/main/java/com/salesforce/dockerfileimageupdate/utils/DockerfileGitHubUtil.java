@@ -95,12 +95,14 @@ public class DockerfileGitHubUtil {
         if (!orgsToIncludeOrExclude.isEmpty()) {
             StringBuilder includeOrExcludeOrgsQuery = new StringBuilder();
             for (Map.Entry<String, Boolean> org : orgsToIncludeOrExclude.entrySet()){
-                if (org.getValue()) {
-                    log.info("Including the org {} in the search.", org.getKey());
-                    includeOrExcludeOrgsQuery.append(String.format("user:%s ", org.getKey()));
-                } else {
-                    log.info("Excluding the org {} from the search.", org.getKey());
-                    includeOrExcludeOrgsQuery.append(String.format("-org:%s ", org.getKey()));
+                if (org.getKey() != null) {
+                    if (org.getValue()) {
+                        log.info("Including the org {} in the search.", org.getKey());
+                        includeOrExcludeOrgsQuery.append(String.format("user:%s ", org.getKey()));
+                    } else {
+                        log.info("Excluding the org {} from the search.", org.getKey());
+                        includeOrExcludeOrgsQuery.append(String.format("-org:%s ", org.getKey()));
+                    }
                 }
             }
             search.q(includeOrExcludeOrgsQuery.toString());
