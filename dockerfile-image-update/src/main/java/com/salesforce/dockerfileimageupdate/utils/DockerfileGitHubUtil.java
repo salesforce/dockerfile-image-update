@@ -118,7 +118,7 @@ public class DockerfileGitHubUtil {
         log.info("Number of files found for {}: {}", image, totalCount);
 
         Boolean includeOrExclude = false;
-        if (!orgsToIncludeOrExclude.isEmpty()) {
+        if (!orgsToIncludeOrExclude.isEmpty() && orgsToIncludeOrExclude.size() == 1) {
             for (Map.Entry<String, Boolean> org : orgsToIncludeOrExclude.entrySet()){
                 if (org.getKey() != null) {
                     includeOrExclude = org.getValue();
