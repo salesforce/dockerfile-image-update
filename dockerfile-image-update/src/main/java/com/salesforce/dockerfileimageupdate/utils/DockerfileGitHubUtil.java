@@ -141,8 +141,6 @@ public class DockerfileGitHubUtil {
                     orgName, gitApiSearchLimit);
         } else if (totalCount > gitApiSearchLimit) {
             return getSearchResultsExcludingOrgWithMostHits(image, files, orgsToIncludeOrExclude, gitApiSearchLimit);
-        } else{
-            log.warn("This is an unexpected path. Something went wrong while searching for files.");
         }
         List<PagedSearchIterable<GHContent>> filesList = new ArrayList<>();
         filesList.add(files);
