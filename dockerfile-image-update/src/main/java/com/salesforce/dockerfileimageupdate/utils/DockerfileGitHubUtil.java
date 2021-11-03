@@ -116,6 +116,19 @@ public class DockerfileGitHubUtil {
         PagedSearchIterable<GHContent> files = search.list();
         int totalCount = files.getTotalCount();
         log.info("Number of files found for {}: {}", image, totalCount);
+        log.info("--Debug--");
+        log.info(String.valueOf(orgsToIncludeOrExclude
+                .entrySet()
+                .stream()
+                .findFirst()
+                .get()
+                .getKey() != null));
+        log.info(String.valueOf(orgsToIncludeOrExclude
+                .entrySet()
+                .stream()
+                .findFirst()
+                .get()
+                .getValue()));
         if (totalCount > gitApiSearchLimit
             && orgsToIncludeOrExclude.size() == 1
             && orgsToIncludeOrExclude
@@ -131,6 +144,7 @@ public class DockerfileGitHubUtil {
                 .get()
                 .getValue()
                 ) {
+            log.info("--Debug--");
             String orgName = orgsToIncludeOrExclude
                     .entrySet()
                     .stream()
