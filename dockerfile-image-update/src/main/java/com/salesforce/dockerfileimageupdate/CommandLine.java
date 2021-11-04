@@ -53,9 +53,14 @@ public class CommandLine {
     }
 
     static ArgumentParser getArgumentParser() {
-        ArgumentParser parser = ArgumentParsers.newFor("dockerfile-image-update").addHelp(true).build()
+        ArgumentParser parser =
+                ArgumentParsers.newFor("dockerfile-image-update").addHelp(true).build()
                 .description("Image Updates through Pull Request Automator");
 
+        parser.addArgument("-l", "--" + Constants.GIT_API_SEARCH_LIMIT)
+                .type(Integer.class)
+                .setDefault(1000)
+                .help("limit the search results for github api (default: 1000)");
         parser.addArgument("-o", "--" + Constants.GIT_ORG)
                 .help("search within specific organization (default: all of github)");
         /* Currently, because of argument passing reasons, you can only specify one branch. */
@@ -73,10 +78,6 @@ public class CommandLine {
                 .help("regex of repository names to exclude from pull request generation");
         parser.addArgument("-B")
                 .help("additional body text to include in pull requests");
-        parser.addArgument("-l", "--" + Constants.GIT_API_SEARCH_LIMIT)
-                .help("limit the search results for github api (default: 1000)")
-                .type(Integer.class)
-                .setDefault(1000);
         return parser;
     }
 

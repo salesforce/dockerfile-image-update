@@ -289,6 +289,7 @@ public class DockerfileGitHubUtilTest {
 
         dockerfileGitHubUtil = new DockerfileGitHubUtil(gitHubUtil);
         Map<String, Boolean> orgsToIncludeOrExclude = new HashMap<>();
+        orgsToIncludeOrExclude.put(null, true);
 
         dockerfileGitHubUtil = new DockerfileGitHubUtil(gitHubUtil);
         when(dockerfileGitHubUtil.getOrgNameWithMaximumHits(contentsWithImage)).thenReturn("org-1", "org-2", "org-3");

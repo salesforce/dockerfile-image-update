@@ -116,16 +116,21 @@ public class DockerfileGitHubUtil {
         PagedSearchIterable<GHContent> files = search.list();
         int totalCount = files.getTotalCount();
         log.info("Number of files found for {}: {}", image, totalCount);
-
-        Boolean includeOrExclude = false;
-        if (!orgsToIncludeOrExclude.isEmpty() && orgsToIncludeOrExclude.size() == 1) {
-            for (Map.Entry<String, Boolean> org : orgsToIncludeOrExclude.entrySet()){
-                if (org.getKey() != null) {
-                    includeOrExclude = org.getValue();
-                }
-            }
-        }
-        if (totalCount > gitApiSearchLimit && orgsToIncludeOrExclude.size() == 1 && includeOrExclude) {
+        if (totalCount > gitApiSearchLimit
+            && orgsToIncludeOrExclude.size() == 1
+            && orgsToIncludeOrExclude
+                .entrySet()
+                .stream()
+                .findFirst()
+                .get()
+                .getKey() != null
+            && orgsToIncludeOrExclude
+                .entrySet()
+                .stream()
+                .findFirst()
+                .get()
+                .getValue()
+                ) {
             String orgName = orgsToIncludeOrExclude
                     .entrySet()
                     .stream()
