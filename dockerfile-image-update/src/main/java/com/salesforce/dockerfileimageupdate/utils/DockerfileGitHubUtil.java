@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.util.*;
+import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -140,6 +141,10 @@ public class DockerfileGitHubUtil {
             log.warn("Number of search results for a single org {} is above {}! The GitHub Search API will only return around 1000 results - https://developer.github.com/v3/search/#about-the-search-api",
                     orgName, gitApiSearchLimit);
         } else if (totalCount > gitApiSearchLimit) {
+            log.info("The number of files returned is greater than the git API search limit" +
+                    " of {}. The orgs with the maximum number of hits will be recursively removed" +
+                    " to reduce the search space. For every org that is excluded, a separate " +
+                    "search will be performed specific to that org.", gitApiSearchLimit);
             return getSearchResultsExcludingOrgWithMostHits(image, files, orgsToIncludeOrExclude, gitApiSearchLimit);
         }
         List<PagedSearchIterable<GHContent>> filesList = new ArrayList<>();
@@ -401,7 +406,8 @@ public class DockerfileGitHubUtil {
     public Optional<List<PagedSearchIterable<GHContent>>> getGHContents(String org, String img, Integer gitApiSearchLimit)
             throws IOException, InterruptedException {
         Optional<List<PagedSearchIterable<GHContent>>> contentsWithImage = Optional.empty();
-        Map<String, Boolean> orgsToIncludeInSearch = Collections.unmodifiableMap(Collections.singletonMap(org, true));
+        Map<String, Boolean> orgsToIncludeInSearch = new HashMap<>();
+        orgsToIncludeInSearch.put(org, true);
         for (int i = 0; i < 5; i++) {
             contentsWithImage = findFilesWithImage(img, orgsToIncludeInSearch, gitApiSearchLimit);
             if (contentsWithImage
