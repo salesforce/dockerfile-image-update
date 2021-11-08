@@ -141,10 +141,10 @@ public class DockerfileGitHubUtil {
             log.warn("Number of search results for a single org {} is above {}! The GitHub Search API will only return around 1000 results - https://developer.github.com/v3/search/#about-the-search-api",
                     orgName, gitApiSearchLimit);
         } else if (totalCount > gitApiSearchLimit) {
-            log.info("The number of files returned is greater than the git API search limit" +
-                    " of {}. The orgs with the maximum number of hits will be recursively removed" +
-                    " to reduce the search space. For every org that is excluded, a separate " +
-                    "search will be performed specific to that org.", gitApiSearchLimit);
+            log.info("The number of files returned is greater than the git API search limit"
+                    + " of {}. The orgs with the maximum number of hits will be recursively removed"
+                    + " to reduce the search space. For every org that is excluded, a separate "
+                    + "search will be performed specific to that org.", gitApiSearchLimit);
             return getSearchResultsExcludingOrgWithMostHits(image, files, orgsToIncludeOrExclude, gitApiSearchLimit);
         }
         List<PagedSearchIterable<GHContent>> filesList = new ArrayList<>();
