@@ -407,7 +407,12 @@ public class DockerfileGitHubUtil {
             throws IOException, InterruptedException {
         Optional<List<PagedSearchIterable<GHContent>>> contentsWithImage = Optional.empty();
         Map<String, Boolean> orgsToIncludeInSearch = new HashMap<>();
-        orgsToIncludeInSearch.put(org, true);
+        if (org != null) {
+            // If there is a Git org specified, that needs to be included in the search query. In
+            // the orgsToIncludeInSearch a true value associated with an org name ensures that
+            // the org gets included in the search query.
+            orgsToIncludeInSearch.put(org, true);
+        }
         for (int i = 0; i < 5; i++) {
             contentsWithImage = findFilesWithImage(img, orgsToIncludeInSearch, gitApiSearchLimit);
             if (contentsWithImage
