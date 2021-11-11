@@ -32,8 +32,9 @@ docker run --rm -v "${PWD}":/usr/src/build \
                 -e CI_DEPLOY_PASSWORD \
                 -e GPG_KEY_NAME \
                 -e GPG_PASSPHRASE \
+                -e MVN_SNAPSHOT_VERSION \
                 maven:3.6-jdk-"${JDK_VERSION}" \
-                /bin/bash -c "source .ci.prepare-ssh-gpg.sh && cd dockerfile-image-update && mvn --quiet --batch-mode deploy -P release scm:tag -Drevision=${NEW_PATCH_VERSION}"
+                /bin/bash -c "source .ci.prepare-ssh-gpg.sh && cd dockerfile-image-update && mvn versions:set -DnewVersion="${MVN_SNAPSHOT_VERSION}" && mvn --quiet --batch-mode deploy -P release scm:tag -Drevision=${NEW_PATCH_VERSION}"
 
 # Get MVN_VERSION
 MVN_VERSION=$(cat ./dockerfile-image-update/target/classes/version.txt)
