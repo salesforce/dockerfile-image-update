@@ -6,10 +6,10 @@ MVN_SNAPSHOT_VERSION=1.1-SNAPSHOT
 
 DFIU_DIR=dockerfile-image-update
 DFIU_TARGET=${DFIU_DIR}/target
-DFIU_FULLPATH=${DFIU_TARGET}/dockerfile-image-update-1.0-SNAPSHOT.jar
+DFIU_FULLPATH=${DFIU_TARGET}/dockerfile-image-update-${MVN_SNAPSHOT_VERSION}.jar
 DFIU_ITEST_DIR=dockerfile-image-update-itest
 DFIU_ITEST_TARGET=${DFIU_ITEST_DIR}/target
-DFIU_ITEST_FULLPATH=${DFIU_ITEST_TARGET}/dockerfile-image-update-itest-1.0-SNAPSHOT.jar
+DFIU_ITEST_FULLPATH=${DFIU_ITEST_TARGET}/dockerfile-image-update-itest-${MVN_SNAPSHOT_VERSION}.jar
 
 mvn-docker-build:
 	docker build --tag local-maven-build --file Dockerfile.maven --build-arg JDK_VERSION=${JDK_VERSION} .
