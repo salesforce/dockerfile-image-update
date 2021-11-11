@@ -48,14 +48,32 @@ public class All implements ExecutableWithNamespace {
         Multimap<String, String> pathToDockerfilesInParentRepo = ArrayListMultimap.create();
 
         Set<Map.Entry<String, JsonElement>> imageToTagStore = parseStoreToImagesMap(ns.get(Constants.STORE));
+        Integer gitApiSearchLimit = ns.get(Constants.GIT_API_SEARCH_LIMIT);
+        List<IOException> exceptions = new ArrayList<>();
+        Map<String, Boolean> orgsToIncludeInSearch = new HashMap<>();
+        if (ns.get(Constants.GIT_ORG) != null) {
+            // If there is a Git org specified, that needs to be included in the search query. In
+            // the orgsToIncludeInSearch a true value associated with an org name ensures that
+            // the org gets included in the search query.
+            orgsToIncludeInSearch.put(ns.get(Constants.GIT_ORG), true);
+        }
         for (Map.Entry<String, JsonElement> imageToTag : imageToTagStore) {
             String image = imageToTag.getKey();
             log.info("Repositories with image {} being forked.", image);
             imageToTagMap.put(image, imageToTag.getValue().getAsString());
-            PagedSearchIterable<GHContent> contentsWithImage =
-                    this.dockerfileGitHubUtil.findFilesWithImage(image, ns.get(Constants.GIT_ORG));
-            forkRepositoriesFound(pathToDockerfilesInParentRepo,
-                    imagesFoundInParentRepo, contentsWithImage, image);
+            Optional<List<PagedSearchIterable<GHContent>>> contentsWithImage =
+                    this.dockerfileGitHubUtil.findFilesWithImage(image, orgsToIncludeInSearch, gitApiSearchLimit);
+            if (contentsWithImage.isPresent()) {
+                contentsWithImage.get().forEach(pagedSearchIterable -> {
+                    try {
+                        forkRepositoriesFound(pathToDockerfilesInParentRepo,
+                                imagesFoundInParentRepo, pagedSearchIterable, image);
+                    } catch (IOException e) {
+                        log.error("Error while creating a fork");
+                        exceptions.add(e);
+                    }
+                });
+            }
         }
 
         GHMyself currentUser = this.dockerfileGitHubUtil.getMyself();
@@ -67,7 +85,7 @@ public class All implements ExecutableWithNamespace {
         List<GHRepository> listOfCurrUserRepos =
                 dockerfileGitHubUtil.getGHRepositories(pathToDockerfilesInParentRepo, currentUser);
 
-        List<IOException> exceptions = new ArrayList<>();
+
         List<String> skippedRepos = new ArrayList<>();
 
         for (GHRepository currUserRepo : listOfCurrUserRepos) {

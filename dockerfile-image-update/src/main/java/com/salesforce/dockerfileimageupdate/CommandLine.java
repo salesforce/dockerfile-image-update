@@ -53,9 +53,14 @@ public class CommandLine {
     }
 
     static ArgumentParser getArgumentParser() {
-        ArgumentParser parser = ArgumentParsers.newFor("dockerfile-image-update").addHelp(true).build()
+        ArgumentParser parser =
+                ArgumentParsers.newFor("dockerfile-image-update").addHelp(true).build()
                 .description("Image Updates through Pull Request Automator");
 
+        parser.addArgument("-l", "--" + Constants.GIT_API_SEARCH_LIMIT)
+                .type(Integer.class)
+                .setDefault(1000)
+                .help("limit the search results for github api (default: 1000)");
         parser.addArgument("-o", "--" + Constants.GIT_ORG)
                 .help("search within specific organization (default: all of github)");
         /* Currently, because of argument passing reasons, you can only specify one branch. */

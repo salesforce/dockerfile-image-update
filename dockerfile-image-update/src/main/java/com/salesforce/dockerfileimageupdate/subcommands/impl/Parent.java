@@ -58,29 +58,36 @@ public class Parent implements ExecutableWithNamespace {
                 new GitForkBranch(ns.get(Constants.IMG), ns.get(Constants.TAG), ns.get(Constants.GIT_BRANCH));
 
         log.info("Finding Dockerfiles with the given image...");
-        Optional<PagedSearchIterable<GHContent>> contentsWithImage = dockerfileGitHubUtil.getGHContents(ns.get(Constants.GIT_ORG), img);
+
+        Integer gitApiSearchLimit = ns.get(Constants.GIT_API_SEARCH_LIMIT);
+        Optional<List<PagedSearchIterable<GHContent>>> contentsWithImage = dockerfileGitHubUtil.getGHContents(ns.get(Constants.GIT_ORG), img, gitApiSearchLimit);
         if (contentsWithImage.isPresent()) {
-            Multimap<String, GitHubContentToProcess> pathToDockerfilesInParentRepo =
-                    pullRequestSender.forkRepositoriesFoundAndGetPathToDockerfiles(contentsWithImage.get(), gitForkBranch);
-            List<IOException> exceptions = new ArrayList<>();
-            List<String> skippedRepos = new ArrayList<>();
+            List<PagedSearchIterable<GHContent>> contentsFoundWithImage = contentsWithImage.get();
+            for (int i = 0; i < contentsFoundWithImage.size(); i++ ) {
+                Multimap<String, GitHubContentToProcess> pathToDockerfilesInParentRepo =
+                        pullRequestSender.forkRepositoriesFoundAndGetPathToDockerfiles(contentsFoundWithImage.get(i), gitForkBranch);
 
-            for (String currUserRepo : pathToDockerfilesInParentRepo.keySet()) {
-                Optional<GitHubContentToProcess> forkWithContentPaths =
-                        pathToDockerfilesInParentRepo.get(currUserRepo).stream().findFirst();
-                if (forkWithContentPaths.isPresent()) {
-                    try {
-                        changeDockerfiles(ns, pathToDockerfilesInParentRepo, forkWithContentPaths.get(), skippedRepos);
-                    } catch (IOException e) {
-                        log.error(String.format("Error changing Dockerfile for %s", forkWithContentPaths.get().getParent().getFullName()), e);
-                        exceptions.add(e);
+
+                List<IOException> exceptions = new ArrayList<>();
+                List<String> skippedRepos = new ArrayList<>();
+
+                for (String currUserRepo : pathToDockerfilesInParentRepo.keySet()) {
+                    Optional<GitHubContentToProcess> forkWithContentPaths =
+                            pathToDockerfilesInParentRepo.get(currUserRepo).stream().findFirst();
+                    if (forkWithContentPaths.isPresent()) {
+                        try {
+                            changeDockerfiles(ns, pathToDockerfilesInParentRepo, forkWithContentPaths.get(), skippedRepos);
+                        } catch (IOException e) {
+                            log.error(String.format("Error changing Dockerfile for %s", forkWithContentPaths.get().getParent().getFullName()), e);
+                            exceptions.add(e);
+                        }
+                    } else {
+                        log.warn("Didn't find fork for {} so not changing Dockerfiles", currUserRepo);
                     }
-                } else {
-                    log.warn("Didn't find fork for {} so not changing Dockerfiles", currUserRepo);
                 }
-            }
 
-            ResultsProcessor.processResults(skippedRepos, exceptions, log);
+                ResultsProcessor.processResults(skippedRepos, exceptions, log);
+            }
         }
     }
 
