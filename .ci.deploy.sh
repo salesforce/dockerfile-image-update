@@ -2,7 +2,7 @@
 # Validate required environment variables
 declare -a vars=(JDK_VERSION encrypted_00fae8efff8c_key encrypted_00fae8efff8c_iv \
     encrypted_96e73e3cb232_key encrypted_96e73e3cb232_iv CI_DEPLOY_USER CI_DEPLOY_PASSWORD \
-    GPG_KEY_NAME GPG_PASSPHRASE DOCKER_USERNAME DOCKER_PASSWORD MVN_SNAPSHOT_VERSION NEW_PATCH_VERSION)
+    GPG_KEY_NAME GPG_PASSPHRASE DOCKER_USERNAME DOCKER_PASSWORD NEW_PATCH_VERSION)
 
 for var_name in "${vars[@]}"
 do
@@ -34,7 +34,7 @@ docker run --rm -v "${PWD}":/usr/src/build \
                 -e GPG_PASSPHRASE \
                 -e MVN_SNAPSHOT_VERSION \
                 maven:3.6-jdk-"${JDK_VERSION}" \
-                /bin/bash -c "source .ci.prepare-ssh-gpg.sh && cd dockerfile-image-update && mvn versions:set -DnewVersion="${MVN_SNAPSHOT_VERSION}" && mvn --quiet --batch-mode deploy -P release scm:tag -Drevision=${NEW_PATCH_VERSION}"
+                /bin/bash -c "source .ci.prepare-ssh-gpg.sh && cd dockerfile-image-update && mvn --quiet --batch-mode deploy -P release scm:tag -Drevision=${NEW_PATCH_VERSION}"
 
 # Get MVN_VERSION
 MVN_VERSION=$(cat ./dockerfile-image-update/target/classes/version.txt)
