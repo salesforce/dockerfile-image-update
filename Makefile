@@ -2,7 +2,7 @@ all: mvn-docker-build get-itest-jar-from-maven-image integration-test
 
 # JDK_VERSION should be the JDK version we use to source our container dependencies
 JDK_VERSION=8
-MVN_SNAPSHOT_VERSION=1.0-SNAPSHOT
+MVN_SNAPSHOT_VERSION=1.1-SNAPSHOT
 
 DFIU_DIR=dockerfile-image-update
 DFIU_TARGET=${DFIU_DIR}/target
