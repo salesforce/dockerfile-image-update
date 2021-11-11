@@ -14,7 +14,7 @@ DFIU_ITEST_FULLPATH=${DFIU_ITEST_TARGET}/dockerfile-image-update-itest-${MVN_SNA
 mvn-docker-build:
 	docker build --tag local-maven-build --file Dockerfile.maven --build-arg JDK_VERSION=${JDK_VERSION} .
 	mkdir -p ${DFIU_TARGET}
-	docker run --rm -v $(CURDIR):/tmp/project local-maven-build /bin/bash -c "ls ${DFIU_TARGET}; cp ${DFIU_FULLPATH} /tmp/project/${DFIU_FULLPATH}"
+	docker run --rm -v $(CURDIR):/tmp/project local-maven-build /bin/bash -c "cp ${DFIU_FULLPATH} /tmp/project/${DFIU_FULLPATH}"
 	docker build --tag salesforce/dockerfile-image-update --build-arg JDK_VERSION=${JDK_VERSION} --build-arg MVN_VERSION=${MVN_SNAPSHOT_VERSION} .
 
 #TODO: Modify docker-compose.yml for local image
