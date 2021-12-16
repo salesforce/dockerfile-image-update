@@ -52,7 +52,7 @@ public class Parent implements ExecutableWithNamespace {
 
         if (ns.get(Constants.SKIP_PR_CREATION)) {
             log.info(String.format("Since the flag %s is set to True, the PR creation steps will " +
-                    "be skipped. ", ns.get(Constants.SKIP_PR_CREATION)));
+                    "be skipped. ", Constants.SKIP_PR_CREATION));
             System.exit(0);
         }
         GitHubPullRequestSender pullRequestSender =
