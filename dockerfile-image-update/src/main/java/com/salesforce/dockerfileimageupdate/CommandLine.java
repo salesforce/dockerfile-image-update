@@ -78,7 +78,7 @@ public class CommandLine {
                 .help("regex of repository names to exclude from pull request generation");
         parser.addArgument("-B")
                 .help("additional body text to include in pull requests");
-        parser.addArgument("-s")
+        parser.addArgument("-s", "--" + Constants.SKIP_PR_CREATION)
                 .type(Boolean.class)
                 .setDefault(false)
                 .help("Only update image tag store. Skip creating PRs");
