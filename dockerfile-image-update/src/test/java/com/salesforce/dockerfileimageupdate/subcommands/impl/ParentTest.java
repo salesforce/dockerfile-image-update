@@ -12,6 +12,7 @@ import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Multimap;
 import com.salesforce.dockerfileimageupdate.model.GitHubContentToProcess;
+import com.salesforce.dockerfileimageupdate.storage.GitHubJsonStore;
 import com.salesforce.dockerfileimageupdate.utils.Constants;
 import com.salesforce.dockerfileimageupdate.utils.DockerfileGitHubUtil;
 import net.sourceforge.argparse4j.inf.Namespace;
@@ -70,6 +71,31 @@ public class ParentTest {
                 .modifyOnGithub(eq(content), eq("image-tag"), eq("image"), eq("tag"), anyString());
         Mockito.verify(dockerfileGitHubUtil, times(1))
                 .createPullReq(eq(parentRepo), eq("image-tag"), eq(forkedRepo), any());
+    }
+
+    @Test
+    public void testPrCreationSkippedWhenSkipPrCreationFlagSetToTrue() throws Exception {
+        Map<String, Object> nsMap = ImmutableMap.of(Constants.IMG,
+                "image", Constants.TAG,
+                "tag", Constants.STORE,
+                "store", Constants.SKIP_PR_CREATION,
+                true);
+        Namespace ns = new Namespace(nsMap);
+        Parent parent = new Parent();
+        DockerfileGitHubUtil dockerfileGitHubUtil = mock(DockerfileGitHubUtil.class);
+        GitHubJsonStore gitHubJsonStore = mock(GitHubJsonStore.class);
+        when(dockerfileGitHubUtil.getGitHubJsonStore(anyString())).thenReturn(gitHubJsonStore);
+        GHRepository forkedRepo = mock(GHRepository.class);
+        GHRepository parentRepo = mock(GHRepository.class);
+
+        parent.execute(ns, dockerfileGitHubUtil);
+
+        Mockito.verify(dockerfileGitHubUtil, times(0))
+                .modifyOnGithub(any(), anyString(), anyString(), anyString(), anyString());
+        Mockito.verify(dockerfileGitHubUtil, times(0))
+                .getGHContents(anyString(), anyString(), anyInt());
+        Mockito.verify(dockerfileGitHubUtil, times(0))
+                .createPullReq(eq(parentRepo), anyString(), eq(forkedRepo), any());
     }
 
     @Test

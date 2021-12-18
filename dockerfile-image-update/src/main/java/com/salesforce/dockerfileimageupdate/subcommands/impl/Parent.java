@@ -50,6 +50,11 @@ public class Parent implements ExecutableWithNamespace {
         log.info("Updating store...");
         this.dockerfileGitHubUtil.getGitHubJsonStore(ns.get(Constants.STORE)).updateStore(img, tag);
 
+        if (ns.get(Constants.SKIP_PR_CREATION)) {
+            log.info("Since the flag {} is set to True, the PR creation steps will "
+                    + "be skipped.", Constants.SKIP_PR_CREATION);
+            return;
+        }
         GitHubPullRequestSender pullRequestSender =
                 new GitHubPullRequestSender(dockerfileGitHubUtil, new ForkableRepoValidator(dockerfileGitHubUtil),
                         ns.get(Constants.GIT_REPO_EXCLUDES));
