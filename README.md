@@ -271,6 +271,7 @@ updates from dependabot and any other minor changes, we've switched to a process
 to manually trigger the release process. For now, that looks like the following:
 
 #### 1. Versioned Git Tag
+
 * Decide what version you desire to have. If you want to bump the major or minor
   version then you need to bump the `MVN_SNAPSHOT_VERSION` in the [Makefile](https://github.com/salesforce/dockerfile-image-update/blob/master/Makefile#L5)
   and in the
@@ -284,6 +285,7 @@ to manually trigger the release process. For now, that looks like the following:
   Central, and tag that commit hash with the next semantic version.
 
 #### 2. Cut Release with Release Notes
+
 * PRs continually get updated with labels by [Pull Request Labeler](https://github.com/actions/labeler)
   and that helps set us up for nice release notes by [Release Drafter](https://github.com/release-drafter/release-drafter).
 * Once that release has been tagged you can go to the draft release which
