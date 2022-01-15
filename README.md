@@ -264,7 +264,9 @@ to manually trigger the release process. For now, that looks like the following:
   version then you need to bump the `MVN_SNAPSHOT_VERSION` in the [Makefile](https://github.com/salesforce/dockerfile-image-update/blob/master/Makefile#L5)
   and in the
   [Dockerfile](https://github.com/salesforce/dockerfile-image-update/blob/afalko-maj-minor/Dockerfile#L4)
-  before proceeding to the next steps. For example `MVN_SNAPSHOT_VERSION=1.0-SNAPSHOT` to `MVN_SNAPSHOT_VERSION=2.0-SNAPSHOT`.
+  before proceeding to the next steps. For example
+  `MVN_SNAPSHOT_VERSION=1.0-SNAPSHOT` to
+  `MVN_SNAPSHOT_VERSION=2.0-SNAPSHOT`.
 * After PRs have been merged to the primary branch, go to the Actions tab
   and trigger the `Release new version` Workflow. This will build,
   integration test, deploy the latest version to Docker Hub and Maven
