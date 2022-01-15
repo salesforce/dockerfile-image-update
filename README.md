@@ -287,7 +287,13 @@ to manually trigger the release process. For now, that looks like the following:
   is continually updated by [Release Drafter](https://github.com/release-drafter/release-drafter)
   and select the latest tag to associate with that release. Change the
   version to reflect the same version as the tag (`1.0.${NEW_VERSION}`).
-  Ideally we'll automate this to run at the end of the triggered workflow.
+  Take a look at the release notes to make sure that PRs are categorized
+  correctly. The categorization is based on the labels of the PRs. You can
+  either fix the labels on the PRs, which will trigger the
+  [release drafter action](https://github.com/salesforce/dockerfile-image-update/actions/workflows/release-drafter.yml),
+  or simply modify the release notes before publishing. Ideally we'll automate
+  this to run at the end of the triggered workflow with something like
+  [svu](https://github.com/caarlos0/svu).
 
 ### Checking Code Climate Locally
 
