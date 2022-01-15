@@ -35,4 +35,6 @@ public class Constants {
     public static final String GIT_ADDITIONAL_COMMIT_MESSAGE = "c";
     public static final String GIT_REPO_EXCLUDES = "excludes";
     public static final String GIT_API_SEARCH_LIMIT = "ghapisearchlimit";
+    public static final String SKIP_PR_CREATION = "skipprcreation";
+
 }
