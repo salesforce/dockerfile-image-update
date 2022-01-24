@@ -24,7 +24,7 @@
 
     <organization>
         <name>Salesforce</name>
-        <url>http://www.salesforce.com</url>
+        <url>https://www.salesforce.com</url>
     </organization>
     <licenses>
         <license>
@@ -62,7 +62,7 @@
     </scm>
 
     <properties>
-        <slf4j.version>1.7.32</slf4j.version>
+        <slf4j.version>1.7.33</slf4j.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <revision>1.1-SNAPSHOT</revision>
     </properties>
@@ -120,7 +120,7 @@
         <dependency>
             <groupId>org.kohsuke</groupId>
             <artifactId>github-api</artifactId>
-            <version>1.300</version>
+            <version>1.301</version>
         </dependency>
     </dependencies>
 
@@ -129,10 +129,9 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.8.1</version>
+                <version>3.9.0</version>
                 <configuration>
-                    <source>1.8</source>
-                    <target>1.8</target>
+                    <release>11</release>
                 </configuration>
             </plugin>
             <plugin>
@@ -257,7 +256,7 @@
                         <artifactId>maven-javadoc-plugin</artifactId>
                         <version>3.3.1</version>
                         <configuration>
-                            <source>8</source>
+                            <source>11</source>
                         </configuration>
                         <executions>
                             <execution>
