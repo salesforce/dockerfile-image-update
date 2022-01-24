@@ -9,12 +9,11 @@
 package com.salesforce.dockerfileimageupdate.utils;
 
 import com.google.common.collect.Multimap;
-import com.salesforce.dockerfileimageupdate.model.FromInstruction;
-import com.salesforce.dockerfileimageupdate.model.GitForkBranch;
-import com.salesforce.dockerfileimageupdate.model.PullRequestInfo;
+import com.salesforce.dockerfileimageupdate.model.*;
 import com.salesforce.dockerfileimageupdate.repository.GitHub;
 import com.salesforce.dockerfileimageupdate.search.GitHubImageSearchTermList;
 import com.salesforce.dockerfileimageupdate.storage.GitHubJsonStore;
+import net.sourceforge.argparse4j.inf.*;
 import org.kohsuke.github.*;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
@@ -436,5 +435,58 @@ public class DockerfileGitHubUtil {
             return Optional.empty();
         }
         return contentsWithImage;
+    }
+
+    public void changeDockerfiles(Namespace ns,
+                                     Multimap<String, GitHubContentToProcess> pathToDockerfilesInParentRepo,
+                                     GitHubContentToProcess gitHubContentToProcess,
+                                     List<String> skippedRepos,
+                                     GitForkBranch gitForkBranch) throws IOException,
+            InterruptedException {
+        // Should we skip doing a getRepository just to fill in the parent value? We already know this to be the parent...
+        GHRepository parent = gitHubContentToProcess.getParent();
+        GHRepository forkedRepo = gitHubContentToProcess.getFork();
+        // TODO: Getting a null pointer here for someone... probably just fixed this since we have parent
+        String parentName = parent.getFullName();
+
+        log.info("Fixing Dockerfiles in {} to PR to {}", forkedRepo.getFullName(), parent.getFullName());
+
+        createOrUpdateForkBranchToParentDefault(parent, forkedRepo, gitForkBranch);
+
+        // loop through all the Dockerfiles in the same repo
+        boolean isContentModified = false;
+        boolean isRepoSkipped = true;
+        for (GitHubContentToProcess forkWithCurrentContentPath : pathToDockerfilesInParentRepo.get(parentName)) {
+            String pathToDockerfile = forkWithCurrentContentPath.getContentPath();
+            GHContent content = tryRetrievingContent(forkedRepo, pathToDockerfile, gitForkBranch.getBranchName());
+            if (content == null) {
+                log.info("No Dockerfile found at path: '{}'", pathToDockerfile);
+            } else {
+                modifyOnGithub(content, gitForkBranch.getBranchName(), gitForkBranch.getImageName(), gitForkBranch.getImageTag(),
+                        ns.get(Constants.GIT_ADDITIONAL_COMMIT_MESSAGE));
+                isContentModified = true;
+                isRepoSkipped = false;
+            }
+        }
+
+        if (isRepoSkipped) {
+            log.info("Skipping repo '{}' because contents of it's fork could not be retrieved. Moving ahead...",
+                    parentName);
+            skippedRepos.add(forkedRepo.getFullName());
+        }
+
+        if (isContentModified) {
+            PullRequestInfo pullRequestInfo =
+                    new PullRequestInfo(ns.get(Constants.GIT_PR_TITLE),
+                            gitForkBranch.getImageName(),
+                            gitForkBranch.getImageTag(),
+                            ns.get(Constants.GIT_PR_BODY));
+            // TODO: get the new PR number and cross post over to old ones
+            createPullReq(parent,
+                    gitForkBranch.getBranchName(),
+                    forkedRepo,
+                    pullRequestInfo);
+            // TODO: Run through PRs in fork to see if they have head branches that match the prefix and close those?
+        }
     }
 }

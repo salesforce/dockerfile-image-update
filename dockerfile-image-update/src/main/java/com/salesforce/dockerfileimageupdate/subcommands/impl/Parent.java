@@ -19,6 +19,7 @@ import com.salesforce.dockerfileimageupdate.subcommands.ExecutableWithNamespace;
 import com.salesforce.dockerfileimageupdate.utils.Constants;
 import com.salesforce.dockerfileimageupdate.utils.DockerfileGitHubUtil;
 import com.salesforce.dockerfileimageupdate.utils.ResultsProcessor;
+import com.salesforce.dockerfileimageupdate.subcommands.commonsteps.Common;
 import net.sourceforge.argparse4j.inf.Namespace;
 import org.kohsuke.github.GHContent;
 import org.kohsuke.github.GHRepository;
@@ -66,90 +67,21 @@ public class Parent implements ExecutableWithNamespace {
 
         Integer gitApiSearchLimit = ns.get(Constants.GIT_API_SEARCH_LIMIT);
         Optional<List<PagedSearchIterable<GHContent>>> contentsWithImage = dockerfileGitHubUtil.getGHContents(ns.get(Constants.GIT_ORG), img, gitApiSearchLimit);
+        Common commonSteps = new Common();
         if (contentsWithImage.isPresent()) {
             List<PagedSearchIterable<GHContent>> contentsFoundWithImage = contentsWithImage.get();
             for (int i = 0; i < contentsFoundWithImage.size(); i++ ) {
-                Multimap<String, GitHubContentToProcess> pathToDockerfilesInParentRepo =
-                        pullRequestSender.forkRepositoriesFoundAndGetPathToDockerfiles(contentsFoundWithImage.get(i), gitForkBranch);
-
-
-                List<IOException> exceptions = new ArrayList<>();
-                List<String> skippedRepos = new ArrayList<>();
-
-                for (String currUserRepo : pathToDockerfilesInParentRepo.keySet()) {
-                    Optional<GitHubContentToProcess> forkWithContentPaths =
-                            pathToDockerfilesInParentRepo.get(currUserRepo).stream().findFirst();
-                    if (forkWithContentPaths.isPresent()) {
-                        try {
-                            changeDockerfiles(ns, pathToDockerfilesInParentRepo, forkWithContentPaths.get(), skippedRepos);
-                        } catch (IOException e) {
-                            log.error(String.format("Error changing Dockerfile for %s", forkWithContentPaths.get().getParent().getFullName()), e);
-                            exceptions.add(e);
-                        }
-                    } else {
-                        log.warn("Didn't find fork for {} so not changing Dockerfiles", currUserRepo);
-                    }
+                try {
+                    commonSteps.prepareToCreatePullRequests(ns, pullRequestSender,
+                            contentsFoundWithImage.get(i), gitForkBranch, dockerfileGitHubUtil);
+                } catch (IOException e) {
+                    log.error("Could not send pull request.");
                 }
-
-                ResultsProcessor.processResults(skippedRepos, exceptions, log);
             }
         }
     }
 
     protected void loadDockerfileGithubUtil(DockerfileGitHubUtil _dockerfileGitHubUtil) {
         dockerfileGitHubUtil = _dockerfileGitHubUtil;
-    }
-
-    protected void changeDockerfiles(Namespace ns,
-                                     Multimap<String, GitHubContentToProcess> pathToDockerfilesInParentRepo,
-                                     GitHubContentToProcess gitHubContentToProcess,
-                                     List<String> skippedRepos) throws IOException,
-            InterruptedException {
-        // Should we skip doing a getRepository just to fill in the parent value? We already know this to be the parent...
-        GHRepository parent = gitHubContentToProcess.getParent();
-        GHRepository forkedRepo = gitHubContentToProcess.getFork();
-        // TODO: Getting a null pointer here for someone... probably just fixed this since we have parent
-        String parentName = parent.getFullName();
-
-        log.info("Fixing Dockerfiles in {} to PR to {}", forkedRepo.getFullName(), parent.getFullName());
-        GitForkBranch gitForkBranch = new GitForkBranch(ns.get(Constants.IMG), ns.get(Constants.TAG), ns.get(Constants.GIT_BRANCH));
-
-        dockerfileGitHubUtil.createOrUpdateForkBranchToParentDefault(parent, forkedRepo, gitForkBranch);
-
-        // loop through all the Dockerfiles in the same repo
-        boolean isContentModified = false;
-        boolean isRepoSkipped = true;
-        for (GitHubContentToProcess forkWithCurrentContentPath : pathToDockerfilesInParentRepo.get(parentName)) {
-            String pathToDockerfile = forkWithCurrentContentPath.getContentPath();
-            GHContent content = dockerfileGitHubUtil.tryRetrievingContent(forkedRepo, pathToDockerfile, gitForkBranch.getBranchName());
-            if (content == null) {
-                log.info("No Dockerfile found at path: '{}'", pathToDockerfile);
-            } else {
-                dockerfileGitHubUtil.modifyOnGithub(content, gitForkBranch.getBranchName(), gitForkBranch.getImageName(), gitForkBranch.getImageTag(),
-                        ns.get(Constants.GIT_ADDITIONAL_COMMIT_MESSAGE));
-                isContentModified = true;
-                isRepoSkipped = false;
-            }
-        }
-
-        if (isRepoSkipped) {
-            log.info("Skipping repo '{}' because contents of it's fork could not be retrieved. Moving ahead...",
-                    parentName);
-            skippedRepos.add(forkedRepo.getFullName());
-        }
-
-        if (isContentModified) {
-            PullRequestInfo pullRequestInfo =
-                    new PullRequestInfo(ns.get(Constants.GIT_PR_TITLE),
-                            gitForkBranch.getImageName(),
-                            gitForkBranch.getImageTag(),
-                            ns.get(Constants.GIT_PR_BODY));
-            // TODO: get the new PR number and cross post over to old ones
-            dockerfileGitHubUtil.createPullReq(parent,
-                    gitForkBranch.getBranchName(),
-                    forkedRepo,
-                    pullRequestInfo);
-            // TODO: Run through PRs in fork to see if they have head branches that match the prefix and close those?
-        }
     }
 }
