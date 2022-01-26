@@ -72,7 +72,7 @@ public class Parent implements ExecutableWithNamespace {
                     commonSteps.prepareToCreatePullRequests(ns, pullRequestSender,
                             contentsFoundWithImage.get(i), gitForkBranch, dockerfileGitHubUtil);
                 } catch (IOException e) {
-                    log.error("Could not send pull request.");
+                    log.error("Could not send pull request.", e);
                 }
             }
         }

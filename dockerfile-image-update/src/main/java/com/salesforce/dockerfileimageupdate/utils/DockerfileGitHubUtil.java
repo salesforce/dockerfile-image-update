@@ -446,7 +446,6 @@ public class DockerfileGitHubUtil {
         // Should we skip doing a getRepository just to fill in the parent value? We already know this to be the parent...
         GHRepository parent = gitHubContentToProcess.getParent();
         GHRepository forkedRepo = gitHubContentToProcess.getFork();
-        // TODO: Getting a null pointer here for someone... probably just fixed this since we have parent
         String parentName = parent.getFullName();
 
         log.info("Fixing Dockerfiles in {} to PR to {}", forkedRepo.getFullName(), parent.getFullName());
@@ -481,12 +480,11 @@ public class DockerfileGitHubUtil {
                             gitForkBranch.getImageName(),
                             gitForkBranch.getImageTag(),
                             ns.get(Constants.GIT_PR_BODY));
-            // TODO: get the new PR number and cross post over to old ones
+
             createPullReq(parent,
                     gitForkBranch.getBranchName(),
                     forkedRepo,
                     pullRequestInfo);
-            // TODO: Run through PRs in fork to see if they have head branches that match the prefix and close those?
         }
     }
 }
