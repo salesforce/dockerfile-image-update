@@ -59,6 +59,9 @@ public class CommonTest {
         Multimap<String, GitHubContentToProcess> pathToDockerfilesInParentRepo = mock(Multimap.class);
         GitHubContentToProcess gitHubContentToProcess = mock(GitHubContentToProcess.class);
         when(pullRequestSender.forkRepositoriesFoundAndGetPathToDockerfiles(contentsFoundWithImage, gitForkBranch)).thenReturn(pathToDockerfilesInParentRepo);
+        Set<String> currUsers = new HashSet<>();
+        currUsers.add("repo1");
+        when(pathToDockerfilesInParentRepo.keySet()).thenReturn(currUsers);
         commonStep.prepareToCreatePullRequests(ns, pullRequestSender, contentsFoundWithImage,
                 gitForkBranch, dockerfileGitHubUtil);
 
