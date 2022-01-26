@@ -10,7 +10,6 @@ package com.salesforce.dockerfileimageupdate.utils;
 
 import com.google.common.collect.*;
 import com.salesforce.dockerfileimageupdate.model.*;
-import com.salesforce.dockerfileimageupdate.subcommands.impl.*;
 import net.sourceforge.argparse4j.inf.*;
 import org.kohsuke.github.*;
 import org.mockito.*;

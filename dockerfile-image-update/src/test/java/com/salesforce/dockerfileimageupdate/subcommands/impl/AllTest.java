@@ -8,10 +8,7 @@
 
 package com.salesforce.dockerfileimageupdate.subcommands.impl;
 
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Multimap;
 import com.google.gson.JsonElement;
 import com.salesforce.dockerfileimageupdate.model.*;
 import com.salesforce.dockerfileimageupdate.process.*;
@@ -27,12 +24,9 @@ import org.kohsuke.github.*;
 import org.mockito.Mockito;
 import org.testng.annotations.Test;
 
-import java.io.FileNotFoundException;
-
 import static org.mockito.Matchers.*;
 import static org.mockito.Mockito.*;
 import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
 
 /**
  * Created by minho.park on 7/19/16.
@@ -81,5 +75,45 @@ public class AllTest {
         Mockito.verify(all, times(1)).getCommon();
         Mockito.verify(commonSteps, times(1)).prepareToCreatePullRequests(ns, pullRequestSender,
                 contentsWithImage, gitForkBranch, dockerfileGitHubUtil);
+    }
+
+    @Test
+    public void testGetCommon(){
+        All all = new All();
+        Common common = new Common();
+        assertEquals(common.getClass(), all.getCommon().getClass());
+    }
+
+    @Test
+    public void testGetGitForkBranch() {
+        Map<String, Object> nsMap = ImmutableMap.of(Constants.IMG,
+                "image", Constants.TAG,
+                "tag", Constants.STORE,
+                "store", Constants.GIT_BRANCH,
+                "branch");
+        Namespace ns = new Namespace(nsMap);
+        All all = Mockito.spy(new All());
+        GitForkBranch gitForkBranch = all.getGitForkBranch("image", "tag", ns);
+        assertEquals(gitForkBranch.getBranchName(), "branch-tag");
+        assertEquals(gitForkBranch.getImageName(), "image");
+        assertEquals(gitForkBranch.getImageTag(), "tag");
+    }
+
+    @Test
+    public void testGetPullRequestSender() {
+        Map<String, Object> nsMap = ImmutableMap.of(Constants.IMG,
+                "image", Constants.TAG,
+                "tag", Constants.STORE,
+                "store", Constants.GIT_BRANCH,
+                "branch");
+        Namespace ns = new Namespace(nsMap);
+        DockerfileGitHubUtil dockerfileGitHubUtil = mock(DockerfileGitHubUtil.class);
+        All all = Mockito.spy(new All());
+        ForkableRepoValidator forkableRepoValidator = mock(ForkableRepoValidator.class);
+        GitHubPullRequestSender gitHubPullRequestSender =
+                new GitHubPullRequestSender(dockerfileGitHubUtil, forkableRepoValidator, "");
+
+        assertEquals(all.getPullRequestSender(dockerfileGitHubUtil, ns).getClass(),
+                gitHubPullRequestSender.getClass());
     }
 }
