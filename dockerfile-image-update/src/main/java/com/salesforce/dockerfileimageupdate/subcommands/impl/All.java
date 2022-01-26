@@ -8,7 +8,6 @@
 
 package com.salesforce.dockerfileimageupdate.subcommands.impl;
 
-import com.google.common.collect.Multimap;
 import com.google.gson.JsonElement;
 import com.salesforce.dockerfileimageupdate.SubCommand;
 import com.salesforce.dockerfileimageupdate.model.*;
@@ -16,7 +15,6 @@ import com.salesforce.dockerfileimageupdate.process.*;
 import com.salesforce.dockerfileimageupdate.subcommands.ExecutableWithNamespace;
 import com.salesforce.dockerfileimageupdate.utils.Constants;
 import com.salesforce.dockerfileimageupdate.utils.DockerfileGitHubUtil;
-import com.salesforce.dockerfileimageupdate.utils.ResultsProcessor;
 import com.salesforce.dockerfileimageupdate.subcommands.commonsteps.Common;
 import net.sourceforge.argparse4j.inf.Namespace;
 import org.kohsuke.github.*;
