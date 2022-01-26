@@ -50,16 +50,15 @@ public class All implements ExecutableWithNamespace {
         for (Map.Entry<String, JsonElement> imageToTag : imageToTagStore) {
             String image = imageToTag.getKey();
             String tag = imageToTag.getValue().getAsString();
-            GitHubPullRequestSender pullRequestSender =
-                    new GitHubPullRequestSender(dockerfileGitHubUtil, new ForkableRepoValidator(dockerfileGitHubUtil),
-                            ns.get(Constants.GIT_REPO_EXCLUDES));
-            GitForkBranch gitForkBranch =
-                    new GitForkBranch(image, tag, ns.get(Constants.GIT_BRANCH));
+            Common commonSteps = getCommon();
+            GitHubPullRequestSender pullRequestSender = getPullRequestSender(dockerfileGitHubUtil, ns);
+            GitForkBranch gitForkBranch = getGitForkBranch(image, tag, ns);
+
             log.info("Finding Dockerfiles with the image name {}...", image);
 
             Optional<List<PagedSearchIterable<GHContent>>> contentsWithImage =
                     this.dockerfileGitHubUtil.findFilesWithImage(image, orgsToIncludeInSearch, gitApiSearchLimit);
-            Common commonSteps = new Common();
+
             if (contentsWithImage.isPresent()) {
                 contentsWithImage.get().forEach(pagedSearchIterable -> {
                     try {
@@ -75,5 +74,18 @@ public class All implements ExecutableWithNamespace {
 
     protected void loadDockerfileGithubUtil(DockerfileGitHubUtil _dockerfileGitHubUtil) {
         dockerfileGitHubUtil = _dockerfileGitHubUtil;
+    }
+
+    protected GitHubPullRequestSender getPullRequestSender(DockerfileGitHubUtil dockerfileGitHubUtil, Namespace ns){
+        return new GitHubPullRequestSender(dockerfileGitHubUtil, new ForkableRepoValidator(dockerfileGitHubUtil),
+                ns.get(Constants.GIT_REPO_EXCLUDES));
+    }
+
+    protected GitForkBranch getGitForkBranch(String image, String tag, Namespace ns){
+        return new GitForkBranch(image, tag, ns.get(Constants.GIT_BRANCH));
+    }
+
+    protected Common getCommon(){
+        return new Common();
     }
 }

@@ -27,6 +27,7 @@ import org.kohsuke.github.PagedSearchIterable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.naming.*;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -56,18 +57,14 @@ public class Parent implements ExecutableWithNamespace {
                     + "be skipped.", Constants.SKIP_PR_CREATION);
             return;
         }
-        GitHubPullRequestSender pullRequestSender =
-                new GitHubPullRequestSender(dockerfileGitHubUtil, new ForkableRepoValidator(dockerfileGitHubUtil),
-                        ns.get(Constants.GIT_REPO_EXCLUDES));
-
-        GitForkBranch gitForkBranch =
-                new GitForkBranch(ns.get(Constants.IMG), ns.get(Constants.TAG), ns.get(Constants.GIT_BRANCH));
-
+        Common commonSteps = getCommon();
+        GitHubPullRequestSender pullRequestSender = getPullRequestSender(dockerfileGitHubUtil, ns);
+        GitForkBranch gitForkBranch = getGitForkBranch(ns);
         log.info("Finding Dockerfiles with the given image...");
 
         Integer gitApiSearchLimit = ns.get(Constants.GIT_API_SEARCH_LIMIT);
         Optional<List<PagedSearchIterable<GHContent>>> contentsWithImage = dockerfileGitHubUtil.getGHContents(ns.get(Constants.GIT_ORG), img, gitApiSearchLimit);
-        Common commonSteps = new Common();
+
         if (contentsWithImage.isPresent()) {
             List<PagedSearchIterable<GHContent>> contentsFoundWithImage = contentsWithImage.get();
             for (int i = 0; i < contentsFoundWithImage.size(); i++ ) {
@@ -79,6 +76,19 @@ public class Parent implements ExecutableWithNamespace {
                 }
             }
         }
+    }
+
+    protected Common getCommon(){
+        return new Common();
+    }
+
+    protected GitForkBranch getGitForkBranch(Namespace ns){
+        return new GitForkBranch(ns.get(Constants.IMG), ns.get(Constants.TAG), ns.get(Constants.GIT_BRANCH));
+    }
+
+    protected GitHubPullRequestSender getPullRequestSender(DockerfileGitHubUtil dockerfileGitHubUtil, Namespace ns){
+        return new GitHubPullRequestSender(dockerfileGitHubUtil, new ForkableRepoValidator(dockerfileGitHubUtil),
+                ns.get(Constants.GIT_REPO_EXCLUDES));
     }
 
     protected void loadDockerfileGithubUtil(DockerfileGitHubUtil _dockerfileGitHubUtil) {
