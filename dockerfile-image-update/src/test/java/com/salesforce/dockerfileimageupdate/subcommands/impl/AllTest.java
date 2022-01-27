@@ -68,10 +68,10 @@ public class AllTest {
 
 
         all.execute(ns, dockerfileGitHubUtil);
-        Mockito.verify(all, times(1)).getGitForkBranch(anyString(), anyString(), any());
-        Mockito.verify(all, times(1)).getPullRequestSender(dockerfileGitHubUtil, ns);
-        Mockito.verify(all, times(1)).getPullRequests();
-        Mockito.verify(pullRequests, times(1)).prepareToCreate(ns, pullRequestSender,
+        verify(all, times(1)).getGitForkBranch(anyString(), anyString(), any());
+        verify(all, times(1)).getPullRequestSender(dockerfileGitHubUtil, ns);
+        verify(all, times(1)).getPullRequests();
+        verify(pullRequests, times(1)).prepareToCreate(ns, pullRequestSender,
                 contentsWithImage, gitForkBranch, dockerfileGitHubUtil);
     }
 

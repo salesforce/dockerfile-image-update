@@ -37,7 +37,7 @@ public class PullRequestsTest {
         pullRequests.prepareToCreate(ns, pullRequestSender, contentsFoundWithImage,
                 gitForkBranch, dockerfileGitHubUtil);
 
-        Mockito.verify(dockerfileGitHubUtil, times(2)).changeDockerfiles(eq(ns),
+        verify(dockerfileGitHubUtil, times(2)).changeDockerfiles(eq(ns),
                 eq(pathToDockerfilesInParentRepo),
                 eq(gitHubContentToProcess), anyList(), eq(gitForkBranch));
     }
@@ -64,7 +64,7 @@ public class PullRequestsTest {
         pullRequests.prepareToCreate(ns, pullRequestSender, contentsFoundWithImage,
                 gitForkBranch, dockerfileGitHubUtil);
 
-        Mockito.verify(dockerfileGitHubUtil, times(0)).changeDockerfiles(eq(ns),
+        verify(dockerfileGitHubUtil, times(0)).changeDockerfiles(eq(ns),
                 eq(pathToDockerfilesInParentRepo),
                 eq(gitHubContentToProcess), anyList(), eq(gitForkBranch));
     }

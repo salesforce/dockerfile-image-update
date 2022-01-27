@@ -20,10 +20,10 @@ import org.mockito.Mockito;
 import org.testng.annotations.Test;
 
 import java.util.*;
-
 import static org.mockito.Matchers.*;
 import static org.mockito.Mockito.*;
 import static org.testng.Assert.*;
+
 /**
  * Created by minho.park on 7/19/16.
  */
@@ -48,10 +48,10 @@ public class ParentTest {
 
         parent.execute(ns, dockerfileGitHubUtil);
 
-        Mockito.verify(parent, times(0)).getGitForkBranch(ns);
-        Mockito.verify(parent, times(0)).getPullRequestSender(dockerfileGitHubUtil, ns);
-        Mockito.verify(parent, times(0)).getPullRequests();
-        Mockito.verify(pullRequests, times(0)).prepareToCreate(ns, pullRequestSender,
+        verify(parent, times(0)).getGitForkBranch(ns);
+        verify(parent, times(0)).getPullRequestSender(dockerfileGitHubUtil, ns);
+        verify(parent, times(0)).getPullRequests();
+        verify(pullRequests, times(0)).prepareToCreate(ns, pullRequestSender,
                 contentsWithImage, gitForkBranch, dockerfileGitHubUtil);
     }
 
@@ -81,10 +81,10 @@ public class ParentTest {
         when(dockerfileGitHubUtil.getGHContents(anyString(), anyString(),  anyInt())).thenReturn(optionalContentsWithImageList);
 
         parent.execute(ns, dockerfileGitHubUtil);
-        Mockito.verify(parent, times(1)).getGitForkBranch(ns);
-        Mockito.verify(parent, times(1)).getPullRequestSender(dockerfileGitHubUtil, ns);
-        Mockito.verify(parent, times(1)).getPullRequests();
-        Mockito.verify(pullRequests, times(1)).prepareToCreate(ns, pullRequestSender,
+        verify(parent, times(1)).getGitForkBranch(ns);
+        verify(parent, times(1)).getPullRequestSender(dockerfileGitHubUtil, ns);
+        verify(parent, times(1)).getPullRequests();
+        verify(pullRequests, times(1)).prepareToCreate(ns, pullRequestSender,
                 contentsWithImage, gitForkBranch, dockerfileGitHubUtil);
     }
 
