@@ -13,9 +13,7 @@ import com.google.common.collect.ImmutableMap;
 import com.salesforce.dockerfileimageupdate.model.*;
 import com.salesforce.dockerfileimageupdate.process.*;
 import com.salesforce.dockerfileimageupdate.storage.GitHubJsonStore;
-import com.salesforce.dockerfileimageupdate.subcommands.commonsteps.*;
-import com.salesforce.dockerfileimageupdate.utils.Constants;
-import com.salesforce.dockerfileimageupdate.utils.DockerfileGitHubUtil;
+import com.salesforce.dockerfileimageupdate.utils.*;
 import net.sourceforge.argparse4j.inf.Namespace;
 import org.kohsuke.github.*;
 import org.mockito.Mockito;
@@ -45,15 +43,15 @@ public class ParentTest {
         GitHubPullRequestSender pullRequestSender = mock(GitHubPullRequestSender.class);
         GitForkBranch gitForkBranch = mock(GitForkBranch.class);
         PagedSearchIterable<GHContent> contentsWithImage = mock(PagedSearchIterable.class);
-        Common commonSteps = mock(Common.class);
+        PullRequests pullRequests = mock(PullRequests.class);
         when(dockerfileGitHubUtil.getGitHubJsonStore(anyString())).thenReturn(gitHubJsonStore);
 
         parent.execute(ns, dockerfileGitHubUtil);
 
         Mockito.verify(parent, times(0)).getGitForkBranch(ns);
         Mockito.verify(parent, times(0)).getPullRequestSender(dockerfileGitHubUtil, ns);
-        Mockito.verify(parent, times(0)).getCommon();
-        Mockito.verify(commonSteps, times(0)).prepareToCreatePullRequests(ns, pullRequestSender,
+        Mockito.verify(parent, times(0)).getPullRequests();
+        Mockito.verify(pullRequests, times(0)).prepareToCreate(ns, pullRequestSender,
                 contentsWithImage, gitForkBranch, dockerfileGitHubUtil);
     }
 
@@ -70,31 +68,31 @@ public class ParentTest {
         GitHubJsonStore gitHubJsonStore = mock(GitHubJsonStore.class);
         GitHubPullRequestSender pullRequestSender = mock(GitHubPullRequestSender.class);
         GitForkBranch gitForkBranch = mock(GitForkBranch.class);
-        Common commonSteps = mock(Common.class);
+        PullRequests pullRequests = mock(PullRequests.class);
         when(dockerfileGitHubUtil.getGitHubJsonStore(anyString())).thenReturn(gitHubJsonStore);
         when(parent.getPullRequestSender(dockerfileGitHubUtil, ns)).thenReturn(pullRequestSender);
         when(parent.getGitForkBranch(ns)).thenReturn(gitForkBranch);
-        when(parent.getCommon()).thenReturn(commonSteps);
+        when(parent.getPullRequests()).thenReturn(pullRequests);
         PagedSearchIterable<GHContent> contentsWithImage = mock(PagedSearchIterable.class);
         List<PagedSearchIterable<GHContent>> contentsWithImageList = Collections.singletonList(contentsWithImage);
         Optional<List<PagedSearchIterable<GHContent>>> optionalContentsWithImageList = Optional.of(contentsWithImageList);
-        doNothing().when(commonSteps).prepareToCreatePullRequests(ns, pullRequestSender,
+        doNothing().when(pullRequests).prepareToCreate(ns, pullRequestSender,
                 contentsWithImage, gitForkBranch, dockerfileGitHubUtil);
         when(dockerfileGitHubUtil.getGHContents(anyString(), anyString(),  anyInt())).thenReturn(optionalContentsWithImageList);
 
         parent.execute(ns, dockerfileGitHubUtil);
         Mockito.verify(parent, times(1)).getGitForkBranch(ns);
         Mockito.verify(parent, times(1)).getPullRequestSender(dockerfileGitHubUtil, ns);
-        Mockito.verify(parent, times(1)).getCommon();
-        Mockito.verify(commonSteps, times(1)).prepareToCreatePullRequests(ns, pullRequestSender,
+        Mockito.verify(parent, times(1)).getPullRequests();
+        Mockito.verify(pullRequests, times(1)).prepareToCreate(ns, pullRequestSender,
                 contentsWithImage, gitForkBranch, dockerfileGitHubUtil);
     }
 
     @Test
     public void testGetCommon(){
         Parent parent = new Parent();
-        Common common = new Common();
-        assertEquals(common.getClass(), parent.getCommon().getClass());
+        PullRequests pullRequests = new PullRequests();
+        assertEquals(pullRequests.getClass(), parent.getPullRequests().getClass());
     }
 
     @Test

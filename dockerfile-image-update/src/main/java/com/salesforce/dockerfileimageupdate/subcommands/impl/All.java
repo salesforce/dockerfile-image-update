@@ -15,7 +15,7 @@ import com.salesforce.dockerfileimageupdate.process.*;
 import com.salesforce.dockerfileimageupdate.subcommands.ExecutableWithNamespace;
 import com.salesforce.dockerfileimageupdate.utils.Constants;
 import com.salesforce.dockerfileimageupdate.utils.DockerfileGitHubUtil;
-import com.salesforce.dockerfileimageupdate.subcommands.commonsteps.Common;
+import com.salesforce.dockerfileimageupdate.utils.PullRequests;
 import net.sourceforge.argparse4j.inf.Namespace;
 import org.kohsuke.github.*;
 import org.slf4j.Logger;
@@ -48,7 +48,7 @@ public class All implements ExecutableWithNamespace {
         for (Map.Entry<String, JsonElement> imageToTag : imageToTagStore) {
             String image = imageToTag.getKey();
             String tag = imageToTag.getValue().getAsString();
-            Common commonSteps = getCommon();
+            PullRequests pullRequests = getPullRequests();
             GitHubPullRequestSender pullRequestSender = getPullRequestSender(dockerfileGitHubUtil, ns);
             GitForkBranch gitForkBranch = getGitForkBranch(image, tag, ns);
 
@@ -60,7 +60,7 @@ public class All implements ExecutableWithNamespace {
             if (contentsWithImage.isPresent()) {
                 contentsWithImage.get().forEach(pagedSearchIterable -> {
                     try {
-                        commonSteps.prepareToCreatePullRequests(ns, pullRequestSender,
+                        pullRequests.prepareToCreate(ns, pullRequestSender,
                                 pagedSearchIterable, gitForkBranch, dockerfileGitHubUtil);
                     } catch (IOException e) {
                         log.error("Could not send pull request.");
@@ -83,7 +83,7 @@ public class All implements ExecutableWithNamespace {
         return new GitForkBranch(image, tag, ns.get(Constants.GIT_BRANCH));
     }
 
-    protected Common getCommon(){
-        return new Common();
+    protected PullRequests getPullRequests(){
+        return new PullRequests();
     }
 }

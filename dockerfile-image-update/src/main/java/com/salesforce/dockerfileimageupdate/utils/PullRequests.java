@@ -1,9 +1,8 @@
-package com.salesforce.dockerfileimageupdate.subcommands.commonsteps;
+package com.salesforce.dockerfileimageupdate.utils;
 
 import com.google.common.collect.*;
 import com.salesforce.dockerfileimageupdate.model.*;
 import com.salesforce.dockerfileimageupdate.process.*;
-import com.salesforce.dockerfileimageupdate.utils.*;
 import net.sourceforge.argparse4j.inf.*;
 import org.kohsuke.github.*;
 import org.slf4j.*;
@@ -11,9 +10,9 @@ import org.slf4j.*;
 import java.io.*;
 import java.util.*;
 
-public class Common {
-    private static final Logger log = LoggerFactory.getLogger(Common.class);
-    public void prepareToCreatePullRequests(final Namespace ns,
+public class PullRequests {
+    private static final Logger log = LoggerFactory.getLogger(PullRequests.class);
+    public void prepareToCreate(final Namespace ns,
                                             GitHubPullRequestSender pullRequestSender,
                                             PagedSearchIterable<GHContent> contentsFoundWithImage,
                                             GitForkBranch gitForkBranch,

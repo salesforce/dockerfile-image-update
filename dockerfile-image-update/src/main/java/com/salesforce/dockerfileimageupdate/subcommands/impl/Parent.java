@@ -16,7 +16,7 @@ import com.salesforce.dockerfileimageupdate.process.GitHubPullRequestSender;
 import com.salesforce.dockerfileimageupdate.subcommands.ExecutableWithNamespace;
 import com.salesforce.dockerfileimageupdate.utils.Constants;
 import com.salesforce.dockerfileimageupdate.utils.DockerfileGitHubUtil;
-import com.salesforce.dockerfileimageupdate.subcommands.commonsteps.Common;
+import com.salesforce.dockerfileimageupdate.utils.PullRequests;
 import net.sourceforge.argparse4j.inf.Namespace;
 import org.kohsuke.github.GHContent;
 import org.kohsuke.github.PagedSearchIterable;
@@ -51,7 +51,7 @@ public class Parent implements ExecutableWithNamespace {
                     + "be skipped.", Constants.SKIP_PR_CREATION);
             return;
         }
-        Common commonSteps = getCommon();
+        PullRequests pullRequests = getPullRequests();
         GitHubPullRequestSender pullRequestSender = getPullRequestSender(dockerfileGitHubUtil, ns);
         GitForkBranch gitForkBranch = getGitForkBranch(ns);
         log.info("Finding Dockerfiles with the given image...");
@@ -63,7 +63,7 @@ public class Parent implements ExecutableWithNamespace {
             List<PagedSearchIterable<GHContent>> contentsFoundWithImage = contentsWithImage.get();
             for (int i = 0; i < contentsFoundWithImage.size(); i++ ) {
                 try {
-                    commonSteps.prepareToCreatePullRequests(ns, pullRequestSender,
+                    pullRequests.prepareToCreate(ns, pullRequestSender,
                             contentsFoundWithImage.get(i), gitForkBranch, dockerfileGitHubUtil);
                 } catch (IOException e) {
                     log.error("Could not send pull request.", e);
@@ -72,8 +72,8 @@ public class Parent implements ExecutableWithNamespace {
         }
     }
 
-    protected Common getCommon(){
-        return new Common();
+    protected PullRequests getPullRequests(){
+        return new PullRequests();
     }
 
     protected GitForkBranch getGitForkBranch(Namespace ns){

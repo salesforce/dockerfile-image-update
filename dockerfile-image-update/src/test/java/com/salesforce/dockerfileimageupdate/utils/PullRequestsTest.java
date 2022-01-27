@@ -1,4 +1,4 @@
-package com.salesforce.dockerfileimageupdate.subcommands.commonsteps;
+package com.salesforce.dockerfileimageupdate.utils;
 
 import com.google.common.collect.*;
 import com.salesforce.dockerfileimageupdate.model.*;
@@ -13,16 +13,16 @@ import java.util.*;
 
 import static org.mockito.Mockito.*;
 
-public class CommonTest {
+public class PullRequestsTest {
     @Test
-    public void testCommonStepsSuccessful() throws Exception {
+    public void testPullRequestsPrepareToCreateSuccessful() throws Exception {
         Map<String, Object> nsMap = ImmutableMap.of(Constants.IMG,
                 "image", Constants.TAG,
                 "tag", Constants.STORE,
                 "store", Constants.SKIP_PR_CREATION,
                 false);
         Namespace ns = new Namespace(nsMap);
-        Common commonStep = new Common();
+        PullRequests pullRequests = new PullRequests();
         GitHubPullRequestSender pullRequestSender = mock(GitHubPullRequestSender.class);
         PagedSearchIterable<GHContent> contentsFoundWithImage = mock(PagedSearchIterable.class);
         GitForkBranch gitForkBranch = mock(GitForkBranch.class);
@@ -34,7 +34,7 @@ public class CommonTest {
         when(pullRequestSender.forkRepositoriesFoundAndGetPathToDockerfiles(contentsFoundWithImage, gitForkBranch)).thenReturn(pathToDockerfilesInParentRepo);
 
 
-        commonStep.prepareToCreatePullRequests(ns, pullRequestSender, contentsFoundWithImage,
+        pullRequests.prepareToCreate(ns, pullRequestSender, contentsFoundWithImage,
                 gitForkBranch, dockerfileGitHubUtil);
 
         Mockito.verify(dockerfileGitHubUtil, times(2)).changeDockerfiles(eq(ns),
@@ -43,14 +43,14 @@ public class CommonTest {
     }
 
     @Test
-    public void testCommonStepsWhenNoDockerfileFound() throws Exception {
+    public void testPullRequestsPrepareToCreateWhenNoDockerfileFound() throws Exception {
         Map<String, Object> nsMap = ImmutableMap.of(Constants.IMG,
                 "image", Constants.TAG,
                 "tag", Constants.STORE,
                 "store", Constants.SKIP_PR_CREATION,
                 false);
         Namespace ns = new Namespace(nsMap);
-        Common commonStep = new Common();
+        PullRequests pullRequests = new PullRequests();
         GitHubPullRequestSender pullRequestSender = mock(GitHubPullRequestSender.class);
         PagedSearchIterable<GHContent> contentsFoundWithImage = mock(PagedSearchIterable.class);
         GitForkBranch gitForkBranch = mock(GitForkBranch.class);
@@ -61,7 +61,7 @@ public class CommonTest {
         Set<String> currUsers = new HashSet<>();
         currUsers.add("repo1");
         when(pathToDockerfilesInParentRepo.keySet()).thenReturn(currUsers);
-        commonStep.prepareToCreatePullRequests(ns, pullRequestSender, contentsFoundWithImage,
+        pullRequests.prepareToCreate(ns, pullRequestSender, contentsFoundWithImage,
                 gitForkBranch, dockerfileGitHubUtil);
 
         Mockito.verify(dockerfileGitHubUtil, times(0)).changeDockerfiles(eq(ns),

@@ -13,9 +13,7 @@ import com.google.gson.JsonElement;
 import com.salesforce.dockerfileimageupdate.model.*;
 import com.salesforce.dockerfileimageupdate.process.*;
 import com.salesforce.dockerfileimageupdate.storage.*;
-import com.salesforce.dockerfileimageupdate.subcommands.commonsteps.*;
-import com.salesforce.dockerfileimageupdate.utils.Constants;
-import com.salesforce.dockerfileimageupdate.utils.DockerfileGitHubUtil;
+import com.salesforce.dockerfileimageupdate.utils.*;
 
 import java.util.*;
 
@@ -44,7 +42,7 @@ public class AllTest {
         GitHubJsonStore gitHubJsonStore = mock(GitHubJsonStore.class);
         GitHubPullRequestSender pullRequestSender = mock(GitHubPullRequestSender.class);
         GitForkBranch gitForkBranch = mock(GitForkBranch.class);
-        Common commonSteps = mock(Common.class);
+        PullRequests pullRequests = mock(PullRequests.class);
         Set<Map.Entry<String, JsonElement>> imageToTagStore = mock(Set.class);
         when(dockerfileGitHubUtil.getGitHubJsonStore(anyString())).thenReturn(gitHubJsonStore);
         when(gitHubJsonStore.parseStoreToImagesMap(dockerfileGitHubUtil, "store")).thenReturn(imageToTagStore);
@@ -60,11 +58,11 @@ public class AllTest {
         when(jsonElement.getAsString()).thenReturn("tag1");
         when(all.getPullRequestSender(dockerfileGitHubUtil, ns)).thenReturn(pullRequestSender);
         when(all.getGitForkBranch("image1", "tag1", ns)).thenReturn(gitForkBranch);
-        when(all.getCommon()).thenReturn(commonSteps);
+        when(all.getPullRequests()).thenReturn(pullRequests);
         PagedSearchIterable<GHContent> contentsWithImage = mock(PagedSearchIterable.class);
         List<PagedSearchIterable<GHContent>> contentsWithImageList = Collections.singletonList(contentsWithImage);
         Optional<List<PagedSearchIterable<GHContent>>> optionalContentsWithImageList = Optional.of(contentsWithImageList);
-        doNothing().when(commonSteps).prepareToCreatePullRequests(ns, pullRequestSender,
+        doNothing().when(pullRequests).prepareToCreate(ns, pullRequestSender,
                 contentsWithImage, gitForkBranch, dockerfileGitHubUtil);
         when(dockerfileGitHubUtil.findFilesWithImage(anyString(), anyMap(),  anyInt())).thenReturn(optionalContentsWithImageList);
 
@@ -72,16 +70,16 @@ public class AllTest {
         all.execute(ns, dockerfileGitHubUtil);
         Mockito.verify(all, times(1)).getGitForkBranch(anyString(), anyString(), any());
         Mockito.verify(all, times(1)).getPullRequestSender(dockerfileGitHubUtil, ns);
-        Mockito.verify(all, times(1)).getCommon();
-        Mockito.verify(commonSteps, times(1)).prepareToCreatePullRequests(ns, pullRequestSender,
+        Mockito.verify(all, times(1)).getPullRequests();
+        Mockito.verify(pullRequests, times(1)).prepareToCreate(ns, pullRequestSender,
                 contentsWithImage, gitForkBranch, dockerfileGitHubUtil);
     }
 
     @Test
     public void testGetCommon(){
         All all = new All();
-        Common common = new Common();
-        assertEquals(common.getClass(), all.getCommon().getClass());
+        PullRequests pullRequests = new PullRequests();
+        assertEquals(pullRequests.getClass(), all.getPullRequests().getClass());
     }
 
     @Test
