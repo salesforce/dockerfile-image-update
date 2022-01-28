@@ -8,10 +8,11 @@
 
 package com.salesforce.dockerfileimageupdate.utils;
 
-import com.salesforce.dockerfileimageupdate.model.GitForkBranch;
-import com.salesforce.dockerfileimageupdate.model.PullRequestInfo;
+import com.google.common.collect.*;
+import com.salesforce.dockerfileimageupdate.model.*;
+import net.sourceforge.argparse4j.inf.*;
 import org.kohsuke.github.*;
-import org.mockito.Mock;
+import org.mockito.*;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
@@ -737,5 +738,67 @@ public class DockerfileGitHubUtilTest {
         dockerfileGitHubUtil.createOrUpdateForkBranchToParentDefault(parent, fork, gitForkBranch);
 
         verify(fork, times(1)).createRef(anyString(), matches(sha));
+    }
+
+    @Test
+    public void testOnePullRequestForMultipleDockerfilesInSameRepo() throws Exception {
+        Map<String, Object> nsMap = ImmutableMap.of(Constants.IMG,
+                "image", Constants.TAG,
+                "tag", Constants.STORE,
+                "store");
+        Namespace ns = new Namespace(nsMap);
+        GitForkBranch gitForkBranch = new GitForkBranch("image", "tag", null);
+        Multimap<String, GitHubContentToProcess> pathToDockerfilesInParentRepo = HashMultimap.create();
+        pathToDockerfilesInParentRepo.put("repo1", new GitHubContentToProcess(null, null, "df11"));
+        pathToDockerfilesInParentRepo.put("repo1", new GitHubContentToProcess(null, null, "df12"));
+        pathToDockerfilesInParentRepo.put("repo3", new GitHubContentToProcess(null, null, "df3"));
+        pathToDockerfilesInParentRepo.put("repo4", new GitHubContentToProcess(null, null, "df4"));
+
+        GHRepository forkedRepo = mock(GHRepository.class);
+        when(forkedRepo.isFork()).thenReturn(true);
+        when(forkedRepo.getFullName()).thenReturn("forkedrepo");
+
+        GHRepository parentRepo = mock(GHRepository.class);
+        when(parentRepo.getFullName()).thenReturn("repo1");
+        when(forkedRepo.getParent()).thenReturn(parentRepo);
+
+        //GHRepository parent = mock(GHRepository.class);
+        String defaultBranch = "default";
+        when(parentRepo.getDefaultBranch()).thenReturn(defaultBranch);
+        GHBranch parentBranch = mock(GHBranch.class);
+        String sha = "abcdef";
+        when(parentBranch.getSHA1()).thenReturn(sha);
+        when(parentRepo.getBranch(defaultBranch)).thenReturn(parentBranch);
+
+        gitHubUtil = mock(GitHubUtil.class);
+        dockerfileGitHubUtil = Mockito.spy(new DockerfileGitHubUtil(gitHubUtil));
+        //when(dockerfileGitHubUtil.getPullRequestForImageBranch(any(), any())).thenReturn
+        // (Optional.empty());
+        //when(dockerfileGitHubUtil.getRepo(forkedRepo.getFullName())).thenReturn(forkedRepo);
+        GHContent forkedRepoContent1 = mock(GHContent.class);
+        when(gitHubUtil.tryRetrievingContent(eq(forkedRepo),
+                eq("df11"), eq("image-tag"))).thenReturn(forkedRepoContent1);
+        GHContent forkedRepoContent2 = mock(GHContent.class);
+        when(gitHubUtil.tryRetrievingContent(eq(forkedRepo),
+                eq("df12"), eq("image-tag"))).thenReturn(forkedRepoContent2);
+        doNothing().when(dockerfileGitHubUtil).modifyOnGithub(any(), eq("image-tag"), eq("image")
+                , eq("tag"), anyString());
+
+        dockerfileGitHubUtil.changeDockerfiles(ns, pathToDockerfilesInParentRepo,
+                new GitHubContentToProcess(forkedRepo, parentRepo, ""), new ArrayList<>(), gitForkBranch);
+
+        // Both Dockerfiles retrieved from the same repo
+        verify(dockerfileGitHubUtil, times(1)).tryRetrievingContent(eq(forkedRepo),
+                eq("df11"), eq("image-tag"));
+        verify(dockerfileGitHubUtil, times(1)).tryRetrievingContent(eq(forkedRepo),
+                eq("df12"), eq("image-tag"));
+
+        // Both Dockerfiles modified
+        verify(dockerfileGitHubUtil, times(2))
+                .modifyOnGithub(any(), eq("image-tag"), eq("image"), eq("tag"), anyString());
+
+        // Only one PR created on the repo with changes to both Dockerfiles.
+        verify(dockerfileGitHubUtil, times(1)).createPullReq(eq(parentRepo),
+                eq("image-tag"), eq(forkedRepo), any());
     }
 }

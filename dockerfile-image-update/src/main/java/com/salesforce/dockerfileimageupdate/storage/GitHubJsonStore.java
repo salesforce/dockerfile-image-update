@@ -1,8 +1,7 @@
 package com.salesforce.dockerfileimageupdate.storage;
 
 import com.google.gson.*;
-import com.salesforce.dockerfileimageupdate.utils.Constants;
-import com.salesforce.dockerfileimageupdate.utils.GitHubUtil;
+import com.salesforce.dockerfileimageupdate.utils.*;
 import org.kohsuke.github.GHContent;
 import org.kohsuke.github.GHMyself;
 import org.kohsuke.github.GHRepository;
@@ -13,6 +12,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.file.Paths;
+import java.util.*;
 
 public class GitHubJsonStore {
     private static final Logger log = LoggerFactory.getLogger(GitHubJsonStore.class);
@@ -87,5 +87,32 @@ public class GitHubJsonStore {
 
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
         return gson.toJson(json);
+    }
+
+    public Set<Map.Entry<String, JsonElement>> parseStoreToImagesMap(DockerfileGitHubUtil dockerfileGitHubUtil, String storeName)
+            throws IOException, InterruptedException {
+        GHMyself myself = dockerfileGitHubUtil.getMyself();
+        String login = myself.getLogin();
+        GHRepository store = dockerfileGitHubUtil.getRepo(Paths.get(login, storeName).toString());
+
+        GHContent storeContent = dockerfileGitHubUtil.tryRetrievingContent(store, Constants.STORE_JSON_FILE,
+                store.getDefaultBranch());
+
+        if (storeContent == null) {
+            return Collections.emptySet();
+        }
+
+        JsonElement json;
+        try (InputStream stream = storeContent.read(); InputStreamReader streamR = new InputStreamReader(stream)) {
+            try {
+                json = JsonParser.parseReader(streamR);
+            } catch (JsonParseException e) {
+                log.warn("Not a JSON format store.");
+                return Collections.emptySet();
+            }
+        }
+
+        JsonElement imagesJson = json.getAsJsonObject().get("images");
+        return imagesJson.getAsJsonObject().entrySet();
     }
 }

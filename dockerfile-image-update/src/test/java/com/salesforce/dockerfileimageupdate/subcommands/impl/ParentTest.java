@@ -8,70 +8,27 @@
 
 package com.salesforce.dockerfileimageupdate.subcommands.impl;
 
-import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Multimap;
-import com.salesforce.dockerfileimageupdate.model.GitHubContentToProcess;
+
+import com.salesforce.dockerfileimageupdate.model.*;
+import com.salesforce.dockerfileimageupdate.process.*;
 import com.salesforce.dockerfileimageupdate.storage.GitHubJsonStore;
-import com.salesforce.dockerfileimageupdate.utils.Constants;
-import com.salesforce.dockerfileimageupdate.utils.DockerfileGitHubUtil;
+import com.salesforce.dockerfileimageupdate.utils.*;
 import net.sourceforge.argparse4j.inf.Namespace;
-import org.kohsuke.github.GHContent;
-import org.kohsuke.github.GHRepository;
+import org.kohsuke.github.*;
 import org.mockito.Mockito;
 import org.testng.annotations.Test;
 
-import java.util.ArrayList;
-import java.util.Map;
-import java.util.Optional;
-
+import java.io.*;
+import java.util.*;
 import static org.mockito.Matchers.*;
 import static org.mockito.Mockito.*;
+import static org.testng.Assert.*;
 
 /**
  * Created by minho.park on 7/19/16.
  */
 public class ParentTest {
-
-    @Test
-    public void testChangeDockerfiles_pullRequestCreation() throws Exception {
-        Map<String, Object> nsMap = ImmutableMap.of(Constants.IMG, "image", Constants.TAG, "tag", Constants.STORE, "store");
-        Namespace ns = new Namespace(nsMap);
-
-        GHRepository forkedRepo = mock(GHRepository.class);
-        when(forkedRepo.isFork()).thenReturn(true);
-        when(forkedRepo.getFullName()).thenReturn("forkedrepo");
-
-        GHRepository parentRepo = mock(GHRepository.class);
-        when(parentRepo.getFullName()).thenReturn("repo2");
-        when(forkedRepo.getParent()).thenReturn(parentRepo);
-
-        Multimap<String, GitHubContentToProcess> pathToDockerfilesInParentRepo = HashMultimap.create();
-        pathToDockerfilesInParentRepo.put("repo1", new GitHubContentToProcess(null, null, "df1"));
-        pathToDockerfilesInParentRepo.put("repo2", new GitHubContentToProcess(null, null, "df2"));
-        pathToDockerfilesInParentRepo.put("repo3", new GitHubContentToProcess(null, null, "df3"));
-        pathToDockerfilesInParentRepo.put("repo4", new GitHubContentToProcess(null, null, "df4"));
-
-        GHContent content = mock(GHContent.class);
-
-        DockerfileGitHubUtil dockerfileGitHubUtil = mock(DockerfileGitHubUtil.class);
-
-        when(dockerfileGitHubUtil.getPullRequestForImageBranch(eq(forkedRepo), any())).thenReturn(Optional.empty());
-
-        when(dockerfileGitHubUtil.tryRetrievingContent(forkedRepo, "df2",
-                "image-tag")).thenReturn(content);
-
-        Parent parent = new Parent();
-        parent.loadDockerfileGithubUtil(dockerfileGitHubUtil);
-        parent.changeDockerfiles(ns, pathToDockerfilesInParentRepo, new GitHubContentToProcess(forkedRepo, parentRepo, ""), new ArrayList<>());
-
-        Mockito.verify(dockerfileGitHubUtil, times(1))
-                .tryRetrievingContent(eq(forkedRepo), eq("df2"), eq("image-tag"));
-        Mockito.verify(dockerfileGitHubUtil, times(1))
-                .modifyOnGithub(eq(content), eq("image-tag"), eq("image"), eq("tag"), anyString());
-        Mockito.verify(dockerfileGitHubUtil, times(1))
-                .createPullReq(eq(parentRepo), eq("image-tag"), eq(forkedRepo), any());
-    }
 
     @Test
     public void testPrCreationSkippedWhenSkipPrCreationFlagSetToTrue() throws Exception {
@@ -81,111 +38,124 @@ public class ParentTest {
                 "store", Constants.SKIP_PR_CREATION,
                 true);
         Namespace ns = new Namespace(nsMap);
-        Parent parent = new Parent();
+        Parent parent = spy(new Parent());
         DockerfileGitHubUtil dockerfileGitHubUtil = mock(DockerfileGitHubUtil.class);
         GitHubJsonStore gitHubJsonStore = mock(GitHubJsonStore.class);
+        GitHubPullRequestSender pullRequestSender = mock(GitHubPullRequestSender.class);
+        GitForkBranch gitForkBranch = mock(GitForkBranch.class);
+        PagedSearchIterable<GHContent> contentsWithImage = mock(PagedSearchIterable.class);
+        PullRequests pullRequests = mock(PullRequests.class);
         when(dockerfileGitHubUtil.getGitHubJsonStore(anyString())).thenReturn(gitHubJsonStore);
-        GHRepository forkedRepo = mock(GHRepository.class);
-        GHRepository parentRepo = mock(GHRepository.class);
 
         parent.execute(ns, dockerfileGitHubUtil);
 
-        Mockito.verify(dockerfileGitHubUtil, times(0))
-                .modifyOnGithub(any(), anyString(), anyString(), anyString(), anyString());
-        Mockito.verify(dockerfileGitHubUtil, times(0))
-                .getGHContents(anyString(), anyString(), anyInt());
-        Mockito.verify(dockerfileGitHubUtil, times(0))
-                .createPullReq(eq(parentRepo), anyString(), eq(forkedRepo), any());
+        verify(parent, times(0)).getGitForkBranch(ns);
+        verify(parent, times(0)).getPullRequestSender(dockerfileGitHubUtil, ns);
+        verify(parent, times(0)).getPullRequests();
+        verify(pullRequests, times(0)).prepareToCreate(ns, pullRequestSender,
+                contentsWithImage, gitForkBranch, dockerfileGitHubUtil);
     }
 
     @Test
-    public void testOnePullRequestForMultipleDockerfilesInSameRepo() throws Exception {
+    public void testParentCommandSuccessful() throws Exception {
         Map<String, Object> nsMap = ImmutableMap.of(Constants.IMG,
                 "image", Constants.TAG,
                 "tag", Constants.STORE,
-                "store");
+                "store", Constants.SKIP_PR_CREATION,
+                false);
         Namespace ns = new Namespace(nsMap);
-
-        Multimap<String, GitHubContentToProcess> pathToDockerfilesInParentRepo = HashMultimap.create();
-        pathToDockerfilesInParentRepo.put("repo1", new GitHubContentToProcess(null, null, "df11"));
-        pathToDockerfilesInParentRepo.put("repo1", new GitHubContentToProcess(null, null, "df12"));
-        pathToDockerfilesInParentRepo.put("repo3", new GitHubContentToProcess(null, null, "df3"));
-        pathToDockerfilesInParentRepo.put("repo4", new GitHubContentToProcess(null, null, "df4"));
-
-        GHRepository forkedRepo = mock(GHRepository.class);
-        when(forkedRepo.isFork()).thenReturn(true);
-        when(forkedRepo.getFullName()).thenReturn("forkedrepo");
-
-        GHRepository parentRepo = mock(GHRepository.class);
-        when(parentRepo.getFullName()).thenReturn("repo1");
-        when(forkedRepo.getParent()).thenReturn(parentRepo);
-
+        Parent parent = spy(new Parent());
         DockerfileGitHubUtil dockerfileGitHubUtil = mock(DockerfileGitHubUtil.class);
-        when(dockerfileGitHubUtil.getPullRequestForImageBranch(any(), any())).thenReturn(Optional.empty());
-        when(dockerfileGitHubUtil.getRepo(forkedRepo.getFullName())).thenReturn(forkedRepo);
-        GHContent forkedRepoContent1 = mock(GHContent.class);
-        when(dockerfileGitHubUtil.tryRetrievingContent(eq(forkedRepo),
-                eq("df11"), eq("image-tag"))).thenReturn(forkedRepoContent1);
-        GHContent forkedRepoContent2 = mock(GHContent.class);
-        when(dockerfileGitHubUtil.tryRetrievingContent(eq(forkedRepo),
-                eq("df12"), eq("image-tag"))).thenReturn(forkedRepoContent2);
+        GitHubJsonStore gitHubJsonStore = mock(GitHubJsonStore.class);
+        GitHubPullRequestSender pullRequestSender = mock(GitHubPullRequestSender.class);
+        GitForkBranch gitForkBranch = mock(GitForkBranch.class);
+        PullRequests pullRequests = mock(PullRequests.class);
+        when(dockerfileGitHubUtil.getGitHubJsonStore(anyString())).thenReturn(gitHubJsonStore);
+        when(parent.getPullRequestSender(dockerfileGitHubUtil, ns)).thenReturn(pullRequestSender);
+        when(parent.getGitForkBranch(ns)).thenReturn(gitForkBranch);
+        when(parent.getPullRequests()).thenReturn(pullRequests);
+        PagedSearchIterable<GHContent> contentsWithImage = mock(PagedSearchIterable.class);
+        List<PagedSearchIterable<GHContent>> contentsWithImageList = Collections.singletonList(contentsWithImage);
+        Optional<List<PagedSearchIterable<GHContent>>> optionalContentsWithImageList = Optional.of(contentsWithImageList);
+        doNothing().when(pullRequests).prepareToCreate(ns, pullRequestSender,
+                contentsWithImage, gitForkBranch, dockerfileGitHubUtil);
+        when(dockerfileGitHubUtil.getGHContents(anyString(), anyString(),  anyInt())).thenReturn(optionalContentsWithImageList);
 
-        Parent parent = new Parent();
-        parent.loadDockerfileGithubUtil(dockerfileGitHubUtil);
-        parent.changeDockerfiles(ns, pathToDockerfilesInParentRepo, new GitHubContentToProcess(forkedRepo, parentRepo, ""), new ArrayList<>());
-
-        // Both Dockerfiles retrieved from the same repo
-        Mockito.verify(dockerfileGitHubUtil, times(1)).tryRetrievingContent(eq(forkedRepo),
-                eq("df11"), eq("image-tag"));
-        Mockito.verify(dockerfileGitHubUtil, times(1)).tryRetrievingContent(eq(forkedRepo),
-                eq("df12"), eq("image-tag"));
-
-        // Both Dockerfiles modified
-        Mockito.verify(dockerfileGitHubUtil, times(2))
-                .modifyOnGithub(any(), eq("image-tag"), eq("image"), eq("tag"), anyString());
-
-        // Only one PR created on the repo with changes to both Dockerfiles.
-        Mockito.verify(dockerfileGitHubUtil, times(1)).createPullReq(eq(parentRepo),
-                eq("image-tag"), eq(forkedRepo), any());
+        parent.execute(ns, dockerfileGitHubUtil);
+        verify(parent, times(1)).getGitForkBranch(ns);
+        verify(parent, times(1)).getPullRequestSender(dockerfileGitHubUtil, ns);
+        verify(parent, times(1)).getPullRequests();
+        verify(pullRequests, times(1)).prepareToCreate(ns, pullRequestSender,
+                contentsWithImage, gitForkBranch, dockerfileGitHubUtil);
     }
 
     @Test
-    public void testNoPullRequestForMissingDockerfile() throws Exception {
+    public void testGetCommon(){
+        Parent parent = new Parent();
+        PullRequests pullRequests = new PullRequests();
+        assertEquals(pullRequests.getClass(), parent.getPullRequests().getClass());
+    }
+
+    @Test
+    public void testGetGitForkBranch() {
         Map<String, Object> nsMap = ImmutableMap.of(Constants.IMG,
                 "image", Constants.TAG,
                 "tag", Constants.STORE,
-                "store");
+                "store", Constants.GIT_BRANCH,
+                "branch");
         Namespace ns = new Namespace(nsMap);
+        Parent parent = spy(new Parent());
+        GitForkBranch gitForkBranch = parent.getGitForkBranch(ns);
+        assertEquals(gitForkBranch.getBranchName(), "branch-tag");
+        assertEquals(gitForkBranch.getImageName(), "image");
+        assertEquals(gitForkBranch.getImageTag(), "tag");
+    }
 
-        Multimap<String, GitHubContentToProcess> pathToDockerfilesInParentRepo = HashMultimap.create();
-        pathToDockerfilesInParentRepo.put("repo1", new GitHubContentToProcess(null, null, "missing_df"));
-
-        GHRepository forkedRepo = mock(GHRepository.class);
-        when(forkedRepo.isFork()).thenReturn(true);
-        when(forkedRepo.getFullName()).thenReturn("forkedrepo");
-
-        GHRepository parentRepo = mock(GHRepository.class);
-        when(parentRepo.getFullName()).thenReturn("repo1");
-        when(forkedRepo.getParent()).thenReturn(parentRepo);
-
+    @Test
+    public void testGetPullRequestSender() {
+        Map<String, Object> nsMap = ImmutableMap.of(Constants.IMG,
+                "image", Constants.TAG,
+                "tag", Constants.STORE,
+                "store", Constants.GIT_BRANCH,
+                "branch");
+        Namespace ns = new Namespace(nsMap);
         DockerfileGitHubUtil dockerfileGitHubUtil = mock(DockerfileGitHubUtil.class);
-        when(dockerfileGitHubUtil.getPullRequestForImageBranch(any(), any())).thenReturn(Optional.empty());
-        // Dockerfile not found anymore when trying to retrieve contents from the forked repo.
-        when(dockerfileGitHubUtil.tryRetrievingContent(eq(forkedRepo),
-                eq("missing_df"), eq("image-tag"))).thenReturn(null);
+        Parent parent = spy(new Parent());
+        ForkableRepoValidator forkableRepoValidator = mock(ForkableRepoValidator.class);
+        GitHubPullRequestSender gitHubPullRequestSender =
+                new GitHubPullRequestSender(dockerfileGitHubUtil, forkableRepoValidator, "");
 
-        Parent parent = new Parent();
-        parent.loadDockerfileGithubUtil(dockerfileGitHubUtil);
-        parent.changeDockerfiles(ns, pathToDockerfilesInParentRepo, new GitHubContentToProcess(forkedRepo, parentRepo, ""), new ArrayList<>());
+        assertEquals(parent.getPullRequestSender(dockerfileGitHubUtil, ns).getClass(),
+                gitHubPullRequestSender.getClass());
+    }
 
-        // trying to retrieve Dockerfile
-        Mockito.verify(dockerfileGitHubUtil, times(1)).tryRetrievingContent(eq(forkedRepo),
-                eq("missing_df"), eq("image-tag"));
+    @Test(expectedExceptions = Exception.class)
+    public void testParentCommandThrowsException() throws Exception {
+        Map<String, Object> nsMap = ImmutableMap.of(Constants.IMG,
+                "image", Constants.TAG,
+                "tag", Constants.STORE,
+                "store", Constants.SKIP_PR_CREATION,
+                false);
+        Namespace ns = new Namespace(nsMap);
+        Parent parent = spy(new Parent());
+        DockerfileGitHubUtil dockerfileGitHubUtil = mock(DockerfileGitHubUtil.class);
+        GitHubJsonStore gitHubJsonStore = mock(GitHubJsonStore.class);
+        GitHubPullRequestSender pullRequestSender = mock(GitHubPullRequestSender.class);
+        GitForkBranch gitForkBranch = mock(GitForkBranch.class);
+        PullRequests pullRequests = mock(PullRequests.class);
+        when(dockerfileGitHubUtil.getGitHubJsonStore(anyString())).thenReturn(gitHubJsonStore);
+        when(parent.getPullRequestSender(dockerfileGitHubUtil, ns)).thenReturn(pullRequestSender);
+        when(parent.getGitForkBranch(ns)).thenReturn(gitForkBranch);
+        when(parent.getPullRequests()).thenReturn(pullRequests);
+        PagedSearchIterable<GHContent> contentsWithImage = mock(PagedSearchIterable.class);
+        List<PagedSearchIterable<GHContent>> contentsWithImageList = Collections.singletonList(contentsWithImage);
+        Optional<List<PagedSearchIterable<GHContent>>> optionalContentsWithImageList = Optional.of(contentsWithImageList);
+        doThrow(new InterruptedException("Exception")).when(pullRequests).prepareToCreate(ns, pullRequestSender,
+                contentsWithImage, gitForkBranch, dockerfileGitHubUtil);
+        when(dockerfileGitHubUtil.getGHContents(anyString(), anyString(),  anyInt())).thenReturn(optionalContentsWithImageList);
 
-        // missing Dockerfile, so skipping modify and create PR
-        Mockito.verify(dockerfileGitHubUtil, times(0))
-                .modifyOnGithub(any(), anyString(), anyString(), anyString(), anyString());
-        Mockito.verify(dockerfileGitHubUtil, times(0)).createPullReq(eq(parentRepo),
-                anyString(), eq(forkedRepo), any());
+        parent.execute(ns, dockerfileGitHubUtil);
+
+        assertThrows(InterruptedException.class, () -> parent.execute(ns, dockerfileGitHubUtil));
     }
 }
