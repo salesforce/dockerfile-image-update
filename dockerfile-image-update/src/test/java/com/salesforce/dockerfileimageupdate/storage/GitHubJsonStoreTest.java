@@ -2,11 +2,16 @@ package com.salesforce.dockerfileimageupdate.storage;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
-import com.salesforce.dockerfileimageupdate.utils.GitHubUtil;
+import com.salesforce.dockerfileimageupdate.utils.*;
+import org.kohsuke.github.*;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+import java.util.*;
+
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 
 public class GitHubJsonStoreTest {
@@ -87,5 +92,24 @@ public class GitHubJsonStoreTest {
 
         String output = new GitHubJsonStore(gitHubUtil, "test").getAndModifyJsonString(json, image, tag);
         assertEquals(output, expectedOutput);
+    }
+
+    @Test
+    public void testParseStoreToImagesMap() throws Exception {
+        GitHubJsonStore gitHubJsonStore = mock(GitHubJsonStore.class);
+        DockerfileGitHubUtil dockerfileGitHubUtil = mock(DockerfileGitHubUtil.class);
+        GHMyself ghMyself = mock(GHMyself.class);
+        when(dockerfileGitHubUtil.getMyself()).thenReturn(ghMyself);
+        String dummyLogin = "dummy_login";
+        when(ghMyself.getLogin()).thenReturn(dummyLogin);
+        GHRepository store = mock(GHRepository.class);
+        when(dockerfileGitHubUtil.getRepo(anyString())).thenReturn(store);
+        String defaultBranch = "default-branch";
+        when(store.getDefaultBranch()).thenReturn(defaultBranch);
+        Set<String> EmptySet = Collections.<String>emptySet();
+        when(dockerfileGitHubUtil.tryRetrievingContent(store, "store.json", defaultBranch)).thenReturn(null);
+        Set<Map.Entry<String, JsonElement>> actualResult =
+                gitHubJsonStore.parseStoreToImagesMap(dockerfileGitHubUtil, "store");
+        assertEquals(actualResult, EmptySet);
     }
 }
