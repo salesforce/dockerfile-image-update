@@ -3,15 +3,16 @@ package com.salesforce.dockerfileimageupdate.utils;
 import com.google.common.collect.*;
 import com.salesforce.dockerfileimageupdate.model.*;
 import com.salesforce.dockerfileimageupdate.process.*;
-import com.salesforce.dockerfileimageupdate.utils.*;
 import net.sourceforge.argparse4j.inf.*;
 import org.kohsuke.github.*;
 import org.mockito.*;
 import org.testng.annotations.*;
 
+import java.io.*;
 import java.util.*;
 
 import static org.mockito.Mockito.*;
+import static org.testng.Assert.assertThrows;
 
 public class PullRequestsTest {
     @Test
@@ -40,6 +41,42 @@ public class PullRequestsTest {
         verify(dockerfileGitHubUtil, times(2)).changeDockerfiles(eq(ns),
                 eq(pathToDockerfilesInParentRepo),
                 eq(gitHubContentToProcess), anyList(), eq(gitForkBranch));
+    }
+
+    @Test(expectedExceptions = IOException.class)
+    public void testPullRequestsPrepareThrowsException() throws Exception {
+        Map<String, Object> nsMap = ImmutableMap.of(Constants.IMG,
+                "image", Constants.TAG,
+                "tag", Constants.STORE,
+                "store", Constants.SKIP_PR_CREATION,
+                false);
+        Namespace ns = new Namespace(nsMap);
+        PullRequests pullRequests = new PullRequests();
+        GitHubPullRequestSender pullRequestSender = mock(GitHubPullRequestSender.class);
+        PagedSearchIterable<GHContent> contentsFoundWithImage = mock(PagedSearchIterable.class);
+        GitForkBranch gitForkBranch = mock(GitForkBranch.class);
+        DockerfileGitHubUtil dockerfileGitHubUtil = mock(DockerfileGitHubUtil.class);
+        Multimap<String, GitHubContentToProcess> pathToDockerfilesInParentRepo = ArrayListMultimap.create();
+        GitHubContentToProcess gitHubContentToProcess = mock(GitHubContentToProcess.class);
+        pathToDockerfilesInParentRepo.put("repo1", gitHubContentToProcess);
+        GHRepository ghRepository = mock(GHRepository.class);
+
+        when(pullRequestSender.forkRepositoriesFoundAndGetPathToDockerfiles(contentsFoundWithImage, gitForkBranch)).thenReturn(pathToDockerfilesInParentRepo);
+        ArgumentCaptor<String> valueCapture = ArgumentCaptor.forClass(String.class);
+        when(gitHubContentToProcess.getParent()).thenReturn(ghRepository);
+        when(ghRepository.getFullName()).thenReturn("repo");
+        doThrow(new IOException("Exception")).when(dockerfileGitHubUtil).changeDockerfiles(
+                eq(ns),
+                eq(pathToDockerfilesInParentRepo),
+                eq(gitHubContentToProcess),
+                anyList(),
+                eq(gitForkBranch));
+
+        pullRequests.prepareToCreate(ns, pullRequestSender, contentsFoundWithImage,
+                gitForkBranch, dockerfileGitHubUtil);
+
+        assertThrows(IOException.class, () -> pullRequests.prepareToCreate(ns, pullRequestSender, contentsFoundWithImage,
+                gitForkBranch, dockerfileGitHubUtil));
     }
 
     @Test

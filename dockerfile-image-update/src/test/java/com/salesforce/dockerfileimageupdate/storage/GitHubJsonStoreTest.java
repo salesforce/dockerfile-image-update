@@ -106,7 +106,7 @@ public class GitHubJsonStoreTest {
         when(dockerfileGitHubUtil.getRepo(anyString())).thenReturn(store);
         String defaultBranch = "default-branch";
         when(store.getDefaultBranch()).thenReturn(defaultBranch);
-        Set<String> EmptySet = Collections.<String>emptySet();
+        Set<String> EmptySet = Collections.emptySet();
         when(dockerfileGitHubUtil.tryRetrievingContent(store, "store.json", defaultBranch)).thenReturn(null);
         Set<Map.Entry<String, JsonElement>> actualResult =
                 gitHubJsonStore.parseStoreToImagesMap(dockerfileGitHubUtil, "store");

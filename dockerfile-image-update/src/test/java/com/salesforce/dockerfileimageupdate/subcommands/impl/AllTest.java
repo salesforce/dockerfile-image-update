@@ -37,7 +37,7 @@ public class AllTest {
                 "tag", Constants.STORE,
                 "store");
         Namespace ns = new Namespace(nsMap);
-        All all = Mockito.spy(new All());
+        All all = spy(new All());
         DockerfileGitHubUtil dockerfileGitHubUtil = mock(DockerfileGitHubUtil.class);
         GitHubJsonStore gitHubJsonStore = mock(GitHubJsonStore.class);
         GitHubPullRequestSender pullRequestSender = mock(GitHubPullRequestSender.class);
@@ -90,7 +90,7 @@ public class AllTest {
                 "store", Constants.GIT_BRANCH,
                 "branch");
         Namespace ns = new Namespace(nsMap);
-        All all = Mockito.spy(new All());
+        All all = spy(new All());
         GitForkBranch gitForkBranch = all.getGitForkBranch("image", "tag", ns);
         assertEquals(gitForkBranch.getBranchName(), "branch-tag");
         assertEquals(gitForkBranch.getImageName(), "image");
@@ -106,7 +106,7 @@ public class AllTest {
                 "branch");
         Namespace ns = new Namespace(nsMap);
         DockerfileGitHubUtil dockerfileGitHubUtil = mock(DockerfileGitHubUtil.class);
-        All all = Mockito.spy(new All());
+        All all = spy(new All());
         ForkableRepoValidator forkableRepoValidator = mock(ForkableRepoValidator.class);
         GitHubPullRequestSender gitHubPullRequestSender =
                 new GitHubPullRequestSender(dockerfileGitHubUtil, forkableRepoValidator, "");
