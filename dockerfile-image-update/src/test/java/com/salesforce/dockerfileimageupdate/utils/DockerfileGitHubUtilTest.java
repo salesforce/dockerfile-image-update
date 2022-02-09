@@ -555,7 +555,11 @@ public class DockerfileGitHubUtilTest {
                 {"image7", "98", "FROM image7:4", true},
                 {"image7", "98", "FROM image7: 4", true},
                 {"image124516418023_1085-1-1248571", "7357",
-                        "FROM image124516418023_1085-1-1248571:18026809126359806124890356219518632048125", true}
+                        "FROM image124516418023_1085-1-1248571:18026809126359806124890356219518632048125", true},
+                {"image", "1234",
+                        "FROM image:1234 # no-dfiu", false},
+                {"image", "1234",
+                        "FROM image:1234 # I don't want PR for this hence no-dfiu", false},
         };
     }
 
