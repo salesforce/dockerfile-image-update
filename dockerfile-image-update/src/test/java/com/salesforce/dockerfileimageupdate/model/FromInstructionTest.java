@@ -239,4 +239,23 @@ public class FromInstructionTest {
     public void isFromInstructionWithThisImageAndOlderTag(String line, String imageName, String imageTag, boolean expectedResult) {
         assertEquals(FromInstruction.isFromInstructionWithThisImageAndOlderTag(line, imageName, imageTag), expectedResult);
     }
+
+    @DataProvider
+    public Object[][] commentDataNoDfiu() {
+        return new Object[][] {
+                {"FROM image:tag as builder",       false},
+                {"FROM image:tag#no-dfiu",          true},
+                {"FROM image:tag # no-dfiu",        true},
+                {"FROM image:tag\t# no-dfiu",       true},
+                {"FROM image:\t# no-dfiu # # # ",   true},
+                {"FROM image:",                     false},
+                {"FROM image:test # :no-dfiu",      true},
+                {"FROM image:test # no-dfiu added comments for ignoring dfiu PR",      true}
+        };
+    }
+
+    @Test(dataProvider = "commentDataNoDfiu")
+    public void testCommentsWithNoDfiuParsedCorrectly(String input, Boolean expectedResult) {
+        assertEquals(new FromInstruction(input).hasCommentNoDfiu(), expectedResult);
+    }
 }
