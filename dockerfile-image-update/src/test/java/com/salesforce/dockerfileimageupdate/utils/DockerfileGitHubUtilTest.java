@@ -388,7 +388,7 @@ public class DockerfileGitHubUtilTest {
         when(repo.getDirectoryContent("path", branch)).thenReturn(tree);
 
         dockerfileGitHubUtil = new DockerfileGitHubUtil(gitHubUtil);
-        dockerfileGitHubUtil.modifyOnGithubRecursive(repo, content, branch, img, tag);
+        dockerfileGitHubUtil.modifyOnGithubRecursive(repo, content, branch, img, tag, "");
 
         verify(content, times(6)).isFile();
         verify(content, times(2)).isDirectory();
@@ -437,7 +437,7 @@ public class DockerfileGitHubUtilTest {
 
         when(reader.readLine()).thenReturn("FROM " + currentImage + ":" + currentTag, "", null);
         dockerfileGitHubUtil = new DockerfileGitHubUtil(gitHubUtil);
-        dockerfileGitHubUtil.findImagesAndFix(content, branch, searchImage, newTag, "", reader);
+        dockerfileGitHubUtil.findImagesAndFix(content, branch, searchImage, newTag, "", reader, "");
         verify(content, times(modified)).update(anyString(), anyString(), eq(branch));
     }
 
@@ -455,7 +455,7 @@ public class DockerfileGitHubUtilTest {
         when(reader.readLine()).thenReturn("blahblahblah", "FROM " + currentImage + ":" + currentTag,
                 "blahblahblah", null);
         dockerfileGitHubUtil = new DockerfileGitHubUtil(gitHubUtil);
-        dockerfileGitHubUtil.findImagesAndFix(content, branch, searchImage, newTag, "", reader);
+        dockerfileGitHubUtil.findImagesAndFix(content, branch, searchImage, newTag, "", reader, "");
         verify(content, times(modified)).update(anyString(), anyString(), eq(branch));
     }
 
@@ -474,7 +474,7 @@ public class DockerfileGitHubUtilTest {
         dockerfileGitHubUtil = new DockerfileGitHubUtil(gitHubUtil);
 
         StringBuilder strB = new StringBuilder();
-        dockerfileGitHubUtil.rewriteDockerfile("image", "newtag", reader, strB);
+        dockerfileGitHubUtil.rewriteDockerfile("image", "newtag", reader, strB, "");
 
         assertEquals(strB.toString(), "hello\nFROM image:newtag\nthis is a test\n\n\n\nworld\n");
     }
@@ -508,7 +508,7 @@ public class DockerfileGitHubUtilTest {
         dockerfileGitHubUtil = new DockerfileGitHubUtil(gitHubUtil);
 
         StringBuilder strB = new StringBuilder();
-        boolean modified = dockerfileGitHubUtil.rewriteDockerfile("image", updatedTag, reader, strB);
+        boolean modified = dockerfileGitHubUtil.rewriteDockerfile("image", updatedTag, reader, strB, "");
 
         assertTrue(modified, "Expect the dockerfile to have been modified");
         assertEquals(strB.toString(), String.format("hello\n%s\nthis is a test\n", expectedReplacedData));
@@ -529,7 +529,7 @@ public class DockerfileGitHubUtilTest {
         dockerfileGitHubUtil = new DockerfileGitHubUtil(gitHubUtil);
 
         StringBuilder strB = new StringBuilder();
-        boolean modified = dockerfileGitHubUtil.rewriteDockerfile("image", "tag", reader, strB);
+        boolean modified = dockerfileGitHubUtil.rewriteDockerfile("image", "tag", reader, strB, "");
 
         assertFalse(modified, "Expected the dockerfile to not have changed.");
     }
@@ -568,7 +568,7 @@ public class DockerfileGitHubUtilTest {
                                                     String line, boolean expected) throws Exception {
         gitHubUtil = mock(GitHubUtil.class);
         dockerfileGitHubUtil = new DockerfileGitHubUtil(gitHubUtil);
-        assertEquals(dockerfileGitHubUtil.changeIfDockerfileBaseImageLine(img, tag, new StringBuilder(), line),
+        assertEquals(dockerfileGitHubUtil.changeIfDockerfileBaseImageLine(img, tag, new StringBuilder(), line, ""),
                 expected);
     }
 
@@ -579,11 +579,11 @@ public class DockerfileGitHubUtilTest {
         StringBuilder stringBuilder = new StringBuilder();
         String img = "image";
         String tag = "7357";
-        dockerfileGitHubUtil.changeIfDockerfileBaseImageLine(img, tag, stringBuilder, "hello");
-        dockerfileGitHubUtil.changeIfDockerfileBaseImageLine(img, tag, stringBuilder, "FROM image:blah");
-        dockerfileGitHubUtil.changeIfDockerfileBaseImageLine(img, tag, stringBuilder, "world");
-        dockerfileGitHubUtil.changeIfDockerfileBaseImageLine(img, tag, stringBuilder, "this is a test");
-        assertEquals(stringBuilder.toString(), "hello\nFROM image:7357\nworld\nthis is a test\n");
+        dockerfileGitHubUtil.changeIfDockerfileBaseImageLine(img, tag, stringBuilder, "hello", "");
+        dockerfileGitHubUtil.changeIfDockerfileBaseImageLine(img, tag, stringBuilder, "FROM image:blah", "");
+        dockerfileGitHubUtil.changeIfDockerfileBaseImageLine(img, tag, stringBuilder, "world", "");
+        dockerfileGitHubUtil.changeIfDockerfileBaseImageLine(img, tag, stringBuilder, "this is a test", "");
+        assertEquals(stringBuilder.toString(), "hello\nFROM image:7357\nworld\nthis is a test\n", "");
     }
 
     @Test
@@ -593,11 +593,11 @@ public class DockerfileGitHubUtilTest {
         StringBuilder stringBuilder = new StringBuilder();
         String img = "image";
         String tag = "7357";
-        dockerfileGitHubUtil.changeIfDockerfileBaseImageLine(img, tag, stringBuilder, "hello");
-        dockerfileGitHubUtil.changeIfDockerfileBaseImageLine(img, tag, stringBuilder, "FROM image");
-        dockerfileGitHubUtil.changeIfDockerfileBaseImageLine(img, tag, stringBuilder, "world");
-        dockerfileGitHubUtil.changeIfDockerfileBaseImageLine(img, tag, stringBuilder, "this is a test");
-        assertEquals(stringBuilder.toString(), "hello\nFROM image:7357\nworld\nthis is a test\n");
+        dockerfileGitHubUtil.changeIfDockerfileBaseImageLine(img, tag, stringBuilder, "hello", "");
+        dockerfileGitHubUtil.changeIfDockerfileBaseImageLine(img, tag, stringBuilder, "FROM image", "");
+        dockerfileGitHubUtil.changeIfDockerfileBaseImageLine(img, tag, stringBuilder, "world", "");
+        dockerfileGitHubUtil.changeIfDockerfileBaseImageLine(img, tag, stringBuilder, "this is a test", "");
+        assertEquals(stringBuilder.toString(), "hello\nFROM image:7357\nworld\nthis is a test\n", "");
     }
 
     @Test
@@ -786,7 +786,7 @@ public class DockerfileGitHubUtilTest {
         when(gitHubUtil.tryRetrievingContent(eq(forkedRepo),
                 eq("df12"), eq("image-tag"))).thenReturn(forkedRepoContent2);
         doNothing().when(dockerfileGitHubUtil).modifyOnGithub(any(), eq("image-tag"), eq("image")
-                , eq("tag"), anyString());
+                , eq("tag"), anyString(), anyString());
 
         dockerfileGitHubUtil.changeDockerfiles(ns, pathToDockerfilesInParentRepo,
                 new GitHubContentToProcess(forkedRepo, parentRepo, ""), new ArrayList<>(), gitForkBranch);
@@ -799,10 +799,38 @@ public class DockerfileGitHubUtilTest {
 
         // Both Dockerfiles modified
         verify(dockerfileGitHubUtil, times(2))
-                .modifyOnGithub(any(), eq("image-tag"), eq("image"), eq("tag"), anyString());
+                .modifyOnGithub(any(), eq("image-tag"), eq("image"), eq("tag"), anyString(), anyString());
 
         // Only one PR created on the repo with changes to both Dockerfiles.
         verify(dockerfileGitHubUtil, times(1)).createPullReq(eq(parentRepo),
                 eq("image-tag"), eq(forkedRepo), any());
+    }
+
+    @Test
+    public void testDockerfileWithIgnorePRComment() {
+        gitHubUtil = mock(GitHubUtil.class);
+        dockerfileGitHubUtil = new DockerfileGitHubUtil(gitHubUtil);
+        StringBuilder stringBuilder = new StringBuilder();
+        String img = "image";
+        String tag = "changed";
+
+        dockerfileGitHubUtil.changeIfDockerfileBaseImageLine(img, tag, stringBuilder, "FROM image:original # no-dfiu", "");
+        assertEquals(stringBuilder.toString(), "FROM image:original # no-dfiu\n", "");
+        stringBuilder.setLength(0);
+
+        dockerfileGitHubUtil.changeIfDockerfileBaseImageLine(img, tag, stringBuilder, "FROM image:original # no-dfiu", "dont-ignore");
+        assertEquals(stringBuilder.toString(), "FROM image:changed # no-dfiu\n", "");
+        stringBuilder.setLength(0);
+
+        dockerfileGitHubUtil.changeIfDockerfileBaseImageLine(img, tag, stringBuilder, "FROM image:original # ignore-pr", "dont-ignore");
+        assertEquals(stringBuilder.toString(), "FROM image:changed # ignore-pr\n", "");
+        stringBuilder.setLength(0);
+
+        dockerfileGitHubUtil.changeIfDockerfileBaseImageLine(img, tag, stringBuilder, "FROM image:original # ignore-pr", "ignore-pr");
+        assertEquals(stringBuilder.toString(), "FROM image:original # ignore-pr\n", "");
+        stringBuilder.setLength(0);
+
+        dockerfileGitHubUtil.changeIfDockerfileBaseImageLine(img, tag, stringBuilder, "FROM image:original # ignore-pr", "");
+        assertEquals(stringBuilder.toString(), "FROM image:changed # ignore-pr\n", "");
     }
 }

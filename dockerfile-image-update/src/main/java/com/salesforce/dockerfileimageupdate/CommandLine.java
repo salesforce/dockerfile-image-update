@@ -82,6 +82,8 @@ public class CommandLine {
                 .type(Boolean.class)
                 .setDefault(false)
                 .help("Only update image tag store. Skip creating PRs");
+        parser.addArgument("-x")
+                .help("comment to process after FROM instruction for ignoring PR creation, if empty, 'no-dfiu' will be used");
         return parser;
     }
 

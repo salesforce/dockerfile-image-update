@@ -195,11 +195,15 @@ public class FromInstruction {
      * Determines whether the comment has mentioned "no-dfiu" to ignore creating dfiu PR
      * If "no-dfiu" present in comment, PR should be ignored
      */
-    public boolean shouldNotIgnorePR() {
+    public boolean ignorePR(String ignorePRComment) {
         if (hasComments()) {
-            return !comments.contains(NO_DFIU);
+            if (StringUtils.isNotBlank(ignorePRComment)) {
+                return comments.contains(ignorePRComment);
+            } else {
+                return comments.contains(NO_DFIU);
+            }
         }
-        return true;
+        return false;
     }
 
     public String getTag() {
