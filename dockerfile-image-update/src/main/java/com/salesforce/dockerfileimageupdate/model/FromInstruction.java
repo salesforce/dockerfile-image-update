@@ -192,8 +192,11 @@ public class FromInstruction {
     }
 
     /**
-     * Determines whether the comment has mentioned "no-dfiu" to ignore creating dfiu PR
-     * If "no-dfiu" present in comment, PR should be ignored
+     * Determines whether the comment has mentioned {@code ignorePRComment} to ignore creating dfiu PR
+     * If {@code ignorePRComment} present in comment, PR should be ignored
+     * If {@code ignorePRComment} is empty, then by default 'no-dfiu' comment will be searched
+     * @param ignorePRComment comment to search
+     * @return {@code true} if comment is found
      */
     public boolean ignorePR(String ignorePRComment) {
         if (hasComments()) {
