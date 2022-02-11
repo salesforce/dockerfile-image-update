@@ -306,7 +306,7 @@ public class DockerfileGitHubUtil {
             FromInstruction fromInstruction = new FromInstruction(line);
             if (fromInstruction.hasBaseImage(imageToFind) &&
                     fromInstruction.hasADifferentTag(tag) &&
-                    !fromInstruction.hasCommentNoDfiu()) {
+                    fromInstruction.shouldNotIgnorePR()) {
                 fromInstruction = fromInstruction.getFromInstructionWithNewTag(tag);
                 modified = true;
             }

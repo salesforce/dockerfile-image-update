@@ -243,19 +243,19 @@ public class FromInstructionTest {
     @DataProvider
     public Object[][] commentDataNoDfiu() {
         return new Object[][] {
-                {"FROM image:tag as builder",       false},
-                {"FROM image:tag#no-dfiu",          true},
-                {"FROM image:tag # no-dfiu",        true},
-                {"FROM image:tag\t# no-dfiu",       true},
-                {"FROM image:\t# no-dfiu # # # ",   true},
-                {"FROM image:",                     false},
-                {"FROM image:test # :no-dfiu",      true},
-                {"FROM image:test # no-dfiu added comments for ignoring dfiu PR",      true}
+                {"FROM image:tag as builder",       true},
+                {"FROM image:tag#no-dfiu",          false},
+                {"FROM image:tag # no-dfiu",        false},
+                {"FROM image:tag\t# no-dfiu",       false},
+                {"FROM image:\t# no-dfiu # # # ",   false},
+                {"FROM image:",                     true},
+                {"FROM image:test # :no-dfiu",      false},
+                {"FROM image:test # no-dfiu added comments for ignoring dfiu PR",      false}
         };
     }
 
     @Test(dataProvider = "commentDataNoDfiu")
     public void testCommentsWithNoDfiuParsedCorrectly(String input, Boolean expectedResult) {
-        assertEquals(new FromInstruction(input).hasCommentNoDfiu(), expectedResult);
+        assertEquals(new FromInstruction(input).shouldNotIgnorePR(), expectedResult);
     }
 }
