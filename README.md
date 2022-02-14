@@ -29,6 +29,7 @@ images they depend on get updated.
   * [Prerequisites](#prerequisites)
   * [Precautions](#precautions)
   * [How To Use It](#how-to-use-it)
+  * [Skip An Image](#additional-notes)
 * [Developer Guide](#developer-guide)
   * [Building](#building)
   * [Running locally](#running-locally)
@@ -130,6 +131,7 @@ optional arguments:
   -f, --auto-merge             NOT IMPLEMENTED / set to automatically merge pull requests if available
   -m PULL_REQ_MESSAGE          message to provide for pull requests
   -c COMMIT_MESSAGE            additional commit message for the commits in pull requests
+  -x IGNORE_IMAGE_STRING       comment snippet after FROM instruction for ignoring a child image. Defaults to 'no-dfiu'
 
 subcommands:
   Specify which feature to perform
@@ -190,6 +192,16 @@ positional arguments:
 
 optional arguments:
   -h, --help             show this help message and exit
+```
+
+### Skip An Image
+
+In case you want the tool to skip updating a particular image tag then add a comment `no-dfiu` after the `FROM` declaration in the Dockerfile. The tool will process the comment following `FROM` declaration and if `no-dfiu` is mentioned, pull request for that image tag will be ignored. You can use an alternate comment string by passing an additional command line parameter `-x IGNORE_IMAGE_STRING`. In that case string mentioned with the parameter, will be used for skipping PR creation.
+
+Example:
+
+```
+FROM imagename:imagetag # no-dfiu
 ```
 
 ## Developer Guide

@@ -51,7 +51,7 @@ public class ChildTest {
         DockerfileGitHubUtil dockerfileGitHubUtil = mock(DockerfileGitHubUtil.class);
         Mockito.when(dockerfileGitHubUtil.getRepo(Mockito.any())).thenReturn(new GHRepository());
         Mockito.when(dockerfileGitHubUtil.getOrCreateFork(Mockito.any())).thenReturn(new GHRepository());
-        doNothing().when(dockerfileGitHubUtil).modifyAllOnGithub(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
+        doNothing().when(dockerfileGitHubUtil).modifyAllOnGithub(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
         GitHubJsonStore gitHubJsonStore = mock(GitHubJsonStore.class);
         when(dockerfileGitHubUtil.getGitHubJsonStore(anyString())).thenReturn(gitHubJsonStore);
         doNothing().when(dockerfileGitHubUtil).createPullReq(Mockito.any(), anyString(), Mockito.any(), any());
