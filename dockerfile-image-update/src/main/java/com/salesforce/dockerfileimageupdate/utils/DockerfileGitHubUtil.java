@@ -207,7 +207,8 @@ public class DockerfileGitHubUtil {
     }
 
     public void modifyAllOnGithub(GHRepository repo, String branch,
-                                  String img, String tag, String ignorePRComment) throws IOException, InterruptedException {
+                                  String img, String tag, String ignoreImageString)
+            throws IOException, InterruptedException {
         List<GHContent> tree = null;
 
         /* There are issues with the GitHub API returning that the GitHub repository exists, but has no content,
@@ -226,21 +227,22 @@ public class DockerfileGitHubUtil {
         }
         if (tree != null) {
             for (GHContent con : tree) {
-                modifyOnGithubRecursive(repo, con, branch, img, tag, ignorePRComment);
+                modifyOnGithubRecursive(repo, con, branch, img, tag, ignoreImageString);
             }
         }
     }
 
     protected void modifyOnGithubRecursive(GHRepository repo, GHContent content,
-                                           String branch, String img, String tag, String ignorePRComment) throws IOException {
+                                           String branch, String img, String tag,
+                                           String ignoreImageString) throws IOException {
         /* If we have a submodule; we want to skip.
            Content is submodule when the type is file, but content.getDownloadUrl() is null.
          */
         if (content.isFile() && content.getDownloadUrl() != null) {
-            modifyOnGithub(content, branch, img, tag, "", ignorePRComment);
+            modifyOnGithub(content, branch, img, tag, "", ignoreImageString);
         } else if(content.isDirectory()) {
             for (GHContent newContent : repo.getDirectoryContent(content.getPath(), branch)) {
-                modifyOnGithubRecursive(repo, newContent, branch, img, tag, ignorePRComment);
+                modifyOnGithubRecursive(repo, newContent, branch, img, tag, ignoreImageString);
             }
         } else {
             // The only other case is if we have a file, but content.getDownloadUrl() is null
@@ -254,31 +256,33 @@ public class DockerfileGitHubUtil {
 
     public void modifyOnGithub(GHContent content,
                                String branch, String img, String tag,
-                               String customMessage, String ignorePRComment) throws IOException {
+                               String customMessage, String ignoreImageString) throws IOException {
         try (InputStream stream = content.read();
              InputStreamReader streamR = new InputStreamReader(stream);
              BufferedReader reader = new BufferedReader(streamR)) {
-            findImagesAndFix(content, branch, img, tag, customMessage, reader, ignorePRComment);
+            findImagesAndFix(content, branch, img, tag, customMessage, reader, ignoreImageString);
         }
     }
 
-    protected void findImagesAndFix(GHContent content,
-                                    String branch, String img, String tag, String customMessage,
-                                    BufferedReader reader, String ignorePRComment) throws IOException {
+    protected void findImagesAndFix(GHContent content, String branch, String img,
+                                    String tag, String customMessage, BufferedReader reader,
+                                    String ignoreImageString) throws IOException {
         StringBuilder strB = new StringBuilder();
-        boolean modified = rewriteDockerfile(img, tag, reader, strB, ignorePRComment);
+        boolean modified = rewriteDockerfile(img, tag, reader, strB, ignoreImageString);
         if (modified) {
             content.update(strB.toString(),
                     "Fix Dockerfile base image in /" + content.getPath() + "\n\n" + customMessage, branch);
         }
     }
 
-    protected boolean rewriteDockerfile(String img, String tag, BufferedReader reader, StringBuilder strB, String ignorePRComment) throws IOException {
+    protected boolean rewriteDockerfile(String img, String tag,
+                                        BufferedReader reader, StringBuilder strB,
+                                        String ignoreImageString) throws IOException {
         String line;
         boolean modified = false;
         while ( (line = reader.readLine()) != null ) {
             /* Once true, should stay true. */
-            modified = changeIfDockerfileBaseImageLine(img, tag, strB, line, ignorePRComment) || modified;
+            modified = changeIfDockerfileBaseImageLine(img, tag, strB, line, ignoreImageString) || modified;
         }
         return modified;
     }
@@ -300,7 +304,7 @@ public class DockerfileGitHubUtil {
      */
     protected boolean changeIfDockerfileBaseImageLine(String imageToFind, String tag,
                                                       StringBuilder stringBuilder, String line,
-                                                      String ignorePRComment) {
+                                                      String ignoreImageString) {
         boolean modified = false;
         String outputLine = line;
 
@@ -309,7 +313,7 @@ public class DockerfileGitHubUtil {
             FromInstruction fromInstruction = new FromInstruction(line);
             if (fromInstruction.hasBaseImage(imageToFind) &&
                     fromInstruction.hasADifferentTag(tag) &&
-                    !fromInstruction.ignorePR(ignorePRComment)) {
+                    !fromInstruction.ignorePR(ignoreImageString)) {
                 fromInstruction = fromInstruction.getFromInstructionWithNewTag(tag);
                 modified = true;
             }
@@ -466,7 +470,7 @@ public class DockerfileGitHubUtil {
                 log.info("No Dockerfile found at path: '{}'", pathToDockerfile);
             } else {
                 modifyOnGithub(content, gitForkBranch.getBranchName(), gitForkBranch.getImageName(), gitForkBranch.getImageTag(),
-                        ns.get(Constants.GIT_ADDITIONAL_COMMIT_MESSAGE), ns.get(Constants.IGNORE_PR_COMMENT));
+                        ns.get(Constants.GIT_ADDITIONAL_COMMIT_MESSAGE), ns.get(Constants.IGNORE_IMAGE_STRING));
                 isContentModified = true;
                 isRepoSkipped = false;
             }

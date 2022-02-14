@@ -36,6 +36,6 @@ public class Constants {
     public static final String GIT_REPO_EXCLUDES = "excludes";
     public static final String GIT_API_SEARCH_LIMIT = "ghapisearchlimit";
     public static final String SKIP_PR_CREATION = "skipprcreation";
-    public static final String IGNORE_PR_COMMENT = "x";
+    public static final String IGNORE_IMAGE_STRING = "x";
 
 }

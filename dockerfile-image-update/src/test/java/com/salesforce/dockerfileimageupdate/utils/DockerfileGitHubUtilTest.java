@@ -806,31 +806,26 @@ public class DockerfileGitHubUtilTest {
                 eq("image-tag"), eq(forkedRepo), any());
     }
 
-    @Test
-    public void testDockerfileWithIgnorePRComment() {
+    @DataProvider
+    public Object[][] fromInstructionWithIgnoreStringData() {
+        return new Object[][] {
+                { "FROM image:original # no-dfiu", "", "FROM image:original # no-dfiu\n"},
+                { "FROM image:original # no-dfiu", "dont-ignore", "FROM image:changed # no-dfiu\n"},
+                { "FROM image:original # ignore-pr", "dont-ignore", "FROM image:changed # ignore-pr\n"},
+                { "FROM image:original # ignore-pr", "ignore-pr", "FROM image:original # ignore-pr\n"},
+                { "FROM image:original # ignore-pr", "", "FROM image:changed # ignore-pr\n"}
+        };
+    }
+
+    @Test(dataProvider = "fromInstructionWithIgnoreStringData")
+    public void testDockerfileWithIgnoreImageString(String fromLine, String ignoreImageString, String outputLine) {
         gitHubUtil = mock(GitHubUtil.class);
         dockerfileGitHubUtil = new DockerfileGitHubUtil(gitHubUtil);
         StringBuilder stringBuilder = new StringBuilder();
         String img = "image";
         String tag = "changed";
 
-        dockerfileGitHubUtil.changeIfDockerfileBaseImageLine(img, tag, stringBuilder, "FROM image:original # no-dfiu", "");
-        assertEquals(stringBuilder.toString(), "FROM image:original # no-dfiu\n", "");
-        stringBuilder.setLength(0);
-
-        dockerfileGitHubUtil.changeIfDockerfileBaseImageLine(img, tag, stringBuilder, "FROM image:original # no-dfiu", "dont-ignore");
-        assertEquals(stringBuilder.toString(), "FROM image:changed # no-dfiu\n", "");
-        stringBuilder.setLength(0);
-
-        dockerfileGitHubUtil.changeIfDockerfileBaseImageLine(img, tag, stringBuilder, "FROM image:original # ignore-pr", "dont-ignore");
-        assertEquals(stringBuilder.toString(), "FROM image:changed # ignore-pr\n", "");
-        stringBuilder.setLength(0);
-
-        dockerfileGitHubUtil.changeIfDockerfileBaseImageLine(img, tag, stringBuilder, "FROM image:original # ignore-pr", "ignore-pr");
-        assertEquals(stringBuilder.toString(), "FROM image:original # ignore-pr\n", "");
-        stringBuilder.setLength(0);
-
-        dockerfileGitHubUtil.changeIfDockerfileBaseImageLine(img, tag, stringBuilder, "FROM image:original # ignore-pr", "");
-        assertEquals(stringBuilder.toString(), "FROM image:changed # ignore-pr\n", "");
+        dockerfileGitHubUtil.changeIfDockerfileBaseImageLine(img, tag, stringBuilder, fromLine, ignoreImageString);
+        assertEquals(stringBuilder.toString(), outputLine, "");
     }
 }

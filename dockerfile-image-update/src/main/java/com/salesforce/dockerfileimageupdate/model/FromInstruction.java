@@ -192,16 +192,16 @@ public class FromInstruction {
     }
 
     /**
-     * Determines whether the comment has mentioned {@code ignorePRComment} to ignore creating dfiu PR
-     * If {@code ignorePRComment} present in comment, PR should be ignored
-     * If {@code ignorePRComment} is empty, then by default 'no-dfiu' comment will be searched
-     * @param ignorePRComment comment to search
+     * Determines whether the comment has mentioned {@code ignoreImageString} to ignore creating dfiu PR
+     * If {@code ignoreImageString} present in comment, PR should be ignored
+     * If {@code ignoreImageString} is empty, then by default 'no-dfiu' comment will be searched
+     * @param ignoreImageString comment to search
      * @return {@code true} if comment is found
      */
-    public boolean ignorePR(String ignorePRComment) {
+    public boolean ignorePR(String ignoreImageString) {
         if (hasComments()) {
-            if (StringUtils.isNotBlank(ignorePRComment)) {
-                return comments.contains(ignorePRComment);
+            if (StringUtils.isNotBlank(ignoreImageString)) {
+                return comments.contains(ignoreImageString);
             } else {
                 return comments.contains(NO_DFIU);
             }
