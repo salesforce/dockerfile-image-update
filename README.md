@@ -270,8 +270,8 @@ We currently use GitHub Actions and Releases. In order to collect dependency
 updates from dependabot and any other minor changes, we've switched to a process
 to manually trigger the release process. For now, that looks like the following:
 
-* PRs continually get updated with labels by [Pull Request Labeler](https://github.com/actions/labeler)
-  and that helps set us up for nice release notes by [Release Drafter](https://github.com/release-drafter/release-drafter).
+#### 1. Versioned Git Tag
+
 * Decide what version you desire to have. If you want to bump the major or minor
   version then you need to bump the `MVN_SNAPSHOT_VERSION` in the [Makefile](https://github.com/salesforce/dockerfile-image-update/blob/master/Makefile#L5)
   and in the
@@ -283,11 +283,22 @@ to manually trigger the release process. For now, that looks like the following:
   and trigger the `Release new version` Workflow. This will build,
   integration test, deploy the latest version to Docker Hub and Maven
   Central, and tag that commit hash with the next semantic version.
+
+#### 2. Cut Release with Release Notes
+
+* PRs continually get updated with labels by [Pull Request Labeler](https://github.com/actions/labeler)
+  and that helps set us up for nice release notes by [Release Drafter](https://github.com/release-drafter/release-drafter).
 * Once that release has been tagged you can go to the draft release which
   is continually updated by [Release Drafter](https://github.com/release-drafter/release-drafter)
   and select the latest tag to associate with that release. Change the
   version to reflect the same version as the tag (`1.0.${NEW_VERSION}`).
-  Ideally we'll automate this to run at the end of the triggered workflow.
+  Take a look at the release notes to make sure that PRs are categorized
+  correctly. The categorization is based on the labels of the PRs. You can
+  either fix the labels on the PRs, which will trigger the
+  [release drafter action](https://github.com/salesforce/dockerfile-image-update/actions/workflows/release-drafter.yml),
+  or simply modify the release notes before publishing. Ideally we'll automate
+  this to run at the end of the triggered workflow with something like
+  [svu](https://github.com/caarlos0/svu).
 
 ### Checking Code Climate Locally
 

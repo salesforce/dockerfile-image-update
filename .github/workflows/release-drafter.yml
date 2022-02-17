@@ -1,6 +1,9 @@
 name: Release Drafter
 
 on:
+  label:
+    types: [created, deleted]
+  workflow_dispatch:
   push:
     branches:
       - master
