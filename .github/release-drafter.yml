@@ -34,9 +34,6 @@ categories:
   - title: ":construction_worker: Changes for plugin developers"
     labels:
       - developer 
-  # Default label used by Dependabot
-  - title: 📦 Dependency updates
-    label: dependencies
   - title: 📝 Documentation updates
     label: documentation
   - title: 👻 Maintenance
@@ -47,6 +44,9 @@ categories:
     labels: 
       - test
       - tests
+  # Default label used by Dependabot
+  - title: 📦 Dependency updates
+    label: dependencies
 exclude-labels:
   - reverted
   - no-changelog
