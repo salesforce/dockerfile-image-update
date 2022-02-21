@@ -110,7 +110,6 @@ public class DockerfileGitHubUtil {
         if (image.substring(image.lastIndexOf(' ') + 1).length() <= 1) {
             throw new IOException("Invalid image name.");
         }
-        List<PagedSearchIterable<GHContent>> filesList = new ArrayList<>();
         try {
             List<String> terms = GitHubImageSearchTermList.getSearchTerms(image);
             log.info("Searching for {} with terms: {}", image, terms);
@@ -148,12 +147,13 @@ public class DockerfileGitHubUtil {
                         + "search will be performed specific to that org.", gitApiSearchLimit);
                 return getSearchResultsExcludingOrgWithMostHits(image, files, orgsToIncludeOrExclude, gitApiSearchLimit);
             }
+            List<PagedSearchIterable<GHContent>> filesList = new ArrayList<>();
             filesList.add(files);
             return Optional.of(filesList);
-        } catch (GHException e) {
-            log.warn("Could not perform Github search for the image {}. Trying to proceed... exception: {}", image, e.getMessage());
+        } catch (GHException | HttpException e) {
+            log.error("Could not perform Github search for the image {}. Trying to proceed...q", image, e);
+            return Optional.empty();
         }
-        return Optional.empty();
     }
 
     protected String getOrgNameWithMaximumHits(PagedSearchIterable<GHContent> files) throws IOException {

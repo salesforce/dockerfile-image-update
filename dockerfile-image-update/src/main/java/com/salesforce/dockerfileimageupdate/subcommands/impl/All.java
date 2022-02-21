@@ -45,6 +45,7 @@ public class All implements ExecutableWithNamespace {
             // the org gets included in the search query.
             orgsToIncludeInSearch.put(ns.get(Constants.GIT_ORG), true);
         }
+        List<String> imagesThatCouldNotBeProcessed = new ArrayList<>();
         for (Map.Entry<String, JsonElement> imageToTag : imageToTagStore) {
             String image = imageToTag.getKey();
             String tag = imageToTag.getValue().getAsString();
@@ -66,8 +67,11 @@ public class All implements ExecutableWithNamespace {
                         log.error("Could not send pull request.");
                     }
                 });
+            } else {
+                imagesThatCouldNotBeProcessed.add(image);
             }
         }
+        log.info("The list of images for which a PR could not be created are: {}", imagesThatCouldNotBeProcessed);
     }
 
     protected void loadDockerfileGithubUtil(DockerfileGitHubUtil _dockerfileGitHubUtil) {
