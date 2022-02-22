@@ -2,7 +2,6 @@
 [![codecov](https://codecov.io/gh/salesforce/dockerfile-image-update/branch/master/graph/badge.svg)](https://codecov.io/gh/salesforce/dockerfile-image-update)
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.salesforce.dockerfile-image-update/dockerfile-image-update/badge.svg?maxAge=3600)](https://maven-badges.herokuapp.com/maven-central/com.salesforce.dockerfile-image-update/dockerfile-image-update)
 [![Docker Image Version (latest semver)](https://img.shields.io/docker/v/salesforce/dockerfile-image-update?label=Docker%20version&sort=semver)](https://hub.docker.com/r/salesforce/dockerfile-image-update/tags)
-[![Dependabot Status](https://api.dependabot.com/badges/status?host=github&repo=salesforce/dockerfile-image-update)](https://dependabot.com)
 
 # Dockerfile Image Updater
 
@@ -36,6 +35,7 @@ images they depend on get updated.
   * [Creating a New Feature](#creating-a-new-feature)
   * [Running Unit Tests](#running-unit-tests)
   * [Running Integration Tests](#running-integration-tests)
+  * [Release Process](#release-process)
 * [Blogs / Slides](#blogs--slides)
 
 ## User Guide
