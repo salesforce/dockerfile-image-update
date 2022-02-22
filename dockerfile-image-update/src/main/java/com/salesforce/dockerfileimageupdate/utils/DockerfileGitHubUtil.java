@@ -117,19 +117,19 @@ public class DockerfileGitHubUtil {
         int totalCount = files.getTotalCount();
         log.info("Number of files found for {}: {}", image, totalCount);
         if (totalCount > gitApiSearchLimit
-                && orgsToIncludeOrExclude.size() == 1
-                && orgsToIncludeOrExclude
-                .entrySet()
-                .stream()
-                .findFirst()
-                .get()
-                .getKey() != null
-                && orgsToIncludeOrExclude
-                .entrySet()
-                .stream()
-                .findFirst()
-                .get()
-                .getValue()
+            && orgsToIncludeOrExclude.size() == 1
+            && orgsToIncludeOrExclude
+               .entrySet()
+               .stream()
+               .findFirst()
+               .get()
+               .getKey() != null
+            && orgsToIncludeOrExclude
+               .entrySet()
+               .stream()
+               .findFirst()
+               .get()
+               .getValue()
         ) {
             String orgName = orgsToIncludeOrExclude
                     .entrySet()
