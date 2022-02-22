@@ -71,7 +71,7 @@ public class All implements ExecutableWithNamespace {
                 imagesThatCouldNotBeProcessed.add(image);
             }
         }
-        log.info("The list of images for which a PR could not be created are: {}", imagesThatCouldNotBeProcessed);
+        log.warn("The list of images for which a PR could not be created are: {}", imagesThatCouldNotBeProcessed);
     }
 
     protected void loadDockerfileGithubUtil(DockerfileGitHubUtil _dockerfileGitHubUtil) {
