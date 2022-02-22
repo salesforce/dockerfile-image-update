@@ -110,50 +110,45 @@ public class DockerfileGitHubUtil {
         if (image.substring(image.lastIndexOf(' ') + 1).length() <= 1) {
             throw new IOException("Invalid image name.");
         }
-        try {
-            List<String> terms = GitHubImageSearchTermList.getSearchTerms(image);
-            log.info("Searching for {} with terms: {}", image, terms);
-            terms.forEach(search::q);
-            PagedSearchIterable<GHContent> files = search.list();
-            int totalCount = files.getTotalCount();
-            log.info("Number of files found for {}: {}", image, totalCount);
-            if (totalCount > gitApiSearchLimit
-                    && orgsToIncludeOrExclude.size() == 1
-                    && orgsToIncludeOrExclude
+        List<String> terms = GitHubImageSearchTermList.getSearchTerms(image);
+        log.info("Searching for {} with terms: {}", image, terms);
+        terms.forEach(search::q);
+        PagedSearchIterable<GHContent> files = search.list();
+        int totalCount = files.getTotalCount();
+        log.info("Number of files found for {}: {}", image, totalCount);
+        if (totalCount > gitApiSearchLimit
+                && orgsToIncludeOrExclude.size() == 1
+                && orgsToIncludeOrExclude
+                .entrySet()
+                .stream()
+                .findFirst()
+                .get()
+                .getKey() != null
+                && orgsToIncludeOrExclude
+                .entrySet()
+                .stream()
+                .findFirst()
+                .get()
+                .getValue()
+        ) {
+            String orgName = orgsToIncludeOrExclude
                     .entrySet()
                     .stream()
                     .findFirst()
                     .get()
-                    .getKey() != null
-                    && orgsToIncludeOrExclude
-                    .entrySet()
-                    .stream()
-                    .findFirst()
-                    .get()
-                    .getValue()
-            ) {
-                String orgName = orgsToIncludeOrExclude
-                        .entrySet()
-                        .stream()
-                        .findFirst()
-                        .get()
-                        .getKey();
-                log.warn("Number of search results for a single org {} is above {}! The GitHub Search API will only return around 1000 results - https://developer.github.com/v3/search/#about-the-search-api",
-                        orgName, gitApiSearchLimit);
-            } else if (totalCount > gitApiSearchLimit) {
-                log.info("The number of files returned is greater than the git API search limit"
-                        + " of {}. The orgs with the maximum number of hits will be recursively removed"
-                        + " to reduce the search space. For every org that is excluded, a separate "
-                        + "search will be performed specific to that org.", gitApiSearchLimit);
-                return getSearchResultsExcludingOrgWithMostHits(image, files, orgsToIncludeOrExclude, gitApiSearchLimit);
-            }
-            List<PagedSearchIterable<GHContent>> filesList = new ArrayList<>();
-            filesList.add(files);
-            return Optional.of(filesList);
-        } catch (GHException | HttpException e) {
-            log.error("Could not perform Github search for the image {}. Trying to proceed...q", image, e);
-            return Optional.empty();
+                    .getKey();
+            log.warn("Number of search results for a single org {} is above {}! The GitHub Search API will only return around 1000 results - https://developer.github.com/v3/search/#about-the-search-api",
+                    orgName, gitApiSearchLimit);
+        } else if (totalCount > gitApiSearchLimit) {
+            log.info("The number of files returned is greater than the git API search limit"
+                    + " of {}. The orgs with the maximum number of hits will be recursively removed"
+                    + " to reduce the search space. For every org that is excluded, a separate "
+                    + "search will be performed specific to that org.", gitApiSearchLimit);
+            return getSearchResultsExcludingOrgWithMostHits(image, files, orgsToIncludeOrExclude, gitApiSearchLimit);
         }
+        List<PagedSearchIterable<GHContent>> filesList = new ArrayList<>();
+        filesList.add(files);
+        return Optional.of(filesList);
     }
 
     protected String getOrgNameWithMaximumHits(PagedSearchIterable<GHContent> files) throws IOException {

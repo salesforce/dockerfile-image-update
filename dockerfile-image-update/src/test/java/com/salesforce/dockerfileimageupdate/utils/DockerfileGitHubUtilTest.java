@@ -236,26 +236,6 @@ public class DockerfileGitHubUtilTest {
         dockerfileGitHubUtil.findFilesWithImage(query, orgs, 1000);
     }
 
-    @DataProvider
-    public Object[][] inputLongImages() {
-        return new Object[][] {
-                {"dva-registry.internal.salesforce.com/sfci/dva-stratafile-smoketests/test-multi-docker-images-with-build-tags/frank-loves-docker", null},
-        };
-    }
-
-    @Test(dataProvider = "inputLongImages")
-    public void testFindFilesReturnsEmptyListIfQueryTooLong(String query, String org) throws Exception {
-        gitHubUtil = mock(GitHubUtil.class);
-
-        GHContentSearchBuilder ghContentSearchBuilder = mock(GHContentSearchBuilder.class);
-        when(gitHubUtil.startSearch()).thenReturn(ghContentSearchBuilder);
-        when(ghContentSearchBuilder.list()).thenThrow(new GHException("some exception"));
-
-        dockerfileGitHubUtil = new DockerfileGitHubUtil(gitHubUtil);
-        Map<String, Boolean> orgs = Collections.unmodifiableMap(Collections.singletonMap(org, true));
-        assertEquals(dockerfileGitHubUtil.findFilesWithImage(query, orgs, 1000), Optional.empty());
-    }
-
     @Test
     public void testFindFiles() throws Exception {
         gitHubUtil = mock(GitHubUtil.class);
