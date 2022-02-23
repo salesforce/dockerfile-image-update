@@ -119,18 +119,18 @@ public class DockerfileGitHubUtil {
         if (totalCount > gitApiSearchLimit
             && orgsToIncludeOrExclude.size() == 1
             && orgsToIncludeOrExclude
-                .entrySet()
-                .stream()
-                .findFirst()
-                .get()
-                .getKey() != null
+               .entrySet()
+               .stream()
+               .findFirst()
+               .get()
+               .getKey() != null
             && orgsToIncludeOrExclude
-                .entrySet()
-                .stream()
-                .findFirst()
-                .get()
-                .getValue()
-                ) {
+               .entrySet()
+               .stream()
+               .findFirst()
+               .get()
+               .getValue()
+        ) {
             String orgName = orgsToIncludeOrExclude
                     .entrySet()
                     .stream()
