@@ -49,7 +49,6 @@ public class All implements ExecutableWithNamespace {
         }
         List<ProcessingErrors> imagesThatCouldNotBeProcessed = new LinkedList<>();
         AtomicInteger numberOfImagesToProcess = new AtomicInteger();
-        AtomicInteger numberOfImagesFailedToProcess = new AtomicInteger();
         for (Map.Entry<String, JsonElement> imageToTag : imageToTagStore) {
             numberOfImagesToProcess.getAndIncrement();
             String image = imageToTag.getKey();
@@ -71,38 +70,40 @@ public class All implements ExecutableWithNamespace {
                                     pagedSearchIterable, gitForkBranch, dockerfileGitHubUtil);
                         } catch (IOException e) {
                             log.error("Could not send pull request for image {}.", image);
-                            processErrors(image, tag, e, imagesThatCouldNotBeProcessed, numberOfImagesFailedToProcess);
+                            processErrors(image, tag, e, imagesThatCouldNotBeProcessed);
                         }
                     });
                 }
             } catch (GHException | HttpException e){
                 log.error("Could not perform Github search for the image {}. Trying to proceed...", image);
-                processErrors(image, tag, e, imagesThatCouldNotBeProcessed, numberOfImagesFailedToProcess);
+                processErrors(image, tag, e, imagesThatCouldNotBeProcessed);
             }
         }
-        printSummary(imagesThatCouldNotBeProcessed, numberOfImagesToProcess, numberOfImagesFailedToProcess);
+        printSummary(imagesThatCouldNotBeProcessed, numberOfImagesToProcess);
     }
 
-    protected void printSummary(List<ProcessingErrors> imagesThatCouldNotBeProcessed, AtomicInteger numberOfImagesToProcess, AtomicInteger numberOfImagesFailedToProcess) {
+    protected void printSummary(List<ProcessingErrors> imagesThatCouldNotBeProcessed, AtomicInteger numberOfImagesToProcess) {
+        AtomicInteger numberOfImagesFailedToProcess = new AtomicInteger(imagesThatCouldNotBeProcessed.size());
         AtomicInteger numberOfImagesSuccessfullyProcessed = new AtomicInteger(numberOfImagesToProcess.get() - numberOfImagesFailedToProcess.get());
-        log.warn("The total number of images to process from image tag store: {}", numberOfImagesToProcess.get());
-        log.warn("The total number of images that were successfully processed: {}", numberOfImagesSuccessfullyProcessed.get());
-        log.warn("The total number of images that failed to be processed: {}. The following list shows the images that could not be processed.", numberOfImagesFailedToProcess.get());
-        imagesThatCouldNotBeProcessed.forEach(imageThatCouldNotBeProcessed -> {
-                if (imageThatCouldNotBeProcessed.getFailure().isPresent()) {
-                    log.warn("Image: {}, Exception: {}", imageThatCouldNotBeProcessed.getImageNameAndTag(), imageThatCouldNotBeProcessed.getFailure());
-                } else {
-                    log.warn("Image: {}, Exception: {}", imageThatCouldNotBeProcessed.getImageNameAndTag(), "Failure reason not known.");
+        log.info("The total number of images to process from image tag store: {}", numberOfImagesToProcess.get());
+        log.info("The total number of images that were successfully processed: {}", numberOfImagesSuccessfullyProcessed.get());
+        if (numberOfImagesFailedToProcess.get() > 0) {
+            log.warn("The total number of images that failed to be processed: {}. The following list shows the images that could not be processed.", numberOfImagesFailedToProcess.get());
+            imagesThatCouldNotBeProcessed.forEach(imageThatCouldNotBeProcessed -> {
+                    if (imageThatCouldNotBeProcessed.getFailure().isPresent()) {
+                        log.warn("Image: {}, Exception: {}", imageThatCouldNotBeProcessed.getImageNameAndTag(), imageThatCouldNotBeProcessed.getFailure());
+                    } else {
+                        log.warn("Image: {}, Exception: {}", imageThatCouldNotBeProcessed.getImageNameAndTag(), "Failure reason not known.");
+                    }
                 }
-            }
-        );
+            );
+        }
     }
 
-    protected void processErrors(String image, String tag, Exception e, List<ProcessingErrors> imagesThatCouldNotBeProcessed, AtomicInteger numberOfImagesFailedToProcess) {
+    protected void processErrors(String image, String tag, Exception e, List<ProcessingErrors> imagesThatCouldNotBeProcessed) {
         String imageNameAndTag = image + ":" + tag;
         ProcessingErrors processingErrors = new ProcessingErrors(imageNameAndTag, Optional.of(e));
         imagesThatCouldNotBeProcessed.add(processingErrors);
-        numberOfImagesFailedToProcess.getAndIncrement();
     }
 
     protected void loadDockerfileGithubUtil(DockerfileGitHubUtil _dockerfileGitHubUtil) {

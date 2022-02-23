@@ -75,8 +75,8 @@ public class AllTest {
         verify(all, times(1)).getPullRequests();
         verify(pullRequests, times(1)).prepareToCreate(ns, pullRequestSender,
                 contentsWithImage, gitForkBranch, dockerfileGitHubUtil);
-        verify(all, times(0)).processErrors(anyString(), anyString(), any(), anyList(), any());
-        verify(all, times(1)).printSummary(anyList(), any(), any());
+        verify(all, times(0)).processErrors(anyString(), anyString(), any(), anyList());
+        verify(all, times(1)).printSummary(anyList(), any());
     }
 
     @Test
@@ -121,8 +121,8 @@ public class AllTest {
         verify(all, times(1)).getPullRequests();
         verify(pullRequests, times(0)).prepareToCreate(ns, pullRequestSender,
                 contentsWithImage, gitForkBranch, dockerfileGitHubUtil);
-        verify(all, times(0)).processErrors(anyString(), anyString(), any(), anyList(), any());
-        verify(all, times(1)).printSummary(anyList(), any(), any());
+        verify(all, times(0)).processErrors(anyString(), anyString(), any(), anyList());
+        verify(all, times(1)).printSummary(anyList(), any());
     }
 
     @Test
@@ -166,8 +166,8 @@ public class AllTest {
         verify(all, times(1)).getPullRequests();
         verify(pullRequests, times(0)).prepareToCreate(ns, pullRequestSender,
                 contentsWithImage, gitForkBranch, dockerfileGitHubUtil);
-        verify(all, times(1)).processErrors(anyString(), anyString(), any(), anyList(), any());
-        verify(all, times(1)).printSummary(anyList(), any(), any());
+        verify(all, times(1)).processErrors(anyString(), anyString(), any(), anyList());
+        verify(all, times(1)).printSummary(anyList(), any());
     }
 
     @Test
@@ -213,8 +213,8 @@ public class AllTest {
         verify(all, times(1)).getPullRequests();
         verify(pullRequests, times(1)).prepareToCreate(ns, pullRequestSender,
                 contentsWithImage, gitForkBranch, dockerfileGitHubUtil);
-        verify(all, times(1)).processErrors(anyString(), anyString(), any(), anyList(), any());
-        verify(all, times(1)).printSummary(anyList(), any(), any());
+        verify(all, times(1)).processErrors(anyString(), anyString(), any(), anyList());
+        verify(all, times(1)).printSummary(anyList(), any());
     }
 
     @Test
@@ -226,27 +226,38 @@ public class AllTest {
         List<ProcessingErrors> processingErrorsList = new ArrayList<>();
         AtomicInteger numberOfImagesFailedToProcess = new AtomicInteger(0);
 
-        all.processErrors(image, tag, e, processingErrorsList, numberOfImagesFailedToProcess);
+        all.processErrors(image, tag, e, processingErrorsList);
 
         assertEquals(processingErrorsList.size(), 1);
-        assertEquals(numberOfImagesFailedToProcess.get(), 1);
     }
 
     @Test
-    public void testPrintSummary() {
+    public void testPrintSummaryWhenImagesWereMissed() {
         ProcessingErrors processingErrors = mock(ProcessingErrors.class);
         All all = spy(new All());
         List<ProcessingErrors> processingErrorsList = Collections.singletonList(processingErrors);
         AtomicInteger numberOfImagesToProcess = new AtomicInteger(2);
-        AtomicInteger numberOfImagesFailedToProcess = new AtomicInteger(1);
         Exception failure = mock(Exception.class);
         when(processingErrors.getFailure()).thenReturn(Optional.of(failure));
 
-        all.printSummary(processingErrorsList, numberOfImagesToProcess, numberOfImagesFailedToProcess);
+        all.printSummary(processingErrorsList, numberOfImagesToProcess);
 
         verify(processingErrors, times(1)).getImageNameAndTag();
         verify(processingErrors, times(2)).getFailure();
-        assertEquals(numberOfImagesFailedToProcess.get(), 1);
+        assertEquals(numberOfImagesToProcess.get(), 2);
+    }
+
+    @Test
+    public void testPrintSummaryWhenAllImagesWereSuccessfullyProcessed() {
+        ProcessingErrors processingErrors = mock(ProcessingErrors.class);
+        All all = spy(new All());
+        List<ProcessingErrors> processingErrorsList = Collections.emptyList();
+        AtomicInteger numberOfImagesToProcess = new AtomicInteger(2);
+
+        all.printSummary(processingErrorsList, numberOfImagesToProcess);
+
+        verify(processingErrors, times(0)).getImageNameAndTag();
+        verify(processingErrors, times(0)).getFailure();
         assertEquals(numberOfImagesToProcess.get(), 2);
     }
 
