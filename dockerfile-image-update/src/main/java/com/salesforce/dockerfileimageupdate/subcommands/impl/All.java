@@ -74,7 +74,7 @@ public class All implements ExecutableWithNamespace {
                         }
                     });
                 }
-            } catch (GHException | HttpException e){
+            } catch (GHException | IOException e){
                 log.error("Could not perform Github search for the image {}. Trying to proceed...", image);
                 processErrors(image, tag, e, imagesThatCouldNotBeProcessed);
             }
