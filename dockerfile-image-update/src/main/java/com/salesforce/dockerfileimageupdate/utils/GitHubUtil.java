@@ -108,12 +108,17 @@ public class GitHubUtil {
             log.warn("Handling error with pull request creation... {}", e.getMessage());
             JsonElement root = JsonParser.parseString(e.getMessage());
             JsonArray errorJson = root.getAsJsonObject().get("errors").getAsJsonArray();
-            String error = errorJson.get(0).getAsJsonObject().get("message").getAsString();
+            String error = "";
+            if (errorJson.get(0).getAsJsonObject().has("message")) {
+                error = errorJson.get(0).getAsJsonObject().get("message").getAsString();
+            } else {
+                error = "PR head has invalid code.";
+            }
             log.info("error: {}", error);
             if (error.startsWith("A pull request already exists")) {
                 log.info("NOTE: {} New commits may have been added to the pull request.", error);
                 return 0;
-            } else if (error.startsWith("No commits between")) {
+            } else if (error.startsWith("No commits between") || error.startsWith("PR head has invalid code.")) {
                 log.warn("NOTE: {} Pull request was not created.", error);
                 return 1;
             } else {

@@ -120,6 +120,19 @@ public class GitHubUtilTest {
         assertEquals(gitHubUtil.createPullReq(origRepo, "branch", forkRepo, "title", "body"), 1);
         verify(origRepo, times(1)).createPullRequest(eq("title"), eq("owner:branch"), eq("master"), eq("body"));
     }
+    @Test
+    public void testCreatePullReq_errorCase1_withInvalidCode() throws Exception {
+        GitHub github = mock(GitHub.class);
+        GitHubUtil gitHubUtil = new GitHubUtil(github);
+        GHRepository origRepo = mock(GHRepository.class);
+        when(origRepo.getDefaultBranch()).thenReturn("master");
+        when(origRepo.createPullRequest(eq("title"), eq("owner:branch"), eq("master"), eq("body")))
+                .thenThrow(new IOException("{\"message\":\"Validation Failed\",\"errors\":[{\"resource\":\"PullRequest\",\"field\":\"head\",\"code\":\"invalid\"}],\"documentation_url\":\"https://developer.github.com/enterprise/2.6/v3/pulls/#create-a-pull-request\"}"));
+        GHRepository forkRepo = mock(GHRepository.class);
+        when(forkRepo.getOwnerName()).thenReturn("owner");
+        assertEquals(gitHubUtil.createPullReq(origRepo, "branch", forkRepo, "title", "body"), 1);
+        verify(origRepo, times(1)).createPullRequest(eq("title"), eq("owner:branch"), eq("master"), eq("body"));
+    }
 
     @Test
     public void testTryRetrievingRepository() throws Exception {
