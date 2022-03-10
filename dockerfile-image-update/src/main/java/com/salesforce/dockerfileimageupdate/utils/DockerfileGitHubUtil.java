@@ -177,7 +177,7 @@ public class DockerfileGitHubUtil {
         Optional<List<PagedSearchIterable<GHContent>>> contentsForOrgWithMaximumHits;
         contentsForOrgWithMaximumHits = findFilesWithImage(image, orgsToInclude, gitApiSearchLimit);
 
-        final Map<String, Boolean> orgsToExcludeFromSearch = new HashMap(orgsToExclude);
+        final Map<String, Boolean> orgsToExcludeFromSearch = new HashMap<>(orgsToExclude);
         orgsToExcludeFromSearch.put(orgWithMaximumHits, false);
         log.info("Running search by excluding the orgs {}.", orgsToExcludeFromSearch.keySet());
         Optional<List<PagedSearchIterable<GHContent>>> contentsExcludingOrgWithMaximumHits;

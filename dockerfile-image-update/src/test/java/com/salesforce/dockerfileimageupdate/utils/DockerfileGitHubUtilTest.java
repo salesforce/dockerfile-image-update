@@ -330,6 +330,7 @@ public class DockerfileGitHubUtilTest {
         Map<String, Boolean> orgsToIncludeOrExclude = new HashMap<>();
 
         assertEquals((dockerfileGitHubUtil.getSearchResultsExcludingOrgWithMostHits("image", contentsWithImage, orgsToIncludeOrExclude, 1000)).get().size(), 2);
+        //This check ensures that the parameter passed to the method is not modified. Instead, the method creates a local copy of the map and modifies that.
         assertEquals(orgsToIncludeOrExclude.size(), 0);
     }
 
