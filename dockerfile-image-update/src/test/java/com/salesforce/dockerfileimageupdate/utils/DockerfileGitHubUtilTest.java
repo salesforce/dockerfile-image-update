@@ -330,6 +330,7 @@ public class DockerfileGitHubUtilTest {
         Map<String, Boolean> orgsToIncludeOrExclude = new HashMap<>();
 
         assertEquals((dockerfileGitHubUtil.getSearchResultsExcludingOrgWithMostHits("image", contentsWithImage, orgsToIncludeOrExclude, 1000)).get().size(), 2);
+        assertEquals(orgsToIncludeOrExclude.size(), 0);
     }
 
     @Test
