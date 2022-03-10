@@ -177,10 +177,12 @@ public class DockerfileGitHubUtil {
         Optional<List<PagedSearchIterable<GHContent>>> contentsForOrgWithMaximumHits;
         contentsForOrgWithMaximumHits = findFilesWithImage(image, orgsToInclude, gitApiSearchLimit);
 
-        orgsToExclude.put(orgWithMaximumHits, false);
-        log.info("Running search by excluding the orgs {}.", orgsToExclude.keySet().toString());
+        Map<String, Boolean> orgsToExcludeFromSearch = new HashMap<>();
+        orgsToExcludeFromSearch.putAll(orgsToExclude);
+        orgsToExcludeFromSearch.put(orgWithMaximumHits, false);
+        log.info("Running search by excluding the orgs {}.", orgsToExcludeFromSearch.keySet().toString());
         Optional<List<PagedSearchIterable<GHContent>>> contentsExcludingOrgWithMaximumHits;
-        contentsExcludingOrgWithMaximumHits = findFilesWithImage(image, orgsToExclude, gitApiSearchLimit);
+        contentsExcludingOrgWithMaximumHits = findFilesWithImage(image, orgsToExcludeFromSearch, gitApiSearchLimit);
         if (contentsForOrgWithMaximumHits.isPresent()) {
             allContentsWithImage.addAll(contentsForOrgWithMaximumHits.get());
         }

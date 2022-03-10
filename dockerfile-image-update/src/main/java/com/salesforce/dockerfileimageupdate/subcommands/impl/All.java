@@ -42,6 +42,13 @@ public class All implements ExecutableWithNamespace {
         Integer gitApiSearchLimit = ns.get(Constants.GIT_API_SEARCH_LIMIT);
         List<ProcessingErrors> imagesThatCouldNotBeProcessed = new LinkedList<>();
         AtomicInteger numberOfImagesToProcess = new AtomicInteger();
+        Map<String, Boolean> orgsToIncludeInSearch = new HashMap<>();
+        if (ns.get(Constants.GIT_ORG) != null) {
+            // If there is a Git org specified, that needs to be included in the search query. In
+            // the orgsToIncludeInSearch a true value associated with an org name ensures that
+            // the org gets included in the search query.
+            orgsToIncludeInSearch.put(ns.get(Constants.GIT_ORG), true);
+        }
         for (Map.Entry<String, JsonElement> imageToTag : imageToTagStore) {
             numberOfImagesToProcess.getAndIncrement();
             String image = imageToTag.getKey();
@@ -52,13 +59,6 @@ public class All implements ExecutableWithNamespace {
                 GitForkBranch gitForkBranch = getGitForkBranch(image, tag, ns);
 
                 log.info("Finding Dockerfiles with the image name {}...", image);
-                Map<String, Boolean> orgsToIncludeInSearch = new HashMap<>();
-                if (ns.get(Constants.GIT_ORG) != null) {
-                    // If there is a Git org specified, that needs to be included in the search query. In
-                    // the orgsToIncludeInSearch a true value associated with an org name ensures that
-                    // the org gets included in the search query.
-                    orgsToIncludeInSearch.put(ns.get(Constants.GIT_ORG), true);
-                }
                 Optional<List<PagedSearchIterable<GHContent>>> contentsWithImage =
                         this.dockerfileGitHubUtil.findFilesWithImage(image, orgsToIncludeInSearch, gitApiSearchLimit);
 
