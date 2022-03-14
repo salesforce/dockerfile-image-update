@@ -29,7 +29,8 @@ import java.util.concurrent.TimeUnit;
 public class GitHubUtil {
     private static final Logger log = LoggerFactory.getLogger(GitHubUtil.class);
     public static final String NO_BRANCH_WARN_FORMAT = "Couldn't find branch `%s` in repo `%s`. Waiting a second...";
-    public static final String PR_INVALID_CODE = "The PR head has invalid data.";
+    public static final String PR_INVALID_CODE = "The PR head has invalid data. This might be because the repository was migrated to another organization." +
+            " Please delete the fork and retry.";
 
     private final GitHub github;
 
