@@ -11,6 +11,7 @@ package com.salesforce.dockerfileimageupdate.utils;
 import com.google.common.collect.Multimap;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.kohsuke.github.*;
 import org.slf4j.Logger;
@@ -21,6 +22,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -110,18 +112,18 @@ public class GitHubUtil {
             log.warn("Handling error with pull request creation... {}", e.getMessage());
             JsonElement root = JsonParser.parseString(e.getMessage());
             JsonArray errorJson = root.getAsJsonObject().get("errors").getAsJsonArray();
-            String error = "";
-            if (errorJson.get(0).getAsJsonObject().has("message")) {
-                error = errorJson.get(0).getAsJsonObject().get("message").getAsString();
-            } else {
-                // This case usually happens when the PR head has invalid data. Deleting the forked repo resolves it.
-                error = PR_INVALID_CODE;
+            String error = PR_INVALID_CODE;
+            JsonObject errorMessage = errorJson.get(0).getAsJsonObject();
+            if (errorMessage.has("message")) {
+                error = errorMessage.get("message").getAsString();
             }
             log.info("error: {}", error);
+            String finalError = error;
+            List<String> errorPrefixes = Arrays.asList(PR_INVALID_CODE, "No commits between");
             if (error.startsWith("A pull request already exists")) {
                 log.info("NOTE: {} New commits may have been added to the pull request.", error);
                 return 0;
-            } else if (error.startsWith("No commits between") || error.startsWith(PR_INVALID_CODE)) {
+            } else if (errorPrefixes.stream().anyMatch(prefix -> finalError.startsWith(prefix))) {
                 log.warn("NOTE: {} Pull request was not created.", error);
                 return 1;
             } else {
