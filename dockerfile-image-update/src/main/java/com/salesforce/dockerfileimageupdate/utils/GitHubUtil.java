@@ -29,6 +29,8 @@ import java.util.concurrent.TimeUnit;
 public class GitHubUtil {
     private static final Logger log = LoggerFactory.getLogger(GitHubUtil.class);
     public static final String NO_BRANCH_WARN_FORMAT = "Couldn't find branch `%s` in repo `%s`. Waiting a second...";
+    public static final String PR_INVALID_CODE = "The PR head has invalid data. This might be because the repository was migrated to another organization." +
+            " Please delete the fork and retry.";
 
     private final GitHub github;
 
@@ -108,12 +110,18 @@ public class GitHubUtil {
             log.warn("Handling error with pull request creation... {}", e.getMessage());
             JsonElement root = JsonParser.parseString(e.getMessage());
             JsonArray errorJson = root.getAsJsonObject().get("errors").getAsJsonArray();
-            String error = errorJson.get(0).getAsJsonObject().get("message").getAsString();
+            String error = "";
+            if (errorJson.get(0).getAsJsonObject().has("message")) {
+                error = errorJson.get(0).getAsJsonObject().get("message").getAsString();
+            } else {
+                // This case usually happens when the PR head has invalid data. Deleting the forked repo resolves it.
+                error = PR_INVALID_CODE;
+            }
             log.info("error: {}", error);
             if (error.startsWith("A pull request already exists")) {
                 log.info("NOTE: {} New commits may have been added to the pull request.", error);
                 return 0;
-            } else if (error.startsWith("No commits between")) {
+            } else if (error.startsWith("No commits between") || error.startsWith(PR_INVALID_CODE)) {
                 log.warn("NOTE: {} Pull request was not created.", error);
                 return 1;
             } else {
