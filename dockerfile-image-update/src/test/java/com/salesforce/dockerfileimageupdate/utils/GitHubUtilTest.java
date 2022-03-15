@@ -131,7 +131,7 @@ public class GitHubUtilTest {
         GHRepository forkRepo = mock(GHRepository.class);
         when(forkRepo.getOwnerName()).thenReturn("owner");
         assertEquals(gitHubUtil.createPullReq(origRepo, "branch", forkRepo, "title", "body"), 1);
-        verify(origRepo, times(1)).createPullRequest(eq("title"), eq("owner:branch"), eq("master"), eq("body"));
+        verify(origRepo).createPullRequest(eq("title"), eq("owner:branch"), eq("master"), eq("body"));
     }
 
     @Test
