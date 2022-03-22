@@ -14,6 +14,7 @@ import com.salesforce.dockerfileimageupdate.repository.GitHub;
 import com.salesforce.dockerfileimageupdate.search.GitHubImageSearchTermList;
 import com.salesforce.dockerfileimageupdate.storage.GitHubJsonStore;
 import net.sourceforge.argparse4j.inf.*;
+import org.apache.commons.lang3.StringUtils;
 import org.kohsuke.github.*;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
@@ -30,6 +31,7 @@ import java.util.concurrent.TimeUnit;
 public class DockerfileGitHubUtil {
     private static final Logger log = LoggerFactory.getLogger(DockerfileGitHubUtil.class);
     private final GitHubUtil gitHubUtil;
+    private static final String NO_DFIU = "no-dfiu";
 
     public DockerfileGitHubUtil(GitHubUtil gitHubUtil) {
         this.gitHubUtil = gitHubUtil;
@@ -283,7 +285,7 @@ public class DockerfileGitHubUtil {
         boolean modified = false;
         while ( (line = reader.readLine()) != null ) {
             /* Once true, should stay true. */
-            modified = changeIfDockerfileBaseImageLine(img, tag, strB, line, ignoreImageString) || modified;
+            modified = changeIfDockerfileBaseImageLine(reader, img, tag, strB, line, ignoreImageString) || modified;
         }
         return modified;
     }
@@ -297,31 +299,56 @@ public class DockerfileGitHubUtil {
      * If the inbound {@code line} does not qualify for changes or if the tag is already correct, the
      * {@code stringBuilder} will get {@code line} added to it. We return {@code false} in this instance.
      *
+     *
+     * @param reader BufferReader used for reading next line to FROM Instruction
      * @param imageToFind the Docker image that may require a tag update
      * @param tag the Docker tag that we'd like the image to have
      * @param stringBuilder the stringBuilder to accumulate the output lines for the pull request
      * @param line the inbound line from the Dockerfile
      * @return Whether we've modified the {@code line} that goes into {@code stringBuilder}
      */
-    protected boolean changeIfDockerfileBaseImageLine(String imageToFind, String tag,
+    protected boolean changeIfDockerfileBaseImageLine(BufferedReader reader, String imageToFind, String tag,
                                                       StringBuilder stringBuilder, String line,
-                                                      String ignoreImageString) {
+                                                      String ignoreImageString) throws IOException {
         boolean modified = false;
         String outputLine = line;
+        String nextLine = null;
 
         // Only check/modify lines which contain a FROM instruction
         if (FromInstruction.isFromInstruction(line)) {
             FromInstruction fromInstruction = new FromInstruction(line);
+            nextLine = reader.readLine();
             if (fromInstruction.hasBaseImage(imageToFind) &&
                     fromInstruction.hasADifferentTag(tag) &&
-                    !fromInstruction.ignorePR(ignoreImageString)) {
+                    !ignorePR(nextLine, ignoreImageString)) {
                 fromInstruction = fromInstruction.getFromInstructionWithNewTag(tag);
                 modified = true;
             }
             outputLine = fromInstruction.toString();
         }
         stringBuilder.append(outputLine).append("\n");
+        if (nextLine != null)
+            stringBuilder.append(nextLine).append("\n");
         return modified;
+    }
+
+    /**
+     * Determines whether a comment after FROM line is mentioned {@code ignoreImageString} to ignore creating dfiu PR
+     * If {@code ignoreImageString} present in comment, PR should be ignored
+     * If {@code ignoreImageString} is empty, then by default 'no-dfiu' comment will be searched
+     * @param nextLine Next line to search for comment
+     * @param ignoreImageString comment to search
+     * @return {@code true} if comment is found
+     */
+    protected boolean ignorePR(String nextLine, String ignoreImageString) throws IOException {
+        if (nextLine != null && nextLine.trim().startsWith("#")) {
+            if (StringUtils.isNotBlank(ignoreImageString)) {
+                return nextLine.contains(ignoreImageString);
+            } else {
+                return nextLine.contains(NO_DFIU);
+            }
+        }
+        return false;
     }
 
     public GitHubJsonStore getGitHubJsonStore(String store) {
