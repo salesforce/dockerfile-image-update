@@ -284,8 +284,16 @@ public class DockerfileGitHubUtil {
         String line;
         boolean modified = false;
         while ( (line = reader.readLine()) != null ) {
+            if (ignorePRCommentPresent(line, ignoreImageString)) {
+                strB.append(line).append("\n");
+
+                // Skip the next Line so it is not processed for PR creation
+                line = reader.readLine();
+                strB.append(line).append("\n");
+                continue;
+            }
             /* Once true, should stay true. */
-            modified = changeIfDockerfileBaseImageLine(reader, img, tag, strB, line, ignoreImageString) || modified;
+            modified = changeIfDockerfileBaseImageLine(img, tag, strB, line) || modified;
         }
         return modified;
     }
@@ -300,55 +308,43 @@ public class DockerfileGitHubUtil {
      * {@code stringBuilder} will get {@code line} added to it. We return {@code false} in this instance.
      *
      *
-     * @param reader BufferReader used for reading next line to FROM Instruction
      * @param imageToFind the Docker image that may require a tag update
      * @param tag the Docker tag that we'd like the image to have
      * @param stringBuilder the stringBuilder to accumulate the output lines for the pull request
      * @param line the inbound line from the Dockerfile
      * @return Whether we've modified the {@code line} that goes into {@code stringBuilder}
      */
-    protected boolean changeIfDockerfileBaseImageLine(BufferedReader reader, String imageToFind, String tag,
-                                                      StringBuilder stringBuilder, String line,
-                                                      String ignoreImageString) throws IOException {
+    protected boolean changeIfDockerfileBaseImageLine(String imageToFind, String tag,
+                                                      StringBuilder stringBuilder, String line) {
         boolean modified = false;
         String outputLine = line;
-        String nextLine = null;
 
         // Only check/modify lines which contain a FROM instruction
         if (FromInstruction.isFromInstruction(line)) {
             FromInstruction fromInstruction = new FromInstruction(line);
-            nextLine = reader.readLine();
+
             if (fromInstruction.hasBaseImage(imageToFind) &&
-                    fromInstruction.hasADifferentTag(tag) &&
-                    !ignorePR(nextLine, ignoreImageString)) {
+                    fromInstruction.hasADifferentTag(tag)) {
                 fromInstruction = fromInstruction.getFromInstructionWithNewTag(tag);
                 modified = true;
             }
             outputLine = fromInstruction.toString();
         }
         stringBuilder.append(outputLine).append("\n");
-        if (nextLine != null)
-            stringBuilder.append(nextLine).append("\n");
         return modified;
     }
 
     /**
-     * Determines whether a comment after FROM line is mentioned {@code ignoreImageString} to ignore creating dfiu PR
+     * Determines whether a comment before FROM line has {@code ignoreImageString} to ignore creating dfiu PR
      * If {@code ignoreImageString} present in comment, PR should be ignored
      * If {@code ignoreImageString} is empty, then by default 'no-dfiu' comment will be searched
-     * @param nextLine Next line to search for comment
+     * @param line line to search for comment
      * @param ignoreImageString comment to search
      * @return {@code true} if comment is found
      */
-    protected boolean ignorePR(String nextLine, String ignoreImageString) throws IOException {
-        if (nextLine != null && nextLine.trim().startsWith("#")) {
-            if (StringUtils.isNotBlank(ignoreImageString)) {
-                return nextLine.contains(ignoreImageString);
-            } else {
-                return nextLine.contains(NO_DFIU);
-            }
-        }
-        return false;
+    protected boolean ignorePRCommentPresent(String line, String ignoreImageString) {
+        final String tester = Optional.ofNullable(ignoreImageString).filter(StringUtils::isNotBlank).orElse(NO_DFIU);
+        return StringUtils.isNotBlank(line) && line.trim().startsWith("#") && line.contains(tester);
     }
 
     public GitHubJsonStore getGitHubJsonStore(String store) {
