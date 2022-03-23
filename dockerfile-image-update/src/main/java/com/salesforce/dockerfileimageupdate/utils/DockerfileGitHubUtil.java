@@ -344,7 +344,7 @@ public class DockerfileGitHubUtil {
      */
     protected boolean ignorePRCommentPresent(String line, String ignoreImageString) {
         final String tester = Optional.ofNullable(ignoreImageString).filter(StringUtils::isNotBlank).orElse(NO_DFIU);
-        return StringUtils.isNotBlank(line) && line.trim().startsWith("#") && line.contains(tester);
+        return StringUtils.isNotBlank(line) && line.trim().startsWith("#") && line.substring(line.indexOf("#") + 1).trim().equals(tester);
     }
 
     public GitHubJsonStore getGitHubJsonStore(String store) {

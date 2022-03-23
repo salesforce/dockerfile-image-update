@@ -817,7 +817,7 @@ public class DockerfileGitHubUtilTest {
                 { "# ignore-pr\nFROM image:original", "", "# ignore-pr\nFROM image:changed\n"},
                 { "# no-dfiu\nFROM image:original\nFROM image:abcd", "", "# no-dfiu\nFROM image:original\nFROM image:changed\n"},
                 { "# no-dfiu\nFROM image:original\n# no-dfiu\nFROM image:abcd", "", "# no-dfiu\nFROM image:original\n# no-dfiu\nFROM image:abcd\n"},
-                { "# I don't want PR for this hence mentioning no-dfiu\nFROM image:original", "", "# I don't want PR for this hence mentioning no-dfiu\nFROM image:original\n"},
+                { "#no-dfiu\nFROM image:original", "", "#no-dfiu\nFROM image:original\n"},
         };
     }
 
@@ -841,10 +841,10 @@ public class DockerfileGitHubUtilTest {
                 {"#no-dfiu",            "",         true},
                 {"# no-dfiu",           "",         true},
                 {"\t# no-dfiu",         "",         true},
-                {"\t# no-dfiu # # # ",  "",         true},
+                {"\t# no-dfiu # # # ",  "",         false},
                 {"#\n",                 "",         false},
-                {"# :no-dfiu",          "",         true},
-                {"# no-dfiu added comments for ignoring dfiu PR", "",       true},
+                {"# :no-dfiu",          "",         false},
+                {"# no-dfiu added comments for ignoring dfiu PR", "",       false},
                 {"#FROM a:b",           "",                                 false},
                 {"#ignore-pr",          "ignore-pr",                        true},
                 {"#ignore-pr",          "ignore pr",                        false}
