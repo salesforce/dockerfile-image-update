@@ -16,9 +16,8 @@ import org.mockito.*;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
+import java.nio.charset.Charset;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Iterator;
@@ -552,16 +551,16 @@ public class DockerfileGitHubUtilTest {
                 {"image8", "245", "FROM image8: 245", true},
                 {"image3", "7", "FROM image3", true},
                 {"image3", "7", "  FROM image3", true},
-                {"image3", "7", "FROM image3  ", true},
+                {"image3", "7", "FROM image3  ",  true},
                 {"image3", "7", "\tFROM image3\t", true},
                 {"image7", "98", "FROM image7:4", true},
                 {"image7", "98", "FROM image7: 4", true},
                 {"image124516418023_1085-1-1248571", "7357",
                         "FROM image124516418023_1085-1-1248571:18026809126359806124890356219518632048125", true},
                 {"image", "1234",
-                        "FROM image:1234 # no-dfiu", false},
+                        "FROM image:1234", false},
                 {"image", "1234",
-                        "FROM image:1234 # I don't want PR for this hence no-dfiu", false},
+                        "FROM image:1234", false},
         };
     }
 
@@ -570,7 +569,7 @@ public class DockerfileGitHubUtilTest {
                                                     String line, boolean expected) throws Exception {
         gitHubUtil = mock(GitHubUtil.class);
         dockerfileGitHubUtil = new DockerfileGitHubUtil(gitHubUtil);
-        assertEquals(dockerfileGitHubUtil.changeIfDockerfileBaseImageLine(img, tag, new StringBuilder(), line, ""),
+        assertEquals(dockerfileGitHubUtil.changeIfDockerfileBaseImageLine(img, tag, new StringBuilder(), line),
                 expected);
     }
 
@@ -581,25 +580,25 @@ public class DockerfileGitHubUtilTest {
         StringBuilder stringBuilder = new StringBuilder();
         String img = "image";
         String tag = "7357";
-        dockerfileGitHubUtil.changeIfDockerfileBaseImageLine(img, tag, stringBuilder, "hello", "");
-        dockerfileGitHubUtil.changeIfDockerfileBaseImageLine(img, tag, stringBuilder, "FROM image:blah", "");
-        dockerfileGitHubUtil.changeIfDockerfileBaseImageLine(img, tag, stringBuilder, "world", "");
-        dockerfileGitHubUtil.changeIfDockerfileBaseImageLine(img, tag, stringBuilder, "this is a test", "");
-        assertEquals(stringBuilder.toString(), "hello\nFROM image:7357\nworld\nthis is a test\n", "");
+        dockerfileGitHubUtil.changeIfDockerfileBaseImageLine(img, tag, stringBuilder, "hello");
+        dockerfileGitHubUtil.changeIfDockerfileBaseImageLine(img, tag, stringBuilder, "FROM image:blah");
+        dockerfileGitHubUtil.changeIfDockerfileBaseImageLine(img, tag, stringBuilder, "world");
+        dockerfileGitHubUtil.changeIfDockerfileBaseImageLine(img, tag, stringBuilder, "this is a test");
+        assertEquals(stringBuilder.toString(), "hello\nFROM image:7357\nworld\nthis is a test\n");
     }
 
     @Test
-    public void testDockerfileWithNoTag() {
+    public void testDockerfileWithNoTag() throws IOException {
         gitHubUtil = mock(GitHubUtil.class);
         dockerfileGitHubUtil = new DockerfileGitHubUtil(gitHubUtil);
         StringBuilder stringBuilder = new StringBuilder();
         String img = "image";
         String tag = "7357";
-        dockerfileGitHubUtil.changeIfDockerfileBaseImageLine(img, tag, stringBuilder, "hello", "");
-        dockerfileGitHubUtil.changeIfDockerfileBaseImageLine(img, tag, stringBuilder, "FROM image", "");
-        dockerfileGitHubUtil.changeIfDockerfileBaseImageLine(img, tag, stringBuilder, "world", "");
-        dockerfileGitHubUtil.changeIfDockerfileBaseImageLine(img, tag, stringBuilder, "this is a test", "");
-        assertEquals(stringBuilder.toString(), "hello\nFROM image:7357\nworld\nthis is a test\n", "");
+        dockerfileGitHubUtil.changeIfDockerfileBaseImageLine(img, tag, stringBuilder, "hello");
+        dockerfileGitHubUtil.changeIfDockerfileBaseImageLine(img, tag, stringBuilder, "FROM image");
+        dockerfileGitHubUtil.changeIfDockerfileBaseImageLine(img, tag, stringBuilder, "world");
+        dockerfileGitHubUtil.changeIfDockerfileBaseImageLine(img, tag, stringBuilder, "this is a test");
+        assertEquals(stringBuilder.toString(), "hello\nFROM image:7357\nworld\nthis is a test\n");
     }
 
     @Test
@@ -811,23 +810,51 @@ public class DockerfileGitHubUtilTest {
     @DataProvider
     public Object[][] fromInstructionWithIgnoreStringData() {
         return new Object[][] {
-                { "FROM image:original # no-dfiu", "", "FROM image:original # no-dfiu\n"},
-                { "FROM image:original # no-dfiu", "dont-ignore", "FROM image:changed # no-dfiu\n"},
-                { "FROM image:original # ignore-pr", "dont-ignore", "FROM image:changed # ignore-pr\n"},
-                { "FROM image:original # ignore-pr", "ignore-pr", "FROM image:original # ignore-pr\n"},
-                { "FROM image:original # ignore-pr", "", "FROM image:changed # ignore-pr\n"}
+                { "# no-dfiu\nFROM image:original", "", "# no-dfiu\nFROM image:original\n"},
+                { "# no-dfiu\nFROM image:original", "dont-ignore", "# no-dfiu\nFROM image:changed\n"},
+                { "# ignore-pr\nFROM image:original", "dont-ignore", "# ignore-pr\nFROM image:changed\n"},
+                { "# ignore-pr\nFROM image:original", "ignore-pr", "# ignore-pr\nFROM image:original\n"},
+                { "# ignore-pr\nFROM image:original", "", "# ignore-pr\nFROM image:changed\n"},
+                { "# no-dfiu\nFROM image:original\nFROM image:abcd", "", "# no-dfiu\nFROM image:original\nFROM image:changed\n"},
+                { "# no-dfiu\nFROM image:original\n# no-dfiu\nFROM image:abcd", "", "# no-dfiu\nFROM image:original\n# no-dfiu\nFROM image:abcd\n"},
+                { "#no-dfiu\nFROM image:original", "", "#no-dfiu\nFROM image:original\n"},
         };
     }
 
     @Test(dataProvider = "fromInstructionWithIgnoreStringData")
-    public void testDockerfileWithIgnoreImageString(String fromLine, String ignoreImageString, String outputLine) {
+    public void testDockerfileWithIgnoreImageString(String dockerfileLines, String ignoreImageString, String outputLines) throws IOException {
         gitHubUtil = mock(GitHubUtil.class);
         dockerfileGitHubUtil = new DockerfileGitHubUtil(gitHubUtil);
         StringBuilder stringBuilder = new StringBuilder();
         String img = "image";
         String tag = "changed";
+        InputStream stream = new ByteArrayInputStream(dockerfileLines.getBytes(Charset.forName("UTF-8")));
+        BufferedReader reader = new BufferedReader(new InputStreamReader(stream));
+        dockerfileGitHubUtil.rewriteDockerfile(img, tag, reader, stringBuilder, ignoreImageString);
+        assertEquals(stringBuilder.toString(), outputLines, "");
+    }
 
-        dockerfileGitHubUtil.changeIfDockerfileBaseImageLine(img, tag, stringBuilder, fromLine, ignoreImageString);
-        assertEquals(stringBuilder.toString(), outputLine, "");
+    @DataProvider
+    public Object[][] commentDataNoDfiu() {
+        return new Object[][] {
+                {"#FROM alpine:latest", "",         false},
+                {"#no-dfiu",            "",         true},
+                {"# no-dfiu",           "",         true},
+                {"\t# no-dfiu",         "",         true},
+                {"\t# no-dfiu # # # ",  "",         false},
+                {"#\n",                 "",         false},
+                {"# :no-dfiu",          "",         false},
+                {"# no-dfiu added comments for ignoring dfiu PR", "",       false},
+                {"#FROM a:b",           "",                                 false},
+                {"#ignore-pr",          "ignore-pr",                        true},
+                {"#ignore-pr",          "ignore pr",                        false}
+        };
+    }
+
+    @Test(dataProvider = "commentDataNoDfiu")
+    public void testCommentsWithNoDfiuParsedCorrectly(String line, String ignoreImageString, Boolean expectedResult) throws IOException {
+        gitHubUtil = mock(GitHubUtil.class);
+        dockerfileGitHubUtil = new DockerfileGitHubUtil(gitHubUtil);
+        assertEquals(dockerfileGitHubUtil.ignorePRCommentPresent(line, ignoreImageString), expectedResult);
     }
 }

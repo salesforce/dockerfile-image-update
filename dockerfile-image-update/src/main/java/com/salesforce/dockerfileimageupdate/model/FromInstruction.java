@@ -14,7 +14,6 @@ public class FromInstruction {
 
     private static final String NAME = "FROM";
     private static final String INVALID_INSTRUCTION_LINE = "You have not provided a valid FROM instruction line.";
-    private static final String NO_DFIU = "no-dfiu";
     /**
      * The name of the base image
      */
@@ -189,24 +188,6 @@ public class FromInstruction {
             return true;
         }
         return !tag.trim().equals(expectedTag.trim());
-    }
-
-    /**
-     * Determines whether the comment has mentioned {@code ignoreImageString} to ignore creating dfiu PR
-     * If {@code ignoreImageString} present in comment, PR should be ignored
-     * If {@code ignoreImageString} is empty, then by default 'no-dfiu' comment will be searched
-     * @param ignoreImageString comment to search
-     * @return {@code true} if comment is found
-     */
-    public boolean ignorePR(String ignoreImageString) {
-        if (hasComments()) {
-            if (StringUtils.isNotBlank(ignoreImageString)) {
-                return comments.contains(ignoreImageString);
-            } else {
-                return comments.contains(NO_DFIU);
-            }
-        }
-        return false;
     }
 
     public String getTag() {

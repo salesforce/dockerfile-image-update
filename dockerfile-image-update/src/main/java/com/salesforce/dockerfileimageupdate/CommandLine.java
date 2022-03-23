@@ -83,7 +83,7 @@ public class CommandLine {
                 .setDefault(false)
                 .help("Only update image tag store. Skip creating PRs");
         parser.addArgument("-x")
-                .help("comment snippet after FROM instruction for ignoring a child image. " +
+                .help("comment snippet mentioned in line just before FROM instruction for ignoring a child image. " +
                         "Defaults to 'no-dfiu'");
         return parser;
     }
