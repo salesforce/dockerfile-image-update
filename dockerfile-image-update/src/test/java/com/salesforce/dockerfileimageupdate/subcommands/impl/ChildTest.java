@@ -11,6 +11,7 @@ package com.salesforce.dockerfileimageupdate.subcommands.impl;
 import com.google.common.collect.ImmutableMap;
 import com.salesforce.dockerfileimageupdate.storage.GitHubJsonStore;
 import com.salesforce.dockerfileimageupdate.utils.DockerfileGitHubUtil;
+import com.salesforce.dockerfileimageupdate.utils.DockerfileS3Util;
 import net.sourceforge.argparse4j.inf.Namespace;
 import org.kohsuke.github.GHRepository;
 import org.mockito.Mockito;
@@ -49,6 +50,7 @@ public class ChildTest {
         Child child = new Child();
         Namespace ns = new Namespace(inputMap);
         DockerfileGitHubUtil dockerfileGitHubUtil = mock(DockerfileGitHubUtil.class);
+        DockerfileS3Util dockerfileS3Util = mock(DockerfileS3Util.class);
         Mockito.when(dockerfileGitHubUtil.getRepo(Mockito.any())).thenReturn(new GHRepository());
         Mockito.when(dockerfileGitHubUtil.getOrCreateFork(Mockito.any())).thenReturn(new GHRepository());
         doNothing().when(dockerfileGitHubUtil).modifyAllOnGithub(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
@@ -56,7 +58,7 @@ public class ChildTest {
         when(dockerfileGitHubUtil.getGitHubJsonStore(anyString())).thenReturn(gitHubJsonStore);
         doNothing().when(dockerfileGitHubUtil).createPullReq(Mockito.any(), anyString(), Mockito.any(), any());
 
-        child.execute(ns, dockerfileGitHubUtil);
+        child.execute(ns, dockerfileGitHubUtil, dockerfileS3Util);
 
         Mockito.verify(dockerfileGitHubUtil, atLeastOnce())
                 .createPullReq(Mockito.any(), anyString(), Mockito.any(), any());
@@ -72,11 +74,12 @@ public class ChildTest {
                 STORE, "test");
         Namespace ns = new Namespace(nsMap);
         DockerfileGitHubUtil dockerfileGitHubUtil = mock(DockerfileGitHubUtil.class);
+        DockerfileS3Util dockerfileS3Util = mock(DockerfileS3Util.class);
         GitHubJsonStore gitHubJsonStore = mock(GitHubJsonStore.class);
         when(dockerfileGitHubUtil.getGitHubJsonStore(anyString())).thenReturn(gitHubJsonStore);
         Mockito.when(dockerfileGitHubUtil.getRepo(Mockito.any())).thenReturn(new GHRepository());
         Mockito.when(dockerfileGitHubUtil.getOrCreateFork(Mockito.any())).thenReturn(null);
-        child.execute(ns, dockerfileGitHubUtil);
+        child.execute(ns, dockerfileGitHubUtil, dockerfileS3Util);
         Mockito.verify(dockerfileGitHubUtil, Mockito.never()).createPullReq(Mockito.any(), Mockito.any(), Mockito.any(),
                 Mockito.any());
     }

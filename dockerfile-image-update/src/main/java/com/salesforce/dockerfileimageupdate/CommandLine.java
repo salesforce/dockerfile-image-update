@@ -9,11 +9,12 @@
 package com.salesforce.dockerfileimageupdate;
 
 
+import com.amazonaws.regions.Regions;
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.google.common.reflect.ClassPath;
 import com.salesforce.dockerfileimageupdate.subcommands.ExecutableWithNamespace;
-import com.salesforce.dockerfileimageupdate.utils.Constants;
-import com.salesforce.dockerfileimageupdate.utils.DockerfileGitHubUtil;
-import com.salesforce.dockerfileimageupdate.utils.GitHubUtil;
+import com.salesforce.dockerfileimageupdate.utils.*;
 import net.sourceforge.argparse4j.ArgumentParsers;
 import net.sourceforge.argparse4j.impl.Arguments;
 import net.sourceforge.argparse4j.inf.*;
@@ -47,9 +48,10 @@ public class CommandLine {
             System.exit(1);
         Class<?> runClass = loadCommand(allClasses, ns.get(Constants.COMMAND));
         DockerfileGitHubUtil dockerfileGitHubUtil = initializeDockerfileGithubUtil(ns.get(Constants.GIT_API));
+        DockerfileS3Util dockerfileS3Util = initializeDockerfileS3Util();
 
         /* Execute given command. */
-        ((ExecutableWithNamespace)runClass.newInstance()).execute(ns, dockerfileGitHubUtil);
+        ((ExecutableWithNamespace)runClass.newInstance()).execute(ns, dockerfileGitHubUtil, dockerfileS3Util);
     }
 
     static ArgumentParser getArgumentParser() {
@@ -193,5 +195,11 @@ public class CommandLine {
         GitHubUtil gitHubUtil = new GitHubUtil(github);
 
         return new DockerfileGitHubUtil(gitHubUtil);
+    }
+
+    public static DockerfileS3Util initializeDockerfileS3Util() {
+        AmazonS3 s3 = AmazonS3ClientBuilder.standard().withRegion(Regions.DEFAULT_REGION).build();
+        S3BucketUtil s3BucketUtil = new S3BucketUtil(s3);
+        return new DockerfileS3Util(s3BucketUtil);
     }
 }

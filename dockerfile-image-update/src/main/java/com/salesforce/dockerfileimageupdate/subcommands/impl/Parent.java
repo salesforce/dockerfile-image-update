@@ -13,10 +13,9 @@ import com.salesforce.dockerfileimageupdate.SubCommand;
 import com.salesforce.dockerfileimageupdate.model.GitForkBranch;
 import com.salesforce.dockerfileimageupdate.process.ForkableRepoValidator;
 import com.salesforce.dockerfileimageupdate.process.GitHubPullRequestSender;
+import com.salesforce.dockerfileimageupdate.storage.GitHubJsonStore;
 import com.salesforce.dockerfileimageupdate.subcommands.ExecutableWithNamespace;
-import com.salesforce.dockerfileimageupdate.utils.Constants;
-import com.salesforce.dockerfileimageupdate.utils.DockerfileGitHubUtil;
-import com.salesforce.dockerfileimageupdate.utils.PullRequests;
+import com.salesforce.dockerfileimageupdate.utils.*;
 import net.sourceforge.argparse4j.inf.Namespace;
 import org.kohsuke.github.GHContent;
 import org.kohsuke.github.PagedSearchIterable;
@@ -33,18 +32,29 @@ import java.util.Optional;
 public class Parent implements ExecutableWithNamespace {
 
     private static final Logger log = LoggerFactory.getLogger(Parent.class);
+    private static final String s3Prefix = "s3://";
 
     DockerfileGitHubUtil dockerfileGitHubUtil;
+    DockerfileS3Util dockerfileS3Util;
 
     @Override
-    public void execute(final Namespace ns, DockerfileGitHubUtil dockerfileGitHubUtil)
+    public void execute(final Namespace ns, DockerfileGitHubUtil dockerfileGitHubUtil, DockerfileS3Util dockerfileS3Util)
             throws IOException, InterruptedException {
         loadDockerfileGithubUtil(dockerfileGitHubUtil);
+        loadDockerfileS3Util(dockerfileS3Util);
         String img = ns.get(Constants.IMG);
         String tag = ns.get(Constants.TAG);
 
         log.info("Updating store...");
-        this.dockerfileGitHubUtil.getGitHubJsonStore(ns.get(Constants.STORE)).updateStore(img, tag);
+        String store = ns.get(Constants.STORE);
+        if (store.startsWith(s3Prefix)) {
+            log.info("Using S3 bucket as the underlying data store");
+            this.dockerfileS3Util.getS3ImageStore(store).updateS3Store(img, tag);
+        } else {
+            log.info("Using Git repo as the underlying data store");
+            this.dockerfileGitHubUtil.getGitHubJsonStore(store).updateStore(img, tag);
+        }
+
 
         if (ns.get(Constants.SKIP_PR_CREATION)) {
             log.info("Since the flag {} is set to True, the PR creation steps will "
@@ -87,5 +97,9 @@ public class Parent implements ExecutableWithNamespace {
 
     protected void loadDockerfileGithubUtil(DockerfileGitHubUtil _dockerfileGitHubUtil) {
         dockerfileGitHubUtil = _dockerfileGitHubUtil;
+    }
+
+    protected void loadDockerfileS3Util(DockerfileS3Util _dockerfileS3UtilUtil) {
+        dockerfileS3Util = _dockerfileS3UtilUtil;
     }
 }

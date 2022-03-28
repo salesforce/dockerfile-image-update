@@ -40,6 +40,7 @@ public class ParentTest {
         Namespace ns = new Namespace(nsMap);
         Parent parent = spy(new Parent());
         DockerfileGitHubUtil dockerfileGitHubUtil = mock(DockerfileGitHubUtil.class);
+        DockerfileS3Util dockerfileS3Util = mock(DockerfileS3Util.class);
         GitHubJsonStore gitHubJsonStore = mock(GitHubJsonStore.class);
         GitHubPullRequestSender pullRequestSender = mock(GitHubPullRequestSender.class);
         GitForkBranch gitForkBranch = mock(GitForkBranch.class);
@@ -47,7 +48,7 @@ public class ParentTest {
         PullRequests pullRequests = mock(PullRequests.class);
         when(dockerfileGitHubUtil.getGitHubJsonStore(anyString())).thenReturn(gitHubJsonStore);
 
-        parent.execute(ns, dockerfileGitHubUtil);
+        parent.execute(ns, dockerfileGitHubUtil, dockerfileS3Util);
 
         verify(parent, times(0)).getGitForkBranch(ns);
         verify(parent, times(0)).getPullRequestSender(dockerfileGitHubUtil, ns);
@@ -66,6 +67,7 @@ public class ParentTest {
         Namespace ns = new Namespace(nsMap);
         Parent parent = spy(new Parent());
         DockerfileGitHubUtil dockerfileGitHubUtil = mock(DockerfileGitHubUtil.class);
+        DockerfileS3Util dockerfileS3Util = mock(DockerfileS3Util.class);
         GitHubJsonStore gitHubJsonStore = mock(GitHubJsonStore.class);
         GitHubPullRequestSender pullRequestSender = mock(GitHubPullRequestSender.class);
         GitForkBranch gitForkBranch = mock(GitForkBranch.class);
@@ -81,7 +83,7 @@ public class ParentTest {
                 contentsWithImage, gitForkBranch, dockerfileGitHubUtil);
         when(dockerfileGitHubUtil.getGHContents(anyString(), anyString(),  anyInt())).thenReturn(optionalContentsWithImageList);
 
-        parent.execute(ns, dockerfileGitHubUtil);
+        parent.execute(ns, dockerfileGitHubUtil, dockerfileS3Util);
         verify(parent, times(1)).getGitForkBranch(ns);
         verify(parent, times(1)).getPullRequestSender(dockerfileGitHubUtil, ns);
         verify(parent, times(1)).getPullRequests();
@@ -139,6 +141,7 @@ public class ParentTest {
         Namespace ns = new Namespace(nsMap);
         Parent parent = spy(new Parent());
         DockerfileGitHubUtil dockerfileGitHubUtil = mock(DockerfileGitHubUtil.class);
+        DockerfileS3Util dockerfileS3Util = mock(DockerfileS3Util.class);
         GitHubJsonStore gitHubJsonStore = mock(GitHubJsonStore.class);
         GitHubPullRequestSender pullRequestSender = mock(GitHubPullRequestSender.class);
         GitForkBranch gitForkBranch = mock(GitForkBranch.class);
@@ -154,8 +157,8 @@ public class ParentTest {
                 contentsWithImage, gitForkBranch, dockerfileGitHubUtil);
         when(dockerfileGitHubUtil.getGHContents(anyString(), anyString(),  anyInt())).thenReturn(optionalContentsWithImageList);
 
-        parent.execute(ns, dockerfileGitHubUtil);
+        parent.execute(ns, dockerfileGitHubUtil, dockerfileS3Util);
 
-        assertThrows(InterruptedException.class, () -> parent.execute(ns, dockerfileGitHubUtil));
+        assertThrows(InterruptedException.class, () -> parent.execute(ns, dockerfileGitHubUtil, dockerfileS3Util));
     }
 }

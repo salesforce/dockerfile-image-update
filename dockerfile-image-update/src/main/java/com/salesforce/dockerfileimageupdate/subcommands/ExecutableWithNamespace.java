@@ -9,6 +9,7 @@
 package com.salesforce.dockerfileimageupdate.subcommands;
 
 import com.salesforce.dockerfileimageupdate.utils.DockerfileGitHubUtil;
+import com.salesforce.dockerfileimageupdate.utils.DockerfileS3Util;
 import net.sourceforge.argparse4j.inf.Namespace;
 
 import java.io.IOException;
@@ -20,7 +21,7 @@ import java.io.IOException;
  */
 public interface ExecutableWithNamespace {
 
-    void execute(Namespace ns, DockerfileGitHubUtil dockerfileGitHubUtil)
+    void execute(Namespace ns, DockerfileGitHubUtil dockerfileGitHubUtil, DockerfileS3Util dockerfileS3Util)
             throws IOException, IllegalAccessException, InstantiationException, InterruptedException;
 
 }

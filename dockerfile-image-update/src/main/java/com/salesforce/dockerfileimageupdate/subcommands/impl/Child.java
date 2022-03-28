@@ -14,6 +14,7 @@ import com.salesforce.dockerfileimageupdate.model.PullRequestInfo;
 import com.salesforce.dockerfileimageupdate.subcommands.ExecutableWithNamespace;
 import com.salesforce.dockerfileimageupdate.utils.Constants;
 import com.salesforce.dockerfileimageupdate.utils.DockerfileGitHubUtil;
+import com.salesforce.dockerfileimageupdate.utils.DockerfileS3Util;
 import net.sourceforge.argparse4j.inf.Namespace;
 import org.kohsuke.github.GHRepository;
 import org.slf4j.Logger;
@@ -27,7 +28,7 @@ public class Child implements ExecutableWithNamespace {
     private static final Logger log = LoggerFactory.getLogger(Child.class);
 
     @Override
-    public void execute(final Namespace ns, final DockerfileGitHubUtil dockerfileGitHubUtil)
+    public void execute(final Namespace ns, final DockerfileGitHubUtil dockerfileGitHubUtil, DockerfileS3Util dockerfileS3Util)
             throws IOException, InterruptedException {
         String branch = ns.get(Constants.GIT_BRANCH);
         String img = ns.get(Constants.IMG);

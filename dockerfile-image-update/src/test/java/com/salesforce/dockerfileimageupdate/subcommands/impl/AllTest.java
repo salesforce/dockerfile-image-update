@@ -41,6 +41,7 @@ public class AllTest {
         Namespace ns = new Namespace(nsMap);
         All all = spy(new All());
         DockerfileGitHubUtil dockerfileGitHubUtil = mock(DockerfileGitHubUtil.class);
+        DockerfileS3Util dockerfileS3Util = mock(DockerfileS3Util.class);
         GitHubJsonStore gitHubJsonStore = mock(GitHubJsonStore.class);
         GitHubPullRequestSender pullRequestSender = mock(GitHubPullRequestSender.class);
         GitForkBranch gitForkBranch = mock(GitForkBranch.class);
@@ -69,7 +70,7 @@ public class AllTest {
         when(dockerfileGitHubUtil.findFilesWithImage(anyString(), anyMap(),  anyInt())).thenReturn(optionalContentsWithImageList);
 
 
-        all.execute(ns, dockerfileGitHubUtil);
+        all.execute(ns, dockerfileGitHubUtil, dockerfileS3Util);
         verify(all, times(1)).getGitForkBranch(anyString(), anyString(), any());
         verify(all, times(1)).getPullRequestSender(dockerfileGitHubUtil, ns);
         verify(all, times(1)).getPullRequests();
@@ -88,6 +89,7 @@ public class AllTest {
         Namespace ns = new Namespace(nsMap);
         All all = spy(new All());
         DockerfileGitHubUtil dockerfileGitHubUtil = mock(DockerfileGitHubUtil.class);
+        DockerfileS3Util dockerfileS3Util = mock(DockerfileS3Util.class);
         GitHubJsonStore gitHubJsonStore = mock(GitHubJsonStore.class);
         GitHubPullRequestSender pullRequestSender = mock(GitHubPullRequestSender.class);
         GitForkBranch gitForkBranch = mock(GitForkBranch.class);
@@ -115,7 +117,7 @@ public class AllTest {
         when(dockerfileGitHubUtil.findFilesWithImage(anyString(), anyMap(),  anyInt())).thenReturn(optionalContentsWithImageList);
 
 
-        all.execute(ns, dockerfileGitHubUtil);
+        all.execute(ns, dockerfileGitHubUtil, dockerfileS3Util);
         verify(all, times(1)).getGitForkBranch(anyString(), anyString(), any());
         verify(all, times(1)).getPullRequestSender(dockerfileGitHubUtil, ns);
         verify(all, times(1)).getPullRequests();
@@ -134,6 +136,7 @@ public class AllTest {
         Namespace ns = new Namespace(nsMap);
         All all = spy(new All());
         DockerfileGitHubUtil dockerfileGitHubUtil = mock(DockerfileGitHubUtil.class);
+        DockerfileS3Util dockerfileS3Util = mock(DockerfileS3Util.class);
         GitHubJsonStore gitHubJsonStore = mock(GitHubJsonStore.class);
         GitHubPullRequestSender pullRequestSender = mock(GitHubPullRequestSender.class);
         GitForkBranch gitForkBranch = mock(GitForkBranch.class);
@@ -160,7 +163,7 @@ public class AllTest {
         when(dockerfileGitHubUtil.findFilesWithImage(anyString(), anyMap(),  anyInt())).thenThrow(new GHException("some exception"));
 
 
-        all.execute(ns, dockerfileGitHubUtil);
+        all.execute(ns, dockerfileGitHubUtil, dockerfileS3Util);
         verify(all, times(1)).getGitForkBranch(anyString(), anyString(), any());
         verify(all, times(1)).getPullRequestSender(dockerfileGitHubUtil, ns);
         verify(all, times(1)).getPullRequests();
@@ -179,6 +182,7 @@ public class AllTest {
         Namespace ns = new Namespace(nsMap);
         All all = spy(new All());
         DockerfileGitHubUtil dockerfileGitHubUtil = mock(DockerfileGitHubUtil.class);
+        DockerfileS3Util dockerfileS3Util = mock(DockerfileS3Util.class);
         GitHubJsonStore gitHubJsonStore = mock(GitHubJsonStore.class);
         GitHubPullRequestSender pullRequestSender = mock(GitHubPullRequestSender.class);
         GitForkBranch gitForkBranch = mock(GitForkBranch.class);
@@ -207,7 +211,7 @@ public class AllTest {
         when(dockerfileGitHubUtil.findFilesWithImage(anyString(), anyMap(),  anyInt())).thenReturn(optionalContentsWithImageList);
 
 
-        all.execute(ns, dockerfileGitHubUtil);
+        all.execute(ns, dockerfileGitHubUtil, dockerfileS3Util);
         verify(all, times(1)).getGitForkBranch(anyString(), anyString(), any());
         verify(all, times(1)).getPullRequestSender(dockerfileGitHubUtil, ns);
         verify(all, times(1)).getPullRequests();
