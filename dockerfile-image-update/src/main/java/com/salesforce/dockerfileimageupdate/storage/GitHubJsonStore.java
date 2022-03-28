@@ -14,7 +14,7 @@ import java.io.InputStreamReader;
 import java.nio.file.Paths;
 import java.util.*;
 
-public class GitHubJsonStore {
+public class GitHubJsonStore implements ImageTagStore {
     private static final Logger log = LoggerFactory.getLogger(GitHubJsonStore.class);
     private final GitHubUtil gitHubUtil;
     private final String store;
@@ -25,6 +25,7 @@ public class GitHubJsonStore {
     }
 
     /* The store link should be a repository name on Github. */
+    @Override
     public void updateStore(String img, String tag) throws IOException {
         if (store == null) {
             log.info("Image tag store cannot be null. Skipping store update...");
@@ -89,6 +90,7 @@ public class GitHubJsonStore {
         return gson.toJson(json);
     }
 
+    @Override
     public Set<Map.Entry<String, JsonElement>> parseStoreToImagesMap(DockerfileGitHubUtil dockerfileGitHubUtil, String storeName)
             throws IOException, InterruptedException {
         GHMyself myself = dockerfileGitHubUtil.getMyself();
