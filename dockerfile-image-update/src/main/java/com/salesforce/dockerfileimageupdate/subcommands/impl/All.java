@@ -55,15 +55,14 @@ public class All implements ExecutableWithNamespace {
         String store = ns.get(Constants.STORE);
         URI storeUri = new URI(store);
         ImageTagStore imageTagStore;
-        log.info("Updating store...");
         switch (storeUri.getScheme()) {
             case (s3Prefix):
-                log.info("Using S3 bucket as the underlying data store");
+                log.info("The underlying data store is an S3 bucket.");
                 AmazonS3 s3 = AmazonS3ClientBuilder.standard().withRegion(Regions.DEFAULT_REGION).build();
                 imageTagStore = new S3Store(s3, store);
                 break;
             default:
-                log.info("Using Git repo as the underlying data store");
+                log.info("The underlying data store is a Git repository.");
                 imageTagStore = this.dockerfileGitHubUtil.getGitHubJsonStore(store);
         }
         HashMap<String, String> imageNameWithTag = imageTagStore.getStoreContent(dockerfileGitHubUtil, store);
