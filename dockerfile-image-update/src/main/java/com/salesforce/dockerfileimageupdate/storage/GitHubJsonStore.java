@@ -116,8 +116,8 @@ public class GitHubJsonStore implements ImageTagStore {
         return imagesJson.getAsJsonObject().entrySet();
     }
 
-    public HashMap<String, String> getStoreContent(DockerfileGitHubUtil dockerfileGitHubUtil, String storeName) throws IOException, InterruptedException {
-        HashMap<String, String> imageNameWithTag = new HashMap<>();
+    public Map<String, String> getStoreContent(DockerfileGitHubUtil dockerfileGitHubUtil, String storeName) throws IOException, InterruptedException {
+        Map<String, String> imageNameWithTag = new HashMap<>();
         Set<Map.Entry<String, JsonElement>> imageToTagStore = parseStoreToImagesMap(dockerfileGitHubUtil, storeName);
         for (Map.Entry<String, JsonElement> imageToTag : imageToTagStore) {
             String image = imageToTag.getKey();

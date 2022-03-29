@@ -10,6 +10,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 public class S3Store implements ImageTagStore {
     private static final Logger log = LoggerFactory.getLogger(S3Store.class);
@@ -29,25 +31,52 @@ public class S3Store implements ImageTagStore {
             return;
         }
         log.info("Updating store: {} with image: {} tag: {}...", store, img, tag);
-        if (!s3.doesBucketExistV2(store)) {
+        if (s3.doesBucketExistV2(store)) {
+            String key = convertImageStringToS3ObjectKey(img);
+            s3.putObject(store, key, tag);
+        } else {
             throw new IOException(String.format("The S3 bucket with name %s does not exist. Cannot proceed.", store));
         }
-        String key = convertImageStringToS3ObjectKey(img);
-        s3.putObject(store, key, tag);
+
     }
 
-    public HashMap<String, String> getStoreContent(DockerfileGitHubUtil dockerfileGitHubUtil, String storeName) {
-        HashMap<String, String> imageNameWithTag = new HashMap<>();
+    public Map<String, String> getStoreContent(DockerfileGitHubUtil dockerfileGitHubUtil, String storeName) throws InterruptedException {
+        Map<String, String> imageNameWithTag;
+        Map<String, Date> imageNameWithAccessTime = new HashMap<>();
         ListObjectsV2Result result = getS3Objects();
         List<S3ObjectSummary> objects = result.getObjectSummaries();
         for (S3ObjectSummary os : objects) {
+            Date lastModified = os.getLastModified();
             String key = os.getKey();
-            String image = convertS3ObjectKeyToImageString(key);
-            S3Object o = getS3Object(store, key);
-            String tag = o.getObjectContent().toString();
-            imageNameWithTag.put(image, tag);
+            imageNameWithAccessTime.put(key, lastModified);
         }
+        imageNameWithTag = getStoreContentSortedByAccessDate(imageNameWithAccessTime);
         return imageNameWithTag;
+    }
+
+    protected Map<String, String> getStoreContentSortedByAccessDate(Map<String, Date> imageNameWithAccessTime) throws InterruptedException {
+        Map<String, String> imageNameWithTagSortedByAccessDate = new LinkedHashMap<>();
+        Map<String, Date> sortedResult = imageNameWithAccessTime.entrySet()
+                .stream()
+                .sorted(Map.Entry.comparingByValue())
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        Map.Entry::getValue,
+                        (oldValue, newValue) -> oldValue, LinkedHashMap::new));
+        for (Map.Entry<String, Date> set : sortedResult.entrySet()) {
+            String key = set.getKey();
+            String image = convertS3ObjectKeyToImageString(key);
+            S3Object o = getS3Object(store, image);
+            String tag = o.getObjectContent().toString();
+            imageNameWithTagSortedByAccessDate.put(image, tag);
+            //Adding a wait to avoid S3 throttling the requests
+            waitFor(TimeUnit.SECONDS.toMillis(1));
+        }
+        return imageNameWithTagSortedByAccessDate;
+    }
+
+    protected void waitFor(long millis) throws InterruptedException {
+        Thread.sleep(millis);
     }
 
     protected String convertImageStringToS3ObjectKey(String img) {

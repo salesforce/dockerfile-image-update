@@ -57,7 +57,7 @@ public class All implements ExecutableWithNamespace {
         ImageTagStore imageTagStore;
         switch (storeUri.getScheme()) {
             case (s3Prefix):
-                log.info("The underlying data store is an S3 bucket.");
+                log.info("The underlying data store is S3.");
                 AmazonS3 s3 = AmazonS3ClientBuilder.standard().withRegion(Regions.DEFAULT_REGION).build();
                 imageTagStore = new S3Store(s3, store);
                 break;
@@ -65,7 +65,7 @@ public class All implements ExecutableWithNamespace {
                 log.info("The underlying data store is a Git repository.");
                 imageTagStore = this.dockerfileGitHubUtil.getGitHubJsonStore(store);
         }
-        HashMap<String, String> imageNameWithTag = imageTagStore.getStoreContent(dockerfileGitHubUtil, store);
+        Map<String, String> imageNameWithTag = imageTagStore.getStoreContent(dockerfileGitHubUtil, store);
         for (Map.Entry<String, String> set : imageNameWithTag.entrySet()) {
             String image = set.getKey();
             String tag = set.getValue();

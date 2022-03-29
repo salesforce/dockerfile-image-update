@@ -19,10 +19,8 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import com.sun.xml.internal.bind.v2.TODO;
 import net.sourceforge.argparse4j.inf.Namespace;
 import org.kohsuke.github.*;
-import org.mockito.Mockito;
 import org.testng.annotations.Test;
 
 import static org.mockito.Matchers.*;
