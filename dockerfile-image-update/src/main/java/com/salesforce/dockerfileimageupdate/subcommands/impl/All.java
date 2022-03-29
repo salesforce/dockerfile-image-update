@@ -11,14 +11,10 @@ package com.salesforce.dockerfileimageupdate.subcommands.impl;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
-import com.amazonaws.services.s3.model.ListObjectsV2Result;
-import com.amazonaws.services.s3.model.S3Object;
-import com.amazonaws.services.s3.model.S3ObjectInputStream;
-import com.amazonaws.services.s3.model.S3ObjectSummary;
-import com.google.gson.JsonElement;
 import com.salesforce.dockerfileimageupdate.SubCommand;
 import com.salesforce.dockerfileimageupdate.model.*;
 import com.salesforce.dockerfileimageupdate.process.*;
+import com.salesforce.dockerfileimageupdate.storage.ImageTagStore;
 import com.salesforce.dockerfileimageupdate.storage.S3Store;
 import com.salesforce.dockerfileimageupdate.subcommands.ExecutableWithNamespace;
 import com.salesforce.dockerfileimageupdate.utils.*;
@@ -27,8 +23,9 @@ import org.kohsuke.github.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.swing.text.html.Option;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -39,13 +36,11 @@ public class All implements ExecutableWithNamespace {
     private static final String s3Prefix = "s3://";
 
     private DockerfileGitHubUtil dockerfileGitHubUtil;
-    DockerfileS3Util dockerfileS3Util;
 
     @Override
-    public void execute(final Namespace ns, final DockerfileGitHubUtil dockerfileGitHubUtil, DockerfileS3Util dockerfileS3Util)
-            throws IOException, InterruptedException {
+    public void execute(final Namespace ns, final DockerfileGitHubUtil dockerfileGitHubUtil)
+            throws IOException, InterruptedException, URISyntaxException {
         loadDockerfileGithubUtil(dockerfileGitHubUtil);
-        loadDockerfileS3Util(dockerfileS3Util);
         Integer gitApiSearchLimit = ns.get(Constants.GIT_API_SEARCH_LIMIT);
         Map<String, Boolean> orgsToIncludeInSearch = new HashMap<>();
         if (ns.get(Constants.GIT_ORG) != null) {
@@ -56,38 +51,29 @@ public class All implements ExecutableWithNamespace {
         }
         List<ProcessingErrors> imagesThatCouldNotBeProcessed = new LinkedList<>();
         AtomicInteger numberOfImagesToProcess = new AtomicInteger();
-        String store = ns.get(Constants.STORE);
         Optional<Exception> failureMessage;
-        if (store.startsWith(s3Prefix)) {
-            log.info("The underlying data store is an S3 bucket.");
-            S3Store s3Store =  this.dockerfileS3Util.getS3ImageStore(store);
-            ListObjectsV2Result result = s3Store.getS3Objects();
-            List<S3ObjectSummary> objects = result.getObjectSummaries();
-            numberOfImagesToProcess.set(objects.size());
-            for (S3ObjectSummary os : objects) {
-                String key = os.getKey();
-                String image = s3Store.convertS3ObjectKeyToImageString(key);
-                S3Object o = this.dockerfileS3Util.getS3BucketUtil().getS3Client().getObject(store, key);
-                String tag = o.getObjectContent().toString();
-                failureMessage = processImageWithTag(image, tag, ns, orgsToIncludeInSearch, gitApiSearchLimit);
-                if (failureMessage.isPresent()) {
-                    ProcessingErrors processingErrors = processErrorMessages(image, tag, failureMessage);
-                    imagesThatCouldNotBeProcessed.add(processingErrors);
-                }
-            }
-        } else {
-            log.info("The underlying data store is a json store on a Git repository.");
-            Set<Map.Entry<String, JsonElement>> imageToTagStore =
-                    this.dockerfileGitHubUtil.getGitHubJsonStore(store).parseStoreToImagesMap(dockerfileGitHubUtil, store);
-            numberOfImagesToProcess.set(imageToTagStore.size());
-            for (Map.Entry<String, JsonElement> imageToTag : imageToTagStore) {
-                String image = imageToTag.getKey();
-                String tag = imageToTag.getValue().getAsString();
-                failureMessage = processImageWithTag(image, tag, ns, orgsToIncludeInSearch, gitApiSearchLimit);
-                if (failureMessage.isPresent()) {
-                    ProcessingErrors processingErrors = processErrorMessages(image, tag, failureMessage);
-                    imagesThatCouldNotBeProcessed.add(processingErrors);
-                }
+        String store = ns.get(Constants.STORE);
+        URI storeUri = new URI(store);
+        ImageTagStore imageTagStore;
+        log.info("Updating store...");
+        switch (storeUri.getScheme()) {
+            case (s3Prefix):
+                log.info("Using S3 bucket as the underlying data store");
+                AmazonS3 s3 = AmazonS3ClientBuilder.standard().withRegion(Regions.DEFAULT_REGION).build();
+                imageTagStore = new S3Store(s3, store);
+                break;
+            default:
+                log.info("Using Git repo as the underlying data store");
+                imageTagStore = this.dockerfileGitHubUtil.getGitHubJsonStore(store);
+        }
+        HashMap<String, String> imageNameWithTag = imageTagStore.getStoreContent(dockerfileGitHubUtil, store);
+        for (Map.Entry<String, String> set : imageNameWithTag.entrySet()) {
+            String image = set.getKey();
+            String tag = set.getValue();
+            failureMessage = processImageWithTag(image, tag, ns, orgsToIncludeInSearch, gitApiSearchLimit);
+            if (failureMessage.isPresent()) {
+                ProcessingErrors processingErrors = processErrorMessages(image, tag, failureMessage);
+                imagesThatCouldNotBeProcessed.add(processingErrors);
             }
         }
         printSummary(imagesThatCouldNotBeProcessed, numberOfImagesToProcess);
@@ -161,9 +147,5 @@ public class All implements ExecutableWithNamespace {
 
     protected PullRequests getPullRequests(){
         return new PullRequests();
-    }
-
-    protected void loadDockerfileS3Util(DockerfileS3Util _dockerfileS3UtilUtil) {
-        dockerfileS3Util = _dockerfileS3UtilUtil;
     }
 }

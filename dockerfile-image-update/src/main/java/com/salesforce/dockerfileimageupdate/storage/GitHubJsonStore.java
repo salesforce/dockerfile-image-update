@@ -14,7 +14,7 @@ import java.io.InputStreamReader;
 import java.nio.file.Paths;
 import java.util.*;
 
-public class GitHubJsonStore {
+public class GitHubJsonStore implements ImageTagStore {
     private static final Logger log = LoggerFactory.getLogger(GitHubJsonStore.class);
     private final GitHubUtil gitHubUtil;
     private final String store;
@@ -114,5 +114,16 @@ public class GitHubJsonStore {
 
         JsonElement imagesJson = json.getAsJsonObject().get("images");
         return imagesJson.getAsJsonObject().entrySet();
+    }
+
+    public HashMap<String, String> getStoreContent(DockerfileGitHubUtil dockerfileGitHubUtil, String storeName) throws IOException, InterruptedException {
+        HashMap<String, String> imageNameWithTag = new HashMap<>();
+        Set<Map.Entry<String, JsonElement>> imageToTagStore = parseStoreToImagesMap(dockerfileGitHubUtil, storeName);
+        for (Map.Entry<String, JsonElement> imageToTag : imageToTagStore) {
+            String image = imageToTag.getKey();
+            String tag = imageToTag.getValue().getAsString();
+            imageNameWithTag.put(image, tag);
+        }
+        return imageNameWithTag;
     }
 }

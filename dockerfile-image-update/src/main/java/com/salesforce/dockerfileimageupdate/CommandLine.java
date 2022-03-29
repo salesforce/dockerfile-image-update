@@ -24,6 +24,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.Comparator;
 import java.util.Set;
 import java.util.TreeSet;
@@ -39,7 +40,7 @@ public class CommandLine {
     private CommandLine () { }
 
     public static void main(String[] args)
-            throws IOException, IllegalAccessException, InstantiationException, InterruptedException {
+            throws IOException, IllegalAccessException, InstantiationException, InterruptedException, URISyntaxException {
         ArgumentParser parser = getArgumentParser();
 
         Set<ClassPath.ClassInfo> allClasses = findSubcommands(parser);
@@ -48,10 +49,9 @@ public class CommandLine {
             System.exit(1);
         Class<?> runClass = loadCommand(allClasses, ns.get(Constants.COMMAND));
         DockerfileGitHubUtil dockerfileGitHubUtil = initializeDockerfileGithubUtil(ns.get(Constants.GIT_API));
-        DockerfileS3Util dockerfileS3Util = initializeDockerfileS3Util();
 
         /* Execute given command. */
-        ((ExecutableWithNamespace)runClass.newInstance()).execute(ns, dockerfileGitHubUtil, dockerfileS3Util);
+        ((ExecutableWithNamespace)runClass.newInstance()).execute(ns, dockerfileGitHubUtil);
     }
 
     static ArgumentParser getArgumentParser() {
@@ -195,11 +195,5 @@ public class CommandLine {
         GitHubUtil gitHubUtil = new GitHubUtil(github);
 
         return new DockerfileGitHubUtil(gitHubUtil);
-    }
-
-    public static DockerfileS3Util initializeDockerfileS3Util() {
-        AmazonS3 s3 = AmazonS3ClientBuilder.standard().withRegion(Regions.DEFAULT_REGION).build();
-        S3BucketUtil s3BucketUtil = new S3BucketUtil(s3);
-        return new DockerfileS3Util(s3BucketUtil);
     }
 }

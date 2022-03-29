@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import com.sun.xml.internal.bind.v2.TODO;
 import net.sourceforge.argparse4j.inf.Namespace;
 import org.kohsuke.github.*;
 import org.mockito.Mockito;
@@ -41,7 +42,6 @@ public class AllTest {
         Namespace ns = new Namespace(nsMap);
         All all = spy(new All());
         DockerfileGitHubUtil dockerfileGitHubUtil = mock(DockerfileGitHubUtil.class);
-        DockerfileS3Util dockerfileS3Util = mock(DockerfileS3Util.class);
         GitHubJsonStore gitHubJsonStore = mock(GitHubJsonStore.class);
         GitHubPullRequestSender pullRequestSender = mock(GitHubPullRequestSender.class);
         GitForkBranch gitForkBranch = mock(GitForkBranch.class);
@@ -70,13 +70,13 @@ public class AllTest {
         when(dockerfileGitHubUtil.findFilesWithImage(anyString(), anyMap(),  anyInt())).thenReturn(optionalContentsWithImageList);
 
 
-        all.execute(ns, dockerfileGitHubUtil, dockerfileS3Util);
+        all.execute(ns, dockerfileGitHubUtil);
         verify(all, times(1)).getGitForkBranch(anyString(), anyString(), any());
         verify(all, times(1)).getPullRequestSender(dockerfileGitHubUtil, ns);
         verify(all, times(1)).getPullRequests();
         verify(pullRequests, times(1)).prepareToCreate(ns, pullRequestSender,
                 contentsWithImage, gitForkBranch, dockerfileGitHubUtil);
-        verify(all, times(0)).processErrors(anyString(), anyString(), any(), anyList());
+        verify(all, times(0)).processErrorMessages(anyString(), anyString(), any());
         verify(all, times(1)).printSummary(anyList(), any());
     }
 
@@ -89,7 +89,6 @@ public class AllTest {
         Namespace ns = new Namespace(nsMap);
         All all = spy(new All());
         DockerfileGitHubUtil dockerfileGitHubUtil = mock(DockerfileGitHubUtil.class);
-        DockerfileS3Util dockerfileS3Util = mock(DockerfileS3Util.class);
         GitHubJsonStore gitHubJsonStore = mock(GitHubJsonStore.class);
         GitHubPullRequestSender pullRequestSender = mock(GitHubPullRequestSender.class);
         GitForkBranch gitForkBranch = mock(GitForkBranch.class);
@@ -117,13 +116,13 @@ public class AllTest {
         when(dockerfileGitHubUtil.findFilesWithImage(anyString(), anyMap(),  anyInt())).thenReturn(optionalContentsWithImageList);
 
 
-        all.execute(ns, dockerfileGitHubUtil, dockerfileS3Util);
+        all.execute(ns, dockerfileGitHubUtil);
         verify(all, times(1)).getGitForkBranch(anyString(), anyString(), any());
         verify(all, times(1)).getPullRequestSender(dockerfileGitHubUtil, ns);
         verify(all, times(1)).getPullRequests();
         verify(pullRequests, times(0)).prepareToCreate(ns, pullRequestSender,
                 contentsWithImage, gitForkBranch, dockerfileGitHubUtil);
-        verify(all, times(0)).processErrors(anyString(), anyString(), any(), anyList());
+        verify(all, times(0)).processErrorMessages(anyString(), anyString(), any());
         verify(all, times(1)).printSummary(anyList(), any());
     }
 
@@ -136,7 +135,6 @@ public class AllTest {
         Namespace ns = new Namespace(nsMap);
         All all = spy(new All());
         DockerfileGitHubUtil dockerfileGitHubUtil = mock(DockerfileGitHubUtil.class);
-        DockerfileS3Util dockerfileS3Util = mock(DockerfileS3Util.class);
         GitHubJsonStore gitHubJsonStore = mock(GitHubJsonStore.class);
         GitHubPullRequestSender pullRequestSender = mock(GitHubPullRequestSender.class);
         GitForkBranch gitForkBranch = mock(GitForkBranch.class);
@@ -163,13 +161,13 @@ public class AllTest {
         when(dockerfileGitHubUtil.findFilesWithImage(anyString(), anyMap(),  anyInt())).thenThrow(new GHException("some exception"));
 
 
-        all.execute(ns, dockerfileGitHubUtil, dockerfileS3Util);
+        all.execute(ns, dockerfileGitHubUtil);
         verify(all, times(1)).getGitForkBranch(anyString(), anyString(), any());
         verify(all, times(1)).getPullRequestSender(dockerfileGitHubUtil, ns);
         verify(all, times(1)).getPullRequests();
         verify(pullRequests, times(0)).prepareToCreate(ns, pullRequestSender,
                 contentsWithImage, gitForkBranch, dockerfileGitHubUtil);
-        verify(all, times(1)).processErrors(anyString(), anyString(), any(), anyList());
+        verify(all, times(1)).processErrorMessages(anyString(), anyString(), any());
         verify(all, times(1)).printSummary(anyList(), any());
     }
 
@@ -182,7 +180,6 @@ public class AllTest {
         Namespace ns = new Namespace(nsMap);
         All all = spy(new All());
         DockerfileGitHubUtil dockerfileGitHubUtil = mock(DockerfileGitHubUtil.class);
-        DockerfileS3Util dockerfileS3Util = mock(DockerfileS3Util.class);
         GitHubJsonStore gitHubJsonStore = mock(GitHubJsonStore.class);
         GitHubPullRequestSender pullRequestSender = mock(GitHubPullRequestSender.class);
         GitForkBranch gitForkBranch = mock(GitForkBranch.class);
@@ -211,28 +208,19 @@ public class AllTest {
         when(dockerfileGitHubUtil.findFilesWithImage(anyString(), anyMap(),  anyInt())).thenReturn(optionalContentsWithImageList);
 
 
-        all.execute(ns, dockerfileGitHubUtil, dockerfileS3Util);
+        all.execute(ns, dockerfileGitHubUtil);
         verify(all, times(1)).getGitForkBranch(anyString(), anyString(), any());
         verify(all, times(1)).getPullRequestSender(dockerfileGitHubUtil, ns);
         verify(all, times(1)).getPullRequests();
         verify(pullRequests, times(1)).prepareToCreate(ns, pullRequestSender,
                 contentsWithImage, gitForkBranch, dockerfileGitHubUtil);
-        verify(all, times(1)).processErrors(anyString(), anyString(), any(), anyList());
+        verify(all, times(1)).processErrorMessages(anyString(), anyString(), any());
         verify(all, times(1)).printSummary(anyList(), any());
     }
 
     @Test
-    public void testProcessErrors() {
-        All all = spy(new All());
-        String image = "image1";
-        String tag = "tag";
-        Exception e = new Exception();
-        List<ProcessingErrors> processingErrorsList = new ArrayList<>();
-        AtomicInteger numberOfImagesFailedToProcess = new AtomicInteger(0);
-
-        all.processErrors(image, tag, e, processingErrorsList);
-
-        assertEquals(processingErrorsList.size(), 1);
+    public void testProcessErrorMessages() {
+        //Add test
     }
 
     @Test
