@@ -32,7 +32,6 @@ import java.net.URISyntaxException;
         requiredParams = {Constants.GIT_REPO, Constants.IMG, Constants.FORCE_TAG}, optionalParams = {"s", Constants.STORE})
 public class Child implements ExecutableWithNamespace {
     private static final Logger log = LoggerFactory.getLogger(Child.class);
-    private static final String s3Prefix = "s3://";
 
     @Override
     public void execute(final Namespace ns, final DockerfileGitHubUtil dockerfileGitHubUtil)
@@ -44,7 +43,7 @@ public class Child implements ExecutableWithNamespace {
         URI storeUri = new URI(store);
         ImageTagStore imageTagStore;
         switch (storeUri.getScheme()) {
-            case (s3Prefix):
+            case (S3Store.s3Prefix):
                 log.info("Using S3 bucket as the underlying data store");
                 AmazonS3 s3 = AmazonS3ClientBuilder.standard().withRegion(Regions.DEFAULT_REGION).build();
                 imageTagStore = new S3Store(s3, store);

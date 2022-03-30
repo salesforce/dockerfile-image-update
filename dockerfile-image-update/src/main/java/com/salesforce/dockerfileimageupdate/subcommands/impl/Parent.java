@@ -38,7 +38,7 @@ import java.util.Optional;
 public class Parent implements ExecutableWithNamespace {
 
     private static final Logger log = LoggerFactory.getLogger(Parent.class);
-    private static final String s3Prefix = "s3://";
+
 
     DockerfileGitHubUtil dockerfileGitHubUtil;
 
@@ -47,10 +47,12 @@ public class Parent implements ExecutableWithNamespace {
             throws IOException, InterruptedException, URISyntaxException {
         String store = ns.get(Constants.STORE);
         URI storeUri = new URI(store);
+        log.info("Avi testing");
+        log.info(store);
         ImageTagStore imageTagStore;
         log.info("Updating store...");
         switch (storeUri.getScheme()) {
-            case (s3Prefix):
+            case (S3Store.s3Prefix):
                 log.info("Using S3 bucket as the underlying data store");
                 AmazonS3 s3 = AmazonS3ClientBuilder.standard().withRegion(Regions.DEFAULT_REGION).build();
                 imageTagStore = new S3Store(s3, store);

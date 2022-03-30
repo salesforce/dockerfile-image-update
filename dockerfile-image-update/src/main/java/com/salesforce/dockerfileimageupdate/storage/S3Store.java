@@ -16,6 +16,7 @@ import java.util.stream.Collectors;
 public class S3Store implements ImageTagStore {
     private static final Logger log = LoggerFactory.getLogger(S3Store.class);
     private static final Character S3_FILE_KEY_PATH_DELIMITER = ';';
+    public static final String s3Prefix = "s3";
     private final AmazonS3 s3;
     private final String store;
 

@@ -33,7 +33,6 @@ import java.util.concurrent.atomic.AtomicInteger;
         requiredParams = {Constants.STORE})
 public class All implements ExecutableWithNamespace {
     private static final Logger log = LoggerFactory.getLogger(All.class);
-    private static final String s3Prefix = "s3://";
 
     private DockerfileGitHubUtil dockerfileGitHubUtil;
 
@@ -56,7 +55,7 @@ public class All implements ExecutableWithNamespace {
         URI storeUri = new URI(store);
         ImageTagStore imageTagStore;
         switch (storeUri.getScheme()) {
-            case (s3Prefix):
+            case (S3Store.s3Prefix):
                 log.info("The underlying data store is S3.");
                 AmazonS3 s3 = AmazonS3ClientBuilder.standard().withRegion(Regions.DEFAULT_REGION).build();
                 imageTagStore = new S3Store(s3, store);
