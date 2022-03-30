@@ -18,6 +18,7 @@ import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.Map;
 
 import static com.salesforce.dockerfileimageupdate.utils.Constants.*;
@@ -63,7 +64,7 @@ public class ChildTest {
     }
 
     @Test
-    public void testCreateForkFailureCase_CreatePullReqIsSkipped() throws IOException, InterruptedException {
+    public void testCreateForkFailureCase_CreatePullReqIsSkipped() throws IOException, InterruptedException, URISyntaxException {
         Child child = new Child();
         Map<String, Object> nsMap = ImmutableMap.of(
                 GIT_REPO, "test",
