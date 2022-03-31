@@ -8,24 +8,20 @@
 
 package com.salesforce.dockerfileimageupdate.subcommands.impl;
 
-import com.amazonaws.regions.Regions;
-import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.salesforce.dockerfileimageupdate.SubCommand;
 import com.salesforce.dockerfileimageupdate.model.GitForkBranch;
 import com.salesforce.dockerfileimageupdate.model.PullRequestInfo;
 import com.salesforce.dockerfileimageupdate.storage.ImageTagStore;
-import com.salesforce.dockerfileimageupdate.storage.S3Store;
 import com.salesforce.dockerfileimageupdate.subcommands.ExecutableWithNamespace;
 import com.salesforce.dockerfileimageupdate.utils.Constants;
 import com.salesforce.dockerfileimageupdate.utils.DockerfileGitHubUtil;
+import com.salesforce.dockerfileimageupdate.utils.ImageStoreUtil;
 import net.sourceforge.argparse4j.inf.Namespace;
 import org.kohsuke.github.GHRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.net.URI;
 import java.net.URISyntaxException;
 
 @SubCommand(help = "updates one specific repository with given tag",
@@ -40,18 +36,8 @@ public class Child implements ExecutableWithNamespace {
         String img = ns.get(Constants.IMG);
         String forceTag = ns.get(Constants.FORCE_TAG);
         String store = ns.get(Constants.STORE);
-        URI storeUri = new URI(store);
-        ImageTagStore imageTagStore;
-        switch (storeUri.getScheme()) {
-            case (S3Store.s3Prefix):
-                log.info("Using S3 bucket as the underlying data store");
-                AmazonS3 s3 = AmazonS3ClientBuilder.standard().withRegion(Regions.DEFAULT_REGION).build();
-                imageTagStore = new S3Store(s3, store);
-                break;
-            default:
-                log.info("Using Git repo as the underlying data store");
-                imageTagStore = dockerfileGitHubUtil.getGitHubJsonStore(store);
-        }
+        ImageStoreUtil imageStoreUtil = getImageStoreUtil();
+        ImageTagStore imageTagStore = imageStoreUtil.initializeImageTagStore(dockerfileGitHubUtil, store);
 
         /* Updates store if a store is specified. */
         imageTagStore.updateStore(img, forceTag);
@@ -80,5 +66,9 @@ public class Child implements ExecutableWithNamespace {
                 gitForkBranch.getBranchName(),
                 fork,
                 pullRequestInfo);
+    }
+
+    protected ImageStoreUtil getImageStoreUtil(){
+        return new ImageStoreUtil();
     }
 }

@@ -8,13 +8,11 @@
 
 package com.salesforce.dockerfileimageupdate;
 
-
-import com.amazonaws.regions.Regions;
-import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.google.common.reflect.ClassPath;
 import com.salesforce.dockerfileimageupdate.subcommands.ExecutableWithNamespace;
-import com.salesforce.dockerfileimageupdate.utils.*;
+import com.salesforce.dockerfileimageupdate.utils.Constants;
+import com.salesforce.dockerfileimageupdate.utils.DockerfileGitHubUtil;
+import com.salesforce.dockerfileimageupdate.utils.GitHubUtil;
 import net.sourceforge.argparse4j.ArgumentParsers;
 import net.sourceforge.argparse4j.impl.Arguments;
 import net.sourceforge.argparse4j.inf.*;

@@ -3,7 +3,11 @@ package com.salesforce.dockerfileimageupdate.storage;
 import com.salesforce.dockerfileimageupdate.utils.DockerfileGitHubUtil;
 
 import java.io.IOException;
-import java.util.Map;
+import java.util.List;
+
+/**
+ * This is an interface for the image tag store. The underlying image tag store can be a Git repo or an S3 bucket.
+ */
 
 public interface ImageTagStore {
 
@@ -22,5 +26,5 @@ public interface ImageTagStore {
      * @param storeName the name of the store whose content needs to be fetched.
      * @return A Map of image name to image version.
      */
-    Map<String, String> getStoreContent(DockerfileGitHubUtil dockerfileGitHubUtil, String storeName) throws IOException, InterruptedException;
+    List<ImageTagStoreContent> getStoreContent(DockerfileGitHubUtil dockerfileGitHubUtil, String storeName) throws IOException, InterruptedException;
 }

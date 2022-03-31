@@ -5,6 +5,7 @@ import com.amazonaws.services.s3.model.ListObjectsV2Result;
 import com.amazonaws.services.s3.model.S3Object;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
 import com.salesforce.dockerfileimageupdate.utils.DockerfileGitHubUtil;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -13,24 +14,24 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-public class S3Store implements ImageTagStore {
-    private static final Logger log = LoggerFactory.getLogger(S3Store.class);
-    private static final Character S3_FILE_KEY_PATH_DELIMITER = ';';
+/**
+ * S3BackedImageTagStore is the main entity we'll be using to interact with the image tag store stored in S3
+ * @author amukhopadhyay
+ */
+public class S3BackedImageTagStore implements ImageTagStore {
+    private static final Logger log = LoggerFactory.getLogger(S3BackedImageTagStore.class);
+    private static final Character S3_FILE_KEY_PATH_DELIMITER = '.';
     public static final String s3Prefix = "s3";
     private final AmazonS3 s3;
     private final String store;
 
-    public S3Store(AmazonS3 s3, String store) {
+    public S3BackedImageTagStore(AmazonS3 s3, @NonNull String store) {
         this.s3 = s3;
         this.store = store;
     }
 
     /* The store link should be a bucket name on S3. */
     public void updateStore(String img, String tag) throws IOException {
-        if (store == null) {
-            log.info("Image tag store cannot be null. Skipping store update...");
-            return;
-        }
         log.info("Updating store: {} with image: {} tag: {}...", store, img, tag);
         if (s3.doesBucketExistV2(store)) {
             String key = convertImageStringToS3ObjectKey(img);
@@ -41,8 +42,8 @@ public class S3Store implements ImageTagStore {
 
     }
 
-    public Map<String, String> getStoreContent(DockerfileGitHubUtil dockerfileGitHubUtil, String storeName) throws InterruptedException {
-        Map<String, String> imageNameWithTag;
+    public List<ImageTagStoreContent> getStoreContent(DockerfileGitHubUtil dockerfileGitHubUtil, String storeName) throws InterruptedException {
+        List<ImageTagStoreContent> imageNamesWithTag;
         Map<String, Date> imageNameWithAccessTime = new HashMap<>();
         ListObjectsV2Result result = getS3Objects();
         List<S3ObjectSummary> objects = result.getObjectSummaries();
@@ -51,12 +52,12 @@ public class S3Store implements ImageTagStore {
             String key = os.getKey();
             imageNameWithAccessTime.put(key, lastModified);
         }
-        imageNameWithTag = getStoreContentSortedByAccessDate(imageNameWithAccessTime);
-        return imageNameWithTag;
+        imageNamesWithTag = getStoreContentSortedByAccessDate(imageNameWithAccessTime);
+        return imageNamesWithTag;
     }
 
-    protected Map<String, String> getStoreContentSortedByAccessDate(Map<String, Date> imageNameWithAccessTime) throws InterruptedException {
-        Map<String, String> imageNameWithTagSortedByAccessDate = new LinkedHashMap<>();
+    protected List<ImageTagStoreContent> getStoreContentSortedByAccessDate(Map<String, Date> imageNameWithAccessTime) throws InterruptedException {
+        List<ImageTagStoreContent> imageNameWithTagSortedByAccessDate = new ArrayList<>();
         Map<String, Date> sortedResult = imageNameWithAccessTime.entrySet()
                 .stream()
                 .sorted(Map.Entry.comparingByValue())
@@ -69,15 +70,10 @@ public class S3Store implements ImageTagStore {
             String image = convertS3ObjectKeyToImageString(key);
             S3Object o = getS3Object(store, image);
             String tag = o.getObjectContent().toString();
-            imageNameWithTagSortedByAccessDate.put(image, tag);
-            //Adding a wait to avoid S3 throttling the requests
-            waitFor(TimeUnit.SECONDS.toMillis(1));
+            ImageTagStoreContent imageTagStoreContent = new ImageTagStoreContent(image, tag);
+            imageNameWithTagSortedByAccessDate.add(imageTagStoreContent);
         }
         return imageNameWithTagSortedByAccessDate;
-    }
-
-    protected void waitFor(long millis) throws InterruptedException {
-        Thread.sleep(millis);
     }
 
     protected String convertImageStringToS3ObjectKey(String img) {

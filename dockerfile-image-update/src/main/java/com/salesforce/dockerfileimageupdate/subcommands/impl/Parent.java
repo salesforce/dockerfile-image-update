@@ -8,18 +8,16 @@
 
 package com.salesforce.dockerfileimageupdate.subcommands.impl;
 
-
-import com.amazonaws.regions.Regions;
-import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.salesforce.dockerfileimageupdate.SubCommand;
 import com.salesforce.dockerfileimageupdate.model.GitForkBranch;
 import com.salesforce.dockerfileimageupdate.process.ForkableRepoValidator;
 import com.salesforce.dockerfileimageupdate.process.GitHubPullRequestSender;
 import com.salesforce.dockerfileimageupdate.storage.ImageTagStore;
-import com.salesforce.dockerfileimageupdate.storage.S3Store;
 import com.salesforce.dockerfileimageupdate.subcommands.ExecutableWithNamespace;
-import com.salesforce.dockerfileimageupdate.utils.*;
+import com.salesforce.dockerfileimageupdate.utils.Constants;
+import com.salesforce.dockerfileimageupdate.utils.DockerfileGitHubUtil;
+import com.salesforce.dockerfileimageupdate.utils.ImageStoreUtil;
+import com.salesforce.dockerfileimageupdate.utils.PullRequests;
 import net.sourceforge.argparse4j.inf.Namespace;
 import org.kohsuke.github.GHContent;
 import org.kohsuke.github.PagedSearchIterable;
@@ -27,7 +25,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Optional;
@@ -45,23 +42,11 @@ public class Parent implements ExecutableWithNamespace {
     @Override
     public void execute(final Namespace ns, DockerfileGitHubUtil dockerfileGitHubUtil)
             throws IOException, InterruptedException, URISyntaxException {
+        loadDockerfileGithubUtil(dockerfileGitHubUtil);
         String store = ns.get(Constants.STORE);
-        URI storeUri = new URI(store);
-        log.info("Avi testing");
-        log.info(store);
-        ImageTagStore imageTagStore;
+        ImageStoreUtil imageStoreUtil = getImageStoreUtil();
         log.info("Updating store...");
-        switch (storeUri.getScheme()) {
-            case (S3Store.s3Prefix):
-                log.info("Using S3 bucket as the underlying data store");
-                AmazonS3 s3 = AmazonS3ClientBuilder.standard().withRegion(Regions.DEFAULT_REGION).build();
-                imageTagStore = new S3Store(s3, store);
-                break;
-            default:
-                log.info("Using Git repo as the underlying data store");
-                loadDockerfileGithubUtil(dockerfileGitHubUtil);
-                imageTagStore = this.dockerfileGitHubUtil.getGitHubJsonStore(store);
-        }
+        ImageTagStore imageTagStore = imageStoreUtil.initializeImageTagStore(this.dockerfileGitHubUtil, store);
         String img = ns.get(Constants.IMG);
         String tag = ns.get(Constants.TAG);
         imageTagStore.updateStore(img, tag);
@@ -107,5 +92,9 @@ public class Parent implements ExecutableWithNamespace {
 
     protected void loadDockerfileGithubUtil(DockerfileGitHubUtil _dockerfileGitHubUtil) {
         dockerfileGitHubUtil = _dockerfileGitHubUtil;
+    }
+
+    protected ImageStoreUtil getImageStoreUtil(){
+        return new ImageStoreUtil();
     }
 }

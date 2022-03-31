@@ -8,23 +8,23 @@
 
 package com.salesforce.dockerfileimageupdate.subcommands.impl;
 
-import com.amazonaws.regions.Regions;
-import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.salesforce.dockerfileimageupdate.SubCommand;
 import com.salesforce.dockerfileimageupdate.model.*;
 import com.salesforce.dockerfileimageupdate.process.*;
 import com.salesforce.dockerfileimageupdate.storage.ImageTagStore;
-import com.salesforce.dockerfileimageupdate.storage.S3Store;
+import com.salesforce.dockerfileimageupdate.storage.ImageTagStoreContent;
 import com.salesforce.dockerfileimageupdate.subcommands.ExecutableWithNamespace;
-import com.salesforce.dockerfileimageupdate.utils.*;
+import com.salesforce.dockerfileimageupdate.utils.Constants;
+import com.salesforce.dockerfileimageupdate.utils.DockerfileGitHubUtil;
+import com.salesforce.dockerfileimageupdate.utils.ImageStoreUtil;
+import com.salesforce.dockerfileimageupdate.utils.ProcessingErrors;
+import com.salesforce.dockerfileimageupdate.utils.PullRequests;
 import net.sourceforge.argparse4j.inf.Namespace;
 import org.kohsuke.github.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -40,6 +40,16 @@ public class All implements ExecutableWithNamespace {
     public void execute(final Namespace ns, final DockerfileGitHubUtil dockerfileGitHubUtil)
             throws IOException, InterruptedException, URISyntaxException {
         loadDockerfileGithubUtil(dockerfileGitHubUtil);
+        String store = ns.get(Constants.STORE);
+        ImageStoreUtil imageStoreUtil = getImageStoreUtil();
+        ImageTagStore imageTagStore = imageStoreUtil.initializeImageTagStore(this.dockerfileGitHubUtil, store);
+        List<ImageTagStoreContent> imageNamesWithTag = imageTagStore.getStoreContent(dockerfileGitHubUtil, store);
+        AtomicInteger numberOfImagesToProcess = new AtomicInteger(imageNamesWithTag.size());
+        List<ProcessingErrors> imagesThatCouldNotBeProcessed = processImagesWithTag(ns, imageNamesWithTag);
+        printSummary(imagesThatCouldNotBeProcessed, numberOfImagesToProcess);
+    }
+
+    protected List<ProcessingErrors> processImagesWithTag(Namespace ns, List<ImageTagStoreContent> imageNamesWithTag) {
         Integer gitApiSearchLimit = ns.get(Constants.GIT_API_SEARCH_LIMIT);
         Map<String, Boolean> orgsToIncludeInSearch = new HashMap<>();
         if (ns.get(Constants.GIT_ORG) != null) {
@@ -48,33 +58,18 @@ public class All implements ExecutableWithNamespace {
             // the org gets included in the search query.
             orgsToIncludeInSearch.put(ns.get(Constants.GIT_ORG), true);
         }
-        List<ProcessingErrors> imagesThatCouldNotBeProcessed = new LinkedList<>();
-        AtomicInteger numberOfImagesToProcess = new AtomicInteger();
         Optional<Exception> failureMessage;
-        String store = ns.get(Constants.STORE);
-        URI storeUri = new URI(store);
-        ImageTagStore imageTagStore;
-        switch (storeUri.getScheme()) {
-            case (S3Store.s3Prefix):
-                log.info("The underlying data store is S3.");
-                AmazonS3 s3 = AmazonS3ClientBuilder.standard().withRegion(Regions.DEFAULT_REGION).build();
-                imageTagStore = new S3Store(s3, store);
-                break;
-            default:
-                log.info("The underlying data store is a Git repository.");
-                imageTagStore = this.dockerfileGitHubUtil.getGitHubJsonStore(store);
-        }
-        Map<String, String> imageNameWithTag = imageTagStore.getStoreContent(dockerfileGitHubUtil, store);
-        for (Map.Entry<String, String> set : imageNameWithTag.entrySet()) {
-            String image = set.getKey();
-            String tag = set.getValue();
+        List<ProcessingErrors> imagesThatCouldNotBeProcessed = new LinkedList<>();
+        for (ImageTagStoreContent content : imageNamesWithTag) {
+            String image = content.getImageName();
+            String tag = content.getTag();
             failureMessage = processImageWithTag(image, tag, ns, orgsToIncludeInSearch, gitApiSearchLimit);
             if (failureMessage.isPresent()) {
                 ProcessingErrors processingErrors = processErrorMessages(image, tag, failureMessage);
                 imagesThatCouldNotBeProcessed.add(processingErrors);
             }
         }
-        printSummary(imagesThatCouldNotBeProcessed, numberOfImagesToProcess);
+        return imagesThatCouldNotBeProcessed;
     }
 
     protected Optional<Exception> processImageWithTag(String image, String tag, Namespace ns, Map<String, Boolean> orgsToIncludeInSearch, Integer gitApiSearchLimit) {
@@ -145,5 +140,9 @@ public class All implements ExecutableWithNamespace {
 
     protected PullRequests getPullRequests(){
         return new PullRequests();
+    }
+
+    protected ImageStoreUtil getImageStoreUtil(){
+        return new ImageStoreUtil();
     }
 }
