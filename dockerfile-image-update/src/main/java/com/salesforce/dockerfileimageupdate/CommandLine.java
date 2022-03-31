@@ -22,7 +22,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.util.Comparator;
 import java.util.Set;
 import java.util.TreeSet;
@@ -38,7 +37,7 @@ public class CommandLine {
     private CommandLine () { }
 
     public static void main(String[] args)
-            throws IOException, IllegalAccessException, InstantiationException, InterruptedException, URISyntaxException {
+            throws IOException, IllegalAccessException, InstantiationException, InterruptedException {
         ArgumentParser parser = getArgumentParser();
 
         Set<ClassPath.ClassInfo> allClasses = findSubcommands(parser);

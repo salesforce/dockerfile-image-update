@@ -41,15 +41,19 @@ public class Parent implements ExecutableWithNamespace {
 
     @Override
     public void execute(final Namespace ns, DockerfileGitHubUtil dockerfileGitHubUtil)
-            throws IOException, InterruptedException, URISyntaxException {
+            throws IOException, InterruptedException {
         loadDockerfileGithubUtil(dockerfileGitHubUtil);
         String store = ns.get(Constants.STORE);
         ImageStoreUtil imageStoreUtil = getImageStoreUtil();
-        log.info("Updating store...");
-        ImageTagStore imageTagStore = imageStoreUtil.initializeImageTagStore(this.dockerfileGitHubUtil, store);
         String img = ns.get(Constants.IMG);
         String tag = ns.get(Constants.TAG);
-        imageTagStore.updateStore(img, tag);
+        log.info("Updating store...");
+        try {
+            ImageTagStore imageTagStore = imageStoreUtil.initializeImageTagStore(this.dockerfileGitHubUtil, store);
+            imageTagStore.updateStore(img, tag);
+        } catch (URISyntaxException e) {
+            log.error("Could not initialize the Image tage store. Exception: ", e.getMessage());
+        }
 
         if (ns.get(Constants.SKIP_PR_CREATION)) {
             log.info("Since the flag {} is set to True, the PR creation steps will "

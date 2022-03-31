@@ -27,7 +27,6 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
 
 @SubCommand(help="updates all repositories' Dockerfiles",
         requiredParams = {Constants.STORE})
@@ -38,15 +37,20 @@ public class All implements ExecutableWithNamespace {
 
     @Override
     public void execute(final Namespace ns, final DockerfileGitHubUtil dockerfileGitHubUtil)
-            throws IOException, InterruptedException, URISyntaxException {
+            throws IOException, InterruptedException {
         loadDockerfileGithubUtil(dockerfileGitHubUtil);
         String store = ns.get(Constants.STORE);
         ImageStoreUtil imageStoreUtil = getImageStoreUtil();
-        ImageTagStore imageTagStore = imageStoreUtil.initializeImageTagStore(this.dockerfileGitHubUtil, store);
-        List<ImageTagStoreContent> imageNamesWithTag = imageTagStore.getStoreContent(dockerfileGitHubUtil, store);
-        AtomicInteger numberOfImagesToProcess = new AtomicInteger(imageNamesWithTag.size());
-        List<ProcessingErrors> imagesThatCouldNotBeProcessed = processImagesWithTag(ns, imageNamesWithTag);
-        printSummary(imagesThatCouldNotBeProcessed, numberOfImagesToProcess);
+        try {
+            ImageTagStore imageTagStore = imageStoreUtil.initializeImageTagStore(this.dockerfileGitHubUtil, store);
+            List<ImageTagStoreContent> imageNamesWithTag = imageTagStore.getStoreContent(dockerfileGitHubUtil, store);
+            Integer numberOfImagesToProcess = imageNamesWithTag.size();
+            List<ProcessingErrors> imagesThatCouldNotBeProcessed = processImagesWithTag(ns, imageNamesWithTag);
+            printSummary(imagesThatCouldNotBeProcessed, numberOfImagesToProcess);
+        } catch (URISyntaxException e) {
+            log.error("Could not initialize the Image tage store. Exception: ", e.getMessage());
+        }
+
     }
 
     protected List<ProcessingErrors> processImagesWithTag(Namespace ns, List<ImageTagStoreContent> imageNamesWithTag) {
@@ -102,27 +106,26 @@ public class All implements ExecutableWithNamespace {
         return failureMessage;
     }
 
-    protected void printSummary(List<ProcessingErrors> imagesThatCouldNotBeProcessed, AtomicInteger numberOfImagesToProcess) {
-        AtomicInteger numberOfImagesFailedToProcess = new AtomicInteger(imagesThatCouldNotBeProcessed.size());
-        AtomicInteger numberOfImagesSuccessfullyProcessed = new AtomicInteger(numberOfImagesToProcess.get() - numberOfImagesFailedToProcess.get());
-        log.info("The total number of images to process from image tag store: {}", numberOfImagesToProcess.get());
-        log.info("The total number of images that were successfully processed: {}", numberOfImagesSuccessfullyProcessed.get());
-        if (numberOfImagesFailedToProcess.get() > 0) {
-            log.warn("The total number of images that failed to be processed: {}. The following list shows the images that could not be processed.", numberOfImagesFailedToProcess.get());
+    protected void printSummary(List<ProcessingErrors> imagesThatCouldNotBeProcessed, Integer numberOfImagesToProcess) {
+        Integer numberOfImagesFailedToProcess = imagesThatCouldNotBeProcessed.size();
+        Integer numberOfImagesSuccessfullyProcessed = numberOfImagesToProcess - numberOfImagesFailedToProcess;
+        log.info("The total number of images to process from image tag store: {}", numberOfImagesToProcess);
+        log.info("The total number of images that were successfully processed: {}", numberOfImagesSuccessfullyProcessed);
+        if (numberOfImagesFailedToProcess > 0) {
+            log.warn("The total number of images that failed to be processed: {}. The following list shows the images that could not be processed.", numberOfImagesFailedToProcess);
             imagesThatCouldNotBeProcessed.forEach(imageThatCouldNotBeProcessed -> {
                     if (imageThatCouldNotBeProcessed.getFailure().isPresent()) {
-                        log.warn("Image: {}, Exception: {}", imageThatCouldNotBeProcessed.getImageNameAndTag(), imageThatCouldNotBeProcessed.getFailure());
+                        log.warn("Image: {}:{}, Exception: {}", imageThatCouldNotBeProcessed.getImageName(), imageThatCouldNotBeProcessed.getTag(), imageThatCouldNotBeProcessed.getFailure());
                     } else {
-                        log.warn("Image: {}, Exception: {}", imageThatCouldNotBeProcessed.getImageNameAndTag(), "Failure reason not known.");
+                        log.warn("Image: {}:{}, Exception: Failure reason not known.", imageThatCouldNotBeProcessed.getImageName(), imageThatCouldNotBeProcessed.getTag());
                     }
                 }
             );
         }
     }
 
-    protected ProcessingErrors processErrorMessages(String image, String tag, Optional<Exception> failure) {
-        String imageNameAndTag = image + ":" + tag;
-        return new ProcessingErrors(imageNameAndTag, failure);
+    protected ProcessingErrors processErrorMessages(String imageName, String tag, Optional<Exception> failure) {
+        return new ProcessingErrors(imageName, tag, failure);
     }
 
     protected void loadDockerfileGithubUtil(DockerfileGitHubUtil _dockerfileGitHubUtil) {

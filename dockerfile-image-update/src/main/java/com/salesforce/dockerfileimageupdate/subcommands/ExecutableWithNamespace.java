@@ -12,7 +12,6 @@ import com.salesforce.dockerfileimageupdate.utils.DockerfileGitHubUtil;
 import net.sourceforge.argparse4j.inf.Namespace;
 
 import java.io.IOException;
-import java.net.URISyntaxException;
 
 /**
  * 
@@ -22,6 +21,6 @@ import java.net.URISyntaxException;
 public interface ExecutableWithNamespace {
 
     void execute(Namespace ns, DockerfileGitHubUtil dockerfileGitHubUtil)
-            throws IOException, IllegalAccessException, InstantiationException, InterruptedException, URISyntaxException;
+            throws IOException, IllegalAccessException, InstantiationException, InterruptedException;
 
 }

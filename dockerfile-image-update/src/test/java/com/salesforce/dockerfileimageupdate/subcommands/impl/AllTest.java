@@ -17,7 +17,6 @@ import com.salesforce.dockerfileimageupdate.utils.*;
 
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import net.sourceforge.argparse4j.inf.Namespace;
 import org.kohsuke.github.*;
@@ -226,15 +225,16 @@ public class AllTest {
         ProcessingErrors processingErrors = mock(ProcessingErrors.class);
         All all = spy(new All());
         List<ProcessingErrors> processingErrorsList = Collections.singletonList(processingErrors);
-        AtomicInteger numberOfImagesToProcess = new AtomicInteger(2);
+        Integer numberOfImagesToProcess = 2;
         Exception failure = mock(Exception.class);
         when(processingErrors.getFailure()).thenReturn(Optional.of(failure));
 
         all.printSummary(processingErrorsList, numberOfImagesToProcess);
 
-        verify(processingErrors, times(1)).getImageNameAndTag();
+        verify(processingErrors, times(1)).getImageName();
+        verify(processingErrors, times(1)).getTag();
         verify(processingErrors, times(2)).getFailure();
-        assertEquals(numberOfImagesToProcess.get(), 2);
+        assertEquals(numberOfImagesToProcess, 2);
     }
 
     @Test
@@ -242,13 +242,14 @@ public class AllTest {
         ProcessingErrors processingErrors = mock(ProcessingErrors.class);
         All all = spy(new All());
         List<ProcessingErrors> processingErrorsList = Collections.emptyList();
-        AtomicInteger numberOfImagesToProcess = new AtomicInteger(2);
+        Integer numberOfImagesToProcess = 2;
 
         all.printSummary(processingErrorsList, numberOfImagesToProcess);
 
-        verify(processingErrors, times(0)).getImageNameAndTag();
+        verify(processingErrors, times(0)).getImageName();
+        verify(processingErrors, times(0)).getTag();
         verify(processingErrors, times(0)).getFailure();
-        assertEquals(numberOfImagesToProcess.get(), 2);
+        assertEquals(numberOfImagesToProcess, 2);
     }
 
     @Test

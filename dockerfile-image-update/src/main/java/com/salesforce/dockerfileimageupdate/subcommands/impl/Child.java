@@ -31,16 +31,20 @@ public class Child implements ExecutableWithNamespace {
 
     @Override
     public void execute(final Namespace ns, final DockerfileGitHubUtil dockerfileGitHubUtil)
-            throws IOException, InterruptedException, URISyntaxException {
+            throws IOException, InterruptedException {
         String branch = ns.get(Constants.GIT_BRANCH);
         String img = ns.get(Constants.IMG);
         String forceTag = ns.get(Constants.FORCE_TAG);
         String store = ns.get(Constants.STORE);
         ImageStoreUtil imageStoreUtil = getImageStoreUtil();
-        ImageTagStore imageTagStore = imageStoreUtil.initializeImageTagStore(dockerfileGitHubUtil, store);
+        try {
+            ImageTagStore imageTagStore = imageStoreUtil.initializeImageTagStore(dockerfileGitHubUtil, store);
+            /* Updates store if a store is specified. */
+            imageTagStore.updateStore(img, forceTag);
+        } catch (URISyntaxException e) {
+            log.error("Could not initialize the Image tage store. Exception: ", e.getMessage());
+        }
 
-        /* Updates store if a store is specified. */
-        imageTagStore.updateStore(img, forceTag);
 
         log.info("Retrieving repository and creating fork...");
         GHRepository repo = dockerfileGitHubUtil.getRepo(ns.get(Constants.GIT_REPO));
