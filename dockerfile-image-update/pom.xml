@@ -122,6 +122,11 @@
             <artifactId>github-api</artifactId>
             <version>1.303</version>
         </dependency>
+        <dependency>
+            <groupId>com.amazonaws</groupId>
+            <artifactId>aws-java-sdk-s3</artifactId>
+            <version>1.11.641</version>
+        </dependency>
     </dependencies>
 
     <build>

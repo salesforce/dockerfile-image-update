@@ -9,15 +9,14 @@
 package com.salesforce.dockerfileimageupdate.subcommands.impl;
 
 import com.google.common.collect.ImmutableMap;
-import com.salesforce.dockerfileimageupdate.storage.GitHubJsonStore;
+import com.salesforce.dockerfileimageupdate.storage.ImageTagStore;
 import com.salesforce.dockerfileimageupdate.utils.DockerfileGitHubUtil;
+import com.salesforce.dockerfileimageupdate.utils.ImageStoreUtil;
 import net.sourceforge.argparse4j.inf.Namespace;
 import org.kohsuke.github.GHRepository;
-import org.mockito.Mockito;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import java.io.IOException;
 import java.util.Map;
 
 import static com.salesforce.dockerfileimageupdate.utils.Constants.*;
@@ -35,7 +34,8 @@ public class ChildTest {
                 {ImmutableMap.of(
                         GIT_REPO, "test",
                         IMG, "test",
-                        FORCE_TAG, "test")},
+                        FORCE_TAG, "test",
+                        STORE, "test")},
                 {ImmutableMap.of(
                         GIT_REPO, "test",
                         IMG, "test",
@@ -46,25 +46,27 @@ public class ChildTest {
 
     @Test(dataProvider = "inputMap")
     public void checkPullRequestMade(Map<String, Object> inputMap) throws Exception {
-        Child child = new Child();
+        Child child = spy(new Child());
         Namespace ns = new Namespace(inputMap);
         DockerfileGitHubUtil dockerfileGitHubUtil = mock(DockerfileGitHubUtil.class);
-        Mockito.when(dockerfileGitHubUtil.getRepo(Mockito.any())).thenReturn(new GHRepository());
-        Mockito.when(dockerfileGitHubUtil.getOrCreateFork(Mockito.any())).thenReturn(new GHRepository());
-        doNothing().when(dockerfileGitHubUtil).modifyAllOnGithub(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
-        GitHubJsonStore gitHubJsonStore = mock(GitHubJsonStore.class);
-        when(dockerfileGitHubUtil.getGitHubJsonStore(anyString())).thenReturn(gitHubJsonStore);
-        doNothing().when(dockerfileGitHubUtil).createPullReq(Mockito.any(), anyString(), Mockito.any(), any());
+        when(dockerfileGitHubUtil.getRepo(any())).thenReturn(new GHRepository());
+        when(dockerfileGitHubUtil.getOrCreateFork(any())).thenReturn(new GHRepository());
+        doNothing().when(dockerfileGitHubUtil).modifyAllOnGithub(any(), any(), any(), any(), any());
+        ImageStoreUtil imageStoreUtil = mock(ImageStoreUtil.class);
+        ImageTagStore imageTagStore = mock(ImageTagStore.class);
+        when(child.getImageStoreUtil()).thenReturn(imageStoreUtil);
+        when(imageStoreUtil.initializeImageTagStore(dockerfileGitHubUtil, "test")).thenReturn(imageTagStore);
+        doNothing().when(dockerfileGitHubUtil).createPullReq(any(), anyString(), any(), any());
 
         child.execute(ns, dockerfileGitHubUtil);
 
-        Mockito.verify(dockerfileGitHubUtil, atLeastOnce())
-                .createPullReq(Mockito.any(), anyString(), Mockito.any(), any());
+        verify(dockerfileGitHubUtil, atLeastOnce())
+                .createPullReq(any(), anyString(), any(), any());
     }
 
     @Test
-    public void testCreateForkFailureCase_CreatePullReqIsSkipped() throws IOException, InterruptedException {
-        Child child = new Child();
+    public void testCreateForkFailureCase_CreatePullReqIsSkipped() throws Exception {
+        Child child = spy(new Child());
         Map<String, Object> nsMap = ImmutableMap.of(
                 GIT_REPO, "test",
                 IMG, "test",
@@ -72,12 +74,14 @@ public class ChildTest {
                 STORE, "test");
         Namespace ns = new Namespace(nsMap);
         DockerfileGitHubUtil dockerfileGitHubUtil = mock(DockerfileGitHubUtil.class);
-        GitHubJsonStore gitHubJsonStore = mock(GitHubJsonStore.class);
-        when(dockerfileGitHubUtil.getGitHubJsonStore(anyString())).thenReturn(gitHubJsonStore);
-        Mockito.when(dockerfileGitHubUtil.getRepo(Mockito.any())).thenReturn(new GHRepository());
-        Mockito.when(dockerfileGitHubUtil.getOrCreateFork(Mockito.any())).thenReturn(null);
+        when(dockerfileGitHubUtil.getRepo(any())).thenReturn(new GHRepository());
+        when(dockerfileGitHubUtil.getOrCreateFork(any())).thenReturn(null);
+        ImageStoreUtil imageStoreUtil = mock(ImageStoreUtil.class);
+        ImageTagStore imageTagStore = mock(ImageTagStore.class);
+        when(child.getImageStoreUtil()).thenReturn(imageStoreUtil);
+        when(imageStoreUtil.initializeImageTagStore(dockerfileGitHubUtil, "test")).thenReturn(imageTagStore);
         child.execute(ns, dockerfileGitHubUtil);
-        Mockito.verify(dockerfileGitHubUtil, Mockito.never()).createPullReq(Mockito.any(), Mockito.any(), Mockito.any(),
-                Mockito.any());
+        verify(dockerfileGitHubUtil, never()).createPullReq(any(), any(), any(),
+                any());
     }
 }

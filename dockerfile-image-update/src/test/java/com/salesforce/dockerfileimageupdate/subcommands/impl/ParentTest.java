@@ -13,13 +13,12 @@ import com.google.common.collect.ImmutableMap;
 import com.salesforce.dockerfileimageupdate.model.*;
 import com.salesforce.dockerfileimageupdate.process.*;
 import com.salesforce.dockerfileimageupdate.storage.GitHubJsonStore;
+import com.salesforce.dockerfileimageupdate.storage.ImageTagStore;
 import com.salesforce.dockerfileimageupdate.utils.*;
 import net.sourceforge.argparse4j.inf.Namespace;
 import org.kohsuke.github.*;
-import org.mockito.Mockito;
 import org.testng.annotations.Test;
 
-import java.io.*;
 import java.util.*;
 import static org.mockito.Matchers.*;
 import static org.mockito.Mockito.*;
@@ -40,12 +39,14 @@ public class ParentTest {
         Namespace ns = new Namespace(nsMap);
         Parent parent = spy(new Parent());
         DockerfileGitHubUtil dockerfileGitHubUtil = mock(DockerfileGitHubUtil.class);
-        GitHubJsonStore gitHubJsonStore = mock(GitHubJsonStore.class);
         GitHubPullRequestSender pullRequestSender = mock(GitHubPullRequestSender.class);
         GitForkBranch gitForkBranch = mock(GitForkBranch.class);
         PagedSearchIterable<GHContent> contentsWithImage = mock(PagedSearchIterable.class);
         PullRequests pullRequests = mock(PullRequests.class);
-        when(dockerfileGitHubUtil.getGitHubJsonStore(anyString())).thenReturn(gitHubJsonStore);
+        ImageStoreUtil imageStoreUtil = mock(ImageStoreUtil.class);
+        ImageTagStore imageTagStore = mock(ImageTagStore.class);
+        when(parent.getImageStoreUtil()).thenReturn(imageStoreUtil);
+        when(imageStoreUtil.initializeImageTagStore(dockerfileGitHubUtil, "store")).thenReturn(imageTagStore);
 
         parent.execute(ns, dockerfileGitHubUtil);
 
@@ -66,22 +67,26 @@ public class ParentTest {
         Namespace ns = new Namespace(nsMap);
         Parent parent = spy(new Parent());
         DockerfileGitHubUtil dockerfileGitHubUtil = mock(DockerfileGitHubUtil.class);
-        GitHubJsonStore gitHubJsonStore = mock(GitHubJsonStore.class);
         GitHubPullRequestSender pullRequestSender = mock(GitHubPullRequestSender.class);
         GitForkBranch gitForkBranch = mock(GitForkBranch.class);
         PullRequests pullRequests = mock(PullRequests.class);
-        when(dockerfileGitHubUtil.getGitHubJsonStore(anyString())).thenReturn(gitHubJsonStore);
-        when(parent.getPullRequestSender(dockerfileGitHubUtil, ns)).thenReturn(pullRequestSender);
-        when(parent.getGitForkBranch(ns)).thenReturn(gitForkBranch);
-        when(parent.getPullRequests()).thenReturn(pullRequests);
+        ImageStoreUtil imageStoreUtil = mock(ImageStoreUtil.class);
+        ImageTagStore imageTagStore = mock(ImageTagStore.class);
         PagedSearchIterable<GHContent> contentsWithImage = mock(PagedSearchIterable.class);
         List<PagedSearchIterable<GHContent>> contentsWithImageList = Collections.singletonList(contentsWithImage);
         Optional<List<PagedSearchIterable<GHContent>>> optionalContentsWithImageList = Optional.of(contentsWithImageList);
+
+        when(parent.getPullRequestSender(dockerfileGitHubUtil, ns)).thenReturn(pullRequestSender);
+        when(parent.getGitForkBranch(ns)).thenReturn(gitForkBranch);
+        when(parent.getPullRequests()).thenReturn(pullRequests);
+        when(parent.getImageStoreUtil()).thenReturn(imageStoreUtil);
+        when(imageStoreUtil.initializeImageTagStore(dockerfileGitHubUtil, "store")).thenReturn(imageTagStore);
         doNothing().when(pullRequests).prepareToCreate(ns, pullRequestSender,
                 contentsWithImage, gitForkBranch, dockerfileGitHubUtil);
         when(dockerfileGitHubUtil.getGHContents(anyString(), anyString(),  anyInt())).thenReturn(optionalContentsWithImageList);
 
         parent.execute(ns, dockerfileGitHubUtil);
+
         verify(parent, times(1)).getGitForkBranch(ns);
         verify(parent, times(1)).getPullRequestSender(dockerfileGitHubUtil, ns);
         verify(parent, times(1)).getPullRequests();
@@ -90,10 +95,17 @@ public class ParentTest {
     }
 
     @Test
-    public void testGetCommon(){
+    public void testGetPullRequests(){
         Parent parent = new Parent();
         PullRequests pullRequests = new PullRequests();
         assertEquals(pullRequests.getClass(), parent.getPullRequests().getClass());
+    }
+
+    @Test
+    public void testGetImageStoreUtil(){
+        Parent parent = new Parent();
+        ImageStoreUtil imageStoreUtil = new ImageStoreUtil();
+        assertEquals(imageStoreUtil.getClass(), parent.getImageStoreUtil().getClass());
     }
 
     @Test
