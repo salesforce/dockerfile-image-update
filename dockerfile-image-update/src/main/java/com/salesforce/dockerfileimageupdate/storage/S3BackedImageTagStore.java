@@ -22,7 +22,7 @@ import java.util.stream.Collectors;
  */
 public class S3BackedImageTagStore implements ImageTagStore {
     private static final Logger log = LoggerFactory.getLogger(S3BackedImageTagStore.class);
-    private static final Character S3_FILE_KEY_PATH_DELIMITER = '.';
+    private static final Character S3_FILE_KEY_PATH_DELIMITER = '!';
     public static final String s3Prefix = "s3";
     private final AmazonS3 s3;
     private final String store;

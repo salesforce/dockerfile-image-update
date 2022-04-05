@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Optional;
 
 /**
  * ImageStore is the main entity we'll be using to initialize the image tag store
@@ -16,19 +17,20 @@ import java.net.URISyntaxException;
 public class ImageStoreUtil {
     private static final Logger log = LoggerFactory.getLogger(PullRequests.class);
     private static ImageStoreType fromStoreUri(URI storeUri) {
-        if (storeUri.getScheme().equals(S3BackedImageTagStore.s3Prefix))
+        Optional<String> scheme = Optional.ofNullable(storeUri.getScheme());
+        if (scheme.isPresent() && storeUri.getScheme().equals(S3BackedImageTagStore.s3Prefix))
             return ImageStoreType.S3;
         return ImageStoreType.GIT;
     }
 
-    public ImageTagStore initializeImageTagStore(DockerfileGitHubUtil dockerfileGitHubUtil, String store) throws URISyntaxException {
+    public static ImageTagStore initializeImageTagStore(DockerfileGitHubUtil dockerfileGitHubUtil, String store) throws URISyntaxException {
         URI storeUri = new URI(store);
         ImageStoreType imageStoreType = fromStoreUri(storeUri);
         ImageTagStore imageTagStore = null;
         switch (imageStoreType) {
             case S3:
                 log.info("The underlying data store is S3.");
-                imageTagStore = imageStoreType.getStore(dockerfileGitHubUtil, store);
+                imageTagStore = getStore(imageStoreType, storeUri);
                 break;
             case GIT:
                 log.info("The underlying data store is a Git repository.");
@@ -38,5 +40,14 @@ public class ImageStoreUtil {
                 log.error("Unknown Image store type.");
         }
         return imageTagStore;
+    }
+
+    private static String getS3StoreName(URI storeUri) {
+        return storeUri.getHost();
+    }
+
+    private static ImageTagStore getStore(ImageStoreType imageStoreType, URI storeUri) {
+        //DockerfileGitHubUtil is not required to initialize the S3 store
+        return imageStoreType.getStore(null, getS3StoreName(storeUri));
     }
 }

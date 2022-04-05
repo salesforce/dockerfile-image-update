@@ -40,9 +40,8 @@ public class All implements ExecutableWithNamespace {
             throws IOException, InterruptedException {
         loadDockerfileGithubUtil(dockerfileGitHubUtil);
         String store = ns.get(Constants.STORE);
-        ImageStoreUtil imageStoreUtil = getImageStoreUtil();
         try {
-            ImageTagStore imageTagStore = imageStoreUtil.initializeImageTagStore(this.dockerfileGitHubUtil, store);
+            ImageTagStore imageTagStore = ImageStoreUtil.initializeImageTagStore(this.dockerfileGitHubUtil, store);
             List<ImageTagStoreContent> imageNamesWithTag = imageTagStore.getStoreContent(dockerfileGitHubUtil, store);
             Integer numberOfImagesToProcess = imageNamesWithTag.size();
             List<ProcessingErrors> imagesThatCouldNotBeProcessed = processImagesWithTag(ns, imageNamesWithTag);
@@ -143,9 +142,5 @@ public class All implements ExecutableWithNamespace {
 
     protected PullRequests getPullRequests(){
         return new PullRequests();
-    }
-
-    protected ImageStoreUtil getImageStoreUtil(){
-        return new ImageStoreUtil();
     }
 }

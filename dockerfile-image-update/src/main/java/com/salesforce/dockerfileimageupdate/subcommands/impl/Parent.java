@@ -39,17 +39,18 @@ public class Parent implements ExecutableWithNamespace {
 
     DockerfileGitHubUtil dockerfileGitHubUtil;
 
+
+
     @Override
     public void execute(final Namespace ns, DockerfileGitHubUtil dockerfileGitHubUtil)
             throws IOException, InterruptedException {
         loadDockerfileGithubUtil(dockerfileGitHubUtil);
         String store = ns.get(Constants.STORE);
-        ImageStoreUtil imageStoreUtil = getImageStoreUtil();
         String img = ns.get(Constants.IMG);
         String tag = ns.get(Constants.TAG);
         log.info("Updating store...");
         try {
-            ImageTagStore imageTagStore = imageStoreUtil.initializeImageTagStore(this.dockerfileGitHubUtil, store);
+            ImageTagStore imageTagStore = ImageStoreUtil.initializeImageTagStore(this.dockerfileGitHubUtil, store);
             imageTagStore.updateStore(img, tag);
         } catch (URISyntaxException e) {
             log.error("Could not initialize the Image tage store. Exception: ", e.getMessage());
@@ -96,9 +97,5 @@ public class Parent implements ExecutableWithNamespace {
 
     protected void loadDockerfileGithubUtil(DockerfileGitHubUtil _dockerfileGitHubUtil) {
         dockerfileGitHubUtil = _dockerfileGitHubUtil;
-    }
-
-    protected ImageStoreUtil getImageStoreUtil(){
-        return new ImageStoreUtil();
     }
 }
