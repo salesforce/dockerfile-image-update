@@ -67,10 +67,7 @@ public class All implements ExecutableWithNamespace {
             String image = content.getImageName();
             String tag = content.getTag();
             failureMessage = processImageWithTag(image, tag, ns, orgsToIncludeInSearch, gitApiSearchLimit);
-            if (failureMessage.isPresent()) {
-                ProcessingErrors processingErrors = processErrorMessages(image, tag, failureMessage);
-                imagesThatCouldNotBeProcessed.add(processingErrors);
-            }
+            failureMessage.ifPresent(message -> imagesThatCouldNotBeProcessed.add(processErrorMessages(image, tag, Optional.of(message))));
         }
         return imagesThatCouldNotBeProcessed;
     }
