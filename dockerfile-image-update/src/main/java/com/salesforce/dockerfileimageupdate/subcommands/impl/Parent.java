@@ -35,11 +35,7 @@ import java.util.Optional;
 public class Parent implements ExecutableWithNamespace {
 
     private static final Logger log = LoggerFactory.getLogger(Parent.class);
-
-
     DockerfileGitHubUtil dockerfileGitHubUtil;
-
-
 
     @Override
     public void execute(final Namespace ns, DockerfileGitHubUtil dockerfileGitHubUtil)

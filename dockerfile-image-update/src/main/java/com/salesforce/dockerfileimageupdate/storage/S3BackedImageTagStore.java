@@ -14,7 +14,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * S3BackedImageTagStore is the main entity we'll be using to interact with the image tag store stored in S3
