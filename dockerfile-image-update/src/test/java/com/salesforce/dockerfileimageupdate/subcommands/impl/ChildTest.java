@@ -9,9 +9,8 @@
 package com.salesforce.dockerfileimageupdate.subcommands.impl;
 
 import com.google.common.collect.ImmutableMap;
-import com.salesforce.dockerfileimageupdate.storage.ImageTagStore;
+import com.salesforce.dockerfileimageupdate.storage.GitHubJsonStore;
 import com.salesforce.dockerfileimageupdate.utils.DockerfileGitHubUtil;
-import com.salesforce.dockerfileimageupdate.utils.ImageStoreUtil;
 import net.sourceforge.argparse4j.inf.Namespace;
 import org.kohsuke.github.GHRepository;
 import org.testng.annotations.DataProvider;
@@ -49,18 +48,17 @@ public class ChildTest {
         Child child = spy(new Child());
         Namespace ns = new Namespace(inputMap);
         DockerfileGitHubUtil dockerfileGitHubUtil = mock(DockerfileGitHubUtil.class);
+        GitHubJsonStore imageTagStore = mock(GitHubJsonStore.class);
         when(dockerfileGitHubUtil.getRepo(any())).thenReturn(new GHRepository());
         when(dockerfileGitHubUtil.getOrCreateFork(any())).thenReturn(new GHRepository());
         doNothing().when(dockerfileGitHubUtil).modifyAllOnGithub(any(), any(), any(), any(), any());
-        ImageStoreUtil imageStoreUtil = mock(ImageStoreUtil.class);
-        ImageTagStore imageTagStore = mock(ImageTagStore.class);
-        when(child.getImageStoreUtil()).thenReturn(imageStoreUtil);
-        when(imageStoreUtil.initializeImageTagStore(dockerfileGitHubUtil, "test")).thenReturn(imageTagStore);
+
+        when(dockerfileGitHubUtil.getGitHubJsonStore("test")).thenReturn(imageTagStore);
         doNothing().when(dockerfileGitHubUtil).createPullReq(any(), anyString(), any(), any());
 
         child.execute(ns, dockerfileGitHubUtil);
 
-        verify(dockerfileGitHubUtil, atLeastOnce())
+        verify(dockerfileGitHubUtil, times(1))
                 .createPullReq(any(), anyString(), any(), any());
     }
 
@@ -76,10 +74,8 @@ public class ChildTest {
         DockerfileGitHubUtil dockerfileGitHubUtil = mock(DockerfileGitHubUtil.class);
         when(dockerfileGitHubUtil.getRepo(any())).thenReturn(new GHRepository());
         when(dockerfileGitHubUtil.getOrCreateFork(any())).thenReturn(null);
-        ImageStoreUtil imageStoreUtil = mock(ImageStoreUtil.class);
-        ImageTagStore imageTagStore = mock(ImageTagStore.class);
-        when(child.getImageStoreUtil()).thenReturn(imageStoreUtil);
-        when(imageStoreUtil.initializeImageTagStore(dockerfileGitHubUtil, "test")).thenReturn(imageTagStore);
+        GitHubJsonStore imageTagStore = mock(GitHubJsonStore.class);
+        when(dockerfileGitHubUtil.getGitHubJsonStore("test")).thenReturn(imageTagStore);
         child.execute(ns, dockerfileGitHubUtil);
         verify(dockerfileGitHubUtil, never()).createPullReq(any(), any(), any(),
                 any());

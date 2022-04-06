@@ -9,7 +9,6 @@
 package com.salesforce.dockerfileimageupdate.subcommands.impl;
 
 import com.google.common.collect.ImmutableMap;
-import com.google.gson.JsonElement;
 import com.salesforce.dockerfileimageupdate.model.*;
 import com.salesforce.dockerfileimageupdate.process.*;
 import com.salesforce.dockerfileimageupdate.storage.*;
@@ -42,9 +41,8 @@ public class AllTest {
         DockerfileGitHubUtil dockerfileGitHubUtil = mock(DockerfileGitHubUtil.class);
         GitHubPullRequestSender pullRequestSender = mock(GitHubPullRequestSender.class);
         GitForkBranch gitForkBranch = mock(GitForkBranch.class);
-        ImageStoreUtil imageStoreUtil = mock(ImageStoreUtil.class);
         PullRequests pullRequests = mock(PullRequests.class);
-        ImageTagStore imageTagStore = mock(ImageTagStore.class);
+        GitHubJsonStore imageTagStore = mock(GitHubJsonStore.class);
         ImageTagStoreContent imageTagStoreContent = mock(ImageTagStoreContent.class);
         PagedSearchIterable<GHContent> contentsWithImage = mock(PagedSearchIterable.class);
         Iterator<ImageTagStoreContent> imageTagStoreContentIterator = mock(Iterator.class);
@@ -53,10 +51,9 @@ public class AllTest {
         List<PagedSearchIterable<GHContent>> contentsWithImageList = Collections.singletonList(contentsWithImage);
         Optional<List<PagedSearchIterable<GHContent>>> optionalContentsWithImageList = Optional.of(contentsWithImageList);
 
+        when(dockerfileGitHubUtil.getGitHubJsonStore("store")).thenReturn(imageTagStore);
         when(imageTagStoreContentIterator.next()).thenReturn(imageTagStoreContent);
         when(imageTagStoreContentIterator.hasNext()).thenReturn(true, false);
-        when(all.getImageStoreUtil()).thenReturn(imageStoreUtil);
-        when(imageStoreUtil.initializeImageTagStore(dockerfileGitHubUtil, "store")).thenReturn(imageTagStore);
         when(imageTagStore.getStoreContent(dockerfileGitHubUtil, "store")).thenReturn(storeContents);
         when(storeContents.iterator()).thenReturn(imageTagStoreContentIterator);
         when(imageTagStoreContent.getImageName()).thenReturn("image1");
@@ -91,14 +88,13 @@ public class AllTest {
         GitHubPullRequestSender pullRequestSender = mock(GitHubPullRequestSender.class);
         GitForkBranch gitForkBranch = mock(GitForkBranch.class);
         PullRequests pullRequests = mock(PullRequests.class);
-        ImageTagStore imageTagStore = mock(ImageTagStore.class);
+        GitHubJsonStore imageTagStore = mock(GitHubJsonStore.class);
         ImageTagStoreContent imageTagStoreContent = mock(ImageTagStoreContent.class);
         ImageStoreUtil imageStoreUtil = mock(ImageStoreUtil.class);
 
         List<ImageTagStoreContent> storeContents = mock(LinkedList.class);
 
-        when(all.getImageStoreUtil()).thenReturn(imageStoreUtil);
-        when(imageStoreUtil.initializeImageTagStore(dockerfileGitHubUtil, "store")).thenReturn(imageTagStore);
+        when(dockerfileGitHubUtil.getGitHubJsonStore("store")).thenReturn(imageTagStore);
         when(imageTagStore.getStoreContent(dockerfileGitHubUtil, "store")).thenReturn(storeContents);
 
 
@@ -140,15 +136,14 @@ public class AllTest {
         GitHubPullRequestSender pullRequestSender = mock(GitHubPullRequestSender.class);
         GitForkBranch gitForkBranch = mock(GitForkBranch.class);
         PullRequests pullRequests = mock(PullRequests.class);
-        ImageTagStore imageTagStore = mock(ImageTagStore.class);
+        GitHubJsonStore imageTagStore = mock(GitHubJsonStore.class);
         ImageTagStoreContent imageTagStoreContent = mock(ImageTagStoreContent.class);
-        ImageStoreUtil imageStoreUtil = mock(ImageStoreUtil.class);
 
         List<ImageTagStoreContent> storeContents = mock(LinkedList.class);
 
 
-        when(all.getImageStoreUtil()).thenReturn(imageStoreUtil);
-        when(imageStoreUtil.initializeImageTagStore(dockerfileGitHubUtil, "store")).thenReturn(imageTagStore);
+
+        when(dockerfileGitHubUtil.getGitHubJsonStore("store")).thenReturn(imageTagStore);
         when(imageTagStore.getStoreContent(dockerfileGitHubUtil, "store")).thenReturn(storeContents);
 
 
@@ -189,15 +184,11 @@ public class AllTest {
         GitHubPullRequestSender pullRequestSender = mock(GitHubPullRequestSender.class);
         GitForkBranch gitForkBranch = mock(GitForkBranch.class);
         PullRequests pullRequests = mock(PullRequests.class);
-        ImageTagStore imageTagStore = mock(ImageTagStore.class);
+        GitHubJsonStore imageTagStore = mock(GitHubJsonStore.class);
         ImageTagStoreContent imageTagStoreContent = mock(ImageTagStoreContent.class);
-        ImageStoreUtil imageStoreUtil = mock(ImageStoreUtil.class);
 
         List<ImageTagStoreContent> storeContents = mock(LinkedList.class);
-
-
-        when(all.getImageStoreUtil()).thenReturn(imageStoreUtil);
-        when(imageStoreUtil.initializeImageTagStore(dockerfileGitHubUtil, "store")).thenReturn(imageTagStore);
+        when(dockerfileGitHubUtil.getGitHubJsonStore("store")).thenReturn(imageTagStore);
         when(imageTagStore.getStoreContent(dockerfileGitHubUtil, "store")).thenReturn(storeContents);
 
 
@@ -306,12 +297,5 @@ public class AllTest {
 
         assertEquals(all.getPullRequestSender(dockerfileGitHubUtil, ns).getClass(),
                 gitHubPullRequestSender.getClass());
-    }
-
-    @Test
-    public void testGetImageStoreUtil(){
-        All all = new All();
-        ImageStoreUtil imageStoreUtil = new ImageStoreUtil();
-        assertEquals(imageStoreUtil.getClass(), all.getImageStoreUtil().getClass());
     }
 }

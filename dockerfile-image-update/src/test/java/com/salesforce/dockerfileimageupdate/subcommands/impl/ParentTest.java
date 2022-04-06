@@ -13,7 +13,6 @@ import com.google.common.collect.ImmutableMap;
 import com.salesforce.dockerfileimageupdate.model.*;
 import com.salesforce.dockerfileimageupdate.process.*;
 import com.salesforce.dockerfileimageupdate.storage.GitHubJsonStore;
-import com.salesforce.dockerfileimageupdate.storage.ImageTagStore;
 import com.salesforce.dockerfileimageupdate.utils.*;
 import net.sourceforge.argparse4j.inf.Namespace;
 import org.kohsuke.github.*;
@@ -28,7 +27,6 @@ import static org.testng.Assert.*;
  * Created by minho.park on 7/19/16.
  */
 public class ParentTest {
-
     @Test
     public void testPrCreationSkippedWhenSkipPrCreationFlagSetToTrue() throws Exception {
         Map<String, Object> nsMap = ImmutableMap.of(Constants.IMG,
@@ -43,13 +41,13 @@ public class ParentTest {
         GitForkBranch gitForkBranch = mock(GitForkBranch.class);
         PagedSearchIterable<GHContent> contentsWithImage = mock(PagedSearchIterable.class);
         PullRequests pullRequests = mock(PullRequests.class);
-        ImageStoreUtil imageStoreUtil = mock(ImageStoreUtil.class);
-        ImageTagStore imageTagStore = mock(ImageTagStore.class);
-        when(parent.getImageStoreUtil()).thenReturn(imageStoreUtil);
-        when(imageStoreUtil.initializeImageTagStore(dockerfileGitHubUtil, "store")).thenReturn(imageTagStore);
+        GitHubJsonStore imageTagStore = mock(GitHubJsonStore.class);
+
+        when(dockerfileGitHubUtil.getGitHubJsonStore("store")).thenReturn(imageTagStore);
 
         parent.execute(ns, dockerfileGitHubUtil);
 
+        verify(dockerfileGitHubUtil).getGitHubJsonStore("store");
         verify(parent, times(0)).getGitForkBranch(ns);
         verify(parent, times(0)).getPullRequestSender(dockerfileGitHubUtil, ns);
         verify(parent, times(0)).getPullRequests();
@@ -70,20 +68,19 @@ public class ParentTest {
         GitHubPullRequestSender pullRequestSender = mock(GitHubPullRequestSender.class);
         GitForkBranch gitForkBranch = mock(GitForkBranch.class);
         PullRequests pullRequests = mock(PullRequests.class);
-        ImageStoreUtil imageStoreUtil = mock(ImageStoreUtil.class);
-        ImageTagStore imageTagStore = mock(ImageTagStore.class);
+        GitHubJsonStore imageTagStore = mock(GitHubJsonStore.class);
         PagedSearchIterable<GHContent> contentsWithImage = mock(PagedSearchIterable.class);
         List<PagedSearchIterable<GHContent>> contentsWithImageList = Collections.singletonList(contentsWithImage);
         Optional<List<PagedSearchIterable<GHContent>>> optionalContentsWithImageList = Optional.of(contentsWithImageList);
 
+
         when(parent.getPullRequestSender(dockerfileGitHubUtil, ns)).thenReturn(pullRequestSender);
         when(parent.getGitForkBranch(ns)).thenReturn(gitForkBranch);
         when(parent.getPullRequests()).thenReturn(pullRequests);
-        when(parent.getImageStoreUtil()).thenReturn(imageStoreUtil);
-        when(imageStoreUtil.initializeImageTagStore(dockerfileGitHubUtil, "store")).thenReturn(imageTagStore);
         doNothing().when(pullRequests).prepareToCreate(ns, pullRequestSender,
                 contentsWithImage, gitForkBranch, dockerfileGitHubUtil);
         when(dockerfileGitHubUtil.getGHContents(anyString(), anyString(),  anyInt())).thenReturn(optionalContentsWithImageList);
+        when(dockerfileGitHubUtil.getGitHubJsonStore("store")).thenReturn(imageTagStore);
 
         parent.execute(ns, dockerfileGitHubUtil);
 
@@ -101,12 +98,6 @@ public class ParentTest {
         assertEquals(pullRequests.getClass(), parent.getPullRequests().getClass());
     }
 
-    @Test
-    public void testGetImageStoreUtil(){
-        Parent parent = new Parent();
-        ImageStoreUtil imageStoreUtil = new ImageStoreUtil();
-        assertEquals(imageStoreUtil.getClass(), parent.getImageStoreUtil().getClass());
-    }
 
     @Test
     public void testGetGitForkBranch() {
