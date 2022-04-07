@@ -2,11 +2,11 @@ package com.salesforce.dockerfileimageupdate.utils;
 
 import com.salesforce.dockerfileimageupdate.storage.GitHubJsonStore;
 import com.salesforce.dockerfileimageupdate.storage.ImageTagStore;
+import com.salesforce.dockerfileimageupdate.storage.S3BackedImageTagStore;
 import org.testng.annotations.Test;
 
 import static org.mockito.Mockito.*;
 import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertThrows;
 
 public class ImageStoreUtilTest {
 
@@ -22,8 +22,9 @@ public class ImageStoreUtilTest {
     }
 
     @Test
-    public void testInitializeImageStoreThrowsExceptionWhenS3EnvVaribalesNotSet(){
+    public void testInitializeImageStoreForS3BasedStore() throws Exception {
         DockerfileGitHubUtil dockerfileGitHubUtil = mock(DockerfileGitHubUtil.class);
-        assertThrows(Exception.class, () -> ImageStoreUtil.initializeImageTagStore(dockerfileGitHubUtil, "s3://store"));
+        ImageTagStore imageTagStore = ImageStoreUtil.initializeImageTagStore(dockerfileGitHubUtil, "s3://store");
+        assertEquals(imageTagStore.getClass(), S3BackedImageTagStore.class);
     }
 }

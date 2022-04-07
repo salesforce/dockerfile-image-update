@@ -56,6 +56,31 @@ public class ParentTest {
     }
 
     @Test
+    public void testPrCreationSkippedWhenSkipPrCreationFlagSetToTrueForS3ImageStore() throws Exception {
+        Map<String, Object> nsMap = ImmutableMap.of(Constants.IMG,
+                "image", Constants.TAG,
+                "tag", Constants.STORE,
+                "s3://store", Constants.SKIP_PR_CREATION,
+                true);
+        Namespace ns = new Namespace(nsMap);
+        Parent parent = spy(new Parent());
+        DockerfileGitHubUtil dockerfileGitHubUtil = mock(DockerfileGitHubUtil.class);
+        GitHubPullRequestSender pullRequestSender = mock(GitHubPullRequestSender.class);
+        GitForkBranch gitForkBranch = mock(GitForkBranch.class);
+        PagedSearchIterable<GHContent> contentsWithImage = mock(PagedSearchIterable.class);
+        PullRequests pullRequests = mock(PullRequests.class);
+
+        parent.execute(ns, dockerfileGitHubUtil);
+
+        verify(dockerfileGitHubUtil, times(0)).getGitHubJsonStore("store");
+        verify(parent, times(0)).getGitForkBranch(ns);
+        verify(parent, times(0)).getPullRequestSender(dockerfileGitHubUtil, ns);
+        verify(parent, times(0)).getPullRequests();
+        verify(pullRequests, times(0)).prepareToCreate(ns, pullRequestSender,
+                contentsWithImage, gitForkBranch, dockerfileGitHubUtil);
+    }
+
+    @Test
     public void testParentCommandSuccessful() throws Exception {
         Map<String, Object> nsMap = ImmutableMap.of(Constants.IMG,
                 "image", Constants.TAG,
@@ -81,6 +106,41 @@ public class ParentTest {
                 contentsWithImage, gitForkBranch, dockerfileGitHubUtil);
         when(dockerfileGitHubUtil.getGHContents(anyString(), anyString(),  anyInt())).thenReturn(optionalContentsWithImageList);
         when(dockerfileGitHubUtil.getGitHubJsonStore("store")).thenReturn(imageTagStore);
+
+        parent.execute(ns, dockerfileGitHubUtil);
+
+        verify(parent, times(1)).getGitForkBranch(ns);
+        verify(parent, times(1)).getPullRequestSender(dockerfileGitHubUtil, ns);
+        verify(parent, times(1)).getPullRequests();
+        verify(pullRequests, times(1)).prepareToCreate(ns, pullRequestSender,
+                contentsWithImage, gitForkBranch, dockerfileGitHubUtil);
+    }
+
+    @Test
+    public void testParentCommandSuccessfulForS3ImageStore() throws Exception {
+        Map<String, Object> nsMap = ImmutableMap.of(Constants.IMG,
+                "image", Constants.TAG,
+                "tag", Constants.STORE,
+                "s3://store", Constants.SKIP_PR_CREATION,
+                false);
+        Namespace ns = new Namespace(nsMap);
+        Parent parent = spy(new Parent());
+        DockerfileGitHubUtil dockerfileGitHubUtil = mock(DockerfileGitHubUtil.class);
+        GitHubPullRequestSender pullRequestSender = mock(GitHubPullRequestSender.class);
+        GitForkBranch gitForkBranch = mock(GitForkBranch.class);
+        PullRequests pullRequests = mock(PullRequests.class);
+        PagedSearchIterable<GHContent> contentsWithImage = mock(PagedSearchIterable.class);
+        List<PagedSearchIterable<GHContent>> contentsWithImageList = Collections.singletonList(contentsWithImage);
+        Optional<List<PagedSearchIterable<GHContent>>> optionalContentsWithImageList = Optional.of(contentsWithImageList);
+
+
+        when(parent.getPullRequestSender(dockerfileGitHubUtil, ns)).thenReturn(pullRequestSender);
+        when(parent.getGitForkBranch(ns)).thenReturn(gitForkBranch);
+        when(parent.getPullRequests()).thenReturn(pullRequests);
+        doNothing().when(pullRequests).prepareToCreate(ns, pullRequestSender,
+                contentsWithImage, gitForkBranch, dockerfileGitHubUtil);
+        when(dockerfileGitHubUtil.getGHContents(anyString(), anyString(),  anyInt())).thenReturn(optionalContentsWithImageList);
+
 
         parent.execute(ns, dockerfileGitHubUtil);
 

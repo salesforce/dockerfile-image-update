@@ -63,6 +63,28 @@ public class ChildTest {
     }
 
     @Test
+    public void checkPullRequestMadeForS3ImageStore() throws Exception {
+        Child child = spy(new Child());
+        Map<String, Object> nsMap = ImmutableMap.of(
+                GIT_REPO, "test",
+                IMG, "test",
+                FORCE_TAG, "test",
+                STORE, "s3://test");
+        Namespace ns = new Namespace(nsMap);
+        DockerfileGitHubUtil dockerfileGitHubUtil = mock(DockerfileGitHubUtil.class);
+
+        when(dockerfileGitHubUtil.getRepo(any())).thenReturn(new GHRepository());
+        when(dockerfileGitHubUtil.getOrCreateFork(any())).thenReturn(new GHRepository());
+        doNothing().when(dockerfileGitHubUtil).modifyAllOnGithub(any(), any(), any(), any(), any());
+        doNothing().when(dockerfileGitHubUtil).createPullReq(any(), anyString(), any(), any());
+
+        child.execute(ns, dockerfileGitHubUtil);
+
+        verify(dockerfileGitHubUtil, times(1))
+                .createPullReq(any(), anyString(), any(), any());
+    }
+
+    @Test
     public void testCreateForkFailureCase_CreatePullReqIsSkipped() throws Exception {
         Child child = spy(new Child());
         Map<String, Object> nsMap = ImmutableMap.of(
