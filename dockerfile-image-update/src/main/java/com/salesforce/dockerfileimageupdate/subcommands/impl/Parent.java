@@ -25,7 +25,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Optional;
 
@@ -48,7 +47,7 @@ public class Parent implements ExecutableWithNamespace {
         try {
             ImageTagStore imageTagStore = ImageStoreUtil.initializeImageTagStore(this.dockerfileGitHubUtil, store);
             imageTagStore.updateStore(img, tag);
-        } catch (URISyntaxException e) {
+        } catch (Exception e) {
             log.error("Could not initialize the Image tage store. Exception: ", e.getMessage());
         }
 
@@ -77,6 +76,7 @@ public class Parent implements ExecutableWithNamespace {
             }
         }
     }
+
 
     protected PullRequests getPullRequests(){
         return new PullRequests();

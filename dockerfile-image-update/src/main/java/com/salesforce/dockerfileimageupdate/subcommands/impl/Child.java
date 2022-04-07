@@ -22,7 +22,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.net.URISyntaxException;
 
 @SubCommand(help = "updates one specific repository with given tag",
         requiredParams = {Constants.GIT_REPO, Constants.IMG, Constants.FORCE_TAG}, optionalParams = {"s", Constants.STORE})
@@ -41,7 +40,7 @@ public class Child implements ExecutableWithNamespace {
             ImageTagStore imageTagStore = imageStoreUtil.initializeImageTagStore(dockerfileGitHubUtil, store);
             /* Updates store if a store is specified. */
             imageTagStore.updateStore(img, forceTag);
-        } catch (URISyntaxException e) {
+        } catch (Exception e) {
             log.error("Could not initialize the Image tage store. Exception: ", e.getMessage());
         }
 

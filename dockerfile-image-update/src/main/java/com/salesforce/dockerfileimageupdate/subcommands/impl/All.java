@@ -25,7 +25,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.util.*;
 
 @SubCommand(help="updates all repositories' Dockerfiles",
@@ -36,8 +35,7 @@ public class All implements ExecutableWithNamespace {
     private DockerfileGitHubUtil dockerfileGitHubUtil;
 
     @Override
-    public void execute(final Namespace ns, final DockerfileGitHubUtil dockerfileGitHubUtil)
-            throws IOException, InterruptedException {
+    public void execute(final Namespace ns, final DockerfileGitHubUtil dockerfileGitHubUtil) {
         loadDockerfileGithubUtil(dockerfileGitHubUtil);
         String store = ns.get(Constants.STORE);
         try {
@@ -46,10 +44,9 @@ public class All implements ExecutableWithNamespace {
             Integer numberOfImagesToProcess = imageNamesWithTag.size();
             List<ProcessingErrors> imagesThatCouldNotBeProcessed = processImagesWithTag(ns, imageNamesWithTag);
             printSummary(imagesThatCouldNotBeProcessed, numberOfImagesToProcess);
-        } catch (URISyntaxException e) {
+        } catch (Exception e) {
             log.error("Could not initialize the Image tage store. Exception: ", e.getMessage());
         }
-
     }
 
     protected List<ProcessingErrors> processImagesWithTag(Namespace ns, List<ImageTagStoreContent> imageNamesWithTag) {

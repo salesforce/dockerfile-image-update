@@ -7,7 +7,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.Optional;
 
 /**
@@ -23,7 +22,8 @@ public class ImageStoreUtil {
         return ImageStoreType.GIT;
     }
 
-    public static ImageTagStore initializeImageTagStore(DockerfileGitHubUtil dockerfileGitHubUtil, String store) throws URISyntaxException {
+    public static ImageTagStore initializeImageTagStore(DockerfileGitHubUtil dockerfileGitHubUtil, String store)
+            throws Exception {
         URI storeUri = new URI(store);
         ImageStoreType imageStoreType = fromStoreUri(storeUri);
         ImageTagStore imageTagStore = null;
@@ -46,8 +46,9 @@ public class ImageStoreUtil {
         return storeUri.getHost();
     }
 
-    private static ImageTagStore getStore(ImageStoreType imageStoreType, URI storeUri) {
+    private static ImageTagStore getStore(ImageStoreType imageStoreType, URI storeUri) throws Exception{
         //DockerfileGitHubUtil is not required to initialize the S3 store
         return imageStoreType.getStore(null, getS3StoreName(storeUri));
     }
+
 }
