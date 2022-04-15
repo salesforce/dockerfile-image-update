@@ -48,7 +48,7 @@ public class Parent implements ExecutableWithNamespace {
             ImageTagStore imageTagStore = ImageStoreUtil.initializeImageTagStore(this.dockerfileGitHubUtil, store);
             imageTagStore.updateStore(img, tag);
         } catch (Exception e) {
-            log.error("Could not initialize the Image tage store. Exception: ", e.getMessage());
+            log.error("Could not initialize the Image tage store. Exception: ", e);
         }
 
         if (ns.get(Constants.SKIP_PR_CREATION)) {

@@ -45,7 +45,7 @@ public class All implements ExecutableWithNamespace {
             List<ProcessingErrors> imagesThatCouldNotBeProcessed = processImagesWithTag(ns, imageNamesWithTag);
             printSummary(imagesThatCouldNotBeProcessed, numberOfImagesToProcess);
         } catch (Exception e) {
-            log.error("Could not initialize the Image tage store. Exception: ", e.getMessage());
+            log.error("Encountered issues while initializing the image tag store or getting its contents. Exception: ", e);
         }
     }
 

@@ -5,7 +5,6 @@ import com.amazonaws.services.s3.model.ListObjectsV2Result;
 import com.amazonaws.services.s3.model.S3Object;
 import com.amazonaws.services.s3.model.S3ObjectInputStream;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
-import com.google.common.io.CharStreams;
 import com.salesforce.dockerfileimageupdate.utils.DockerfileGitHubUtil;
 import org.testng.annotations.Test;
 
@@ -56,12 +55,12 @@ public class S3BackedImageTagStoreTest {
         when(listObjectsV2Result.getObjectSummaries()).thenReturn(s3ObjectSummaryListList);
         when(s3ObjectSummary.getLastModified()).thenReturn(date);
         when(s3ObjectSummary.getKey()).thenReturn("domain!namespace!image");
-        when(amazonS3.getObject("store", "domain/namespace/image")).thenReturn(s3Object);
+        when(amazonS3.getObject("store", "domain!namespace!image")).thenReturn(s3Object);
         when(s3Object.getObjectContent()).thenReturn(objectContent);
 
         List<ImageTagStoreContent> actualResult = s3BackedImageTagStore.getStoreContent(dockerfileGitHubUtil, "store");
 
-        verify(amazonS3).getObject("store", "domain/namespace/image");
+        verify(amazonS3).getObject("store", "domain!namespace!image");
         assertEquals(actualResult.size(), 1);
         assertEquals(actualResult.get(0).getImageName(), "domain/namespace/image");
         assertEquals(actualResult.get(0).getTag(), "tag");
@@ -102,15 +101,15 @@ public class S3BackedImageTagStoreTest {
         when(listObjectsV2Result.getObjectSummaries()).thenReturn(s3ObjectSummaryList);
         when(s3ObjectSummary.getLastModified()).thenReturn(date1, date2);
         when(s3ObjectSummary.getKey()).thenReturn(key1, key2);
-        when(amazonS3.getObject("store", image1)).thenReturn(s3Object1);
-        when(amazonS3.getObject("store", image2)).thenReturn(s3Object2);
+        when(amazonS3.getObject("store", key1)).thenReturn(s3Object1);
+        when(amazonS3.getObject("store", key2)).thenReturn(s3Object2);
         when(s3Object1.getObjectContent()).thenReturn(objectContent1);
         when(s3Object2.getObjectContent()).thenReturn(objectContent2);
 
         List<ImageTagStoreContent> actualResult = s3BackedImageTagStore.getStoreContent(dockerfileGitHubUtil, "store");
 
-        verify(amazonS3, times(1)).getObject("store", image1);
-        verify(amazonS3, times(1)).getObject("store", image2);
+        verify(amazonS3, times(1)).getObject("store", key1);
+        verify(amazonS3, times(1)).getObject("store", key2);
         assertEquals(actualResult.size(), 2);
         assertEquals(actualResult.get(0).getImageName(), image2);
         assertEquals(actualResult.get(0).getTag(), tag2);

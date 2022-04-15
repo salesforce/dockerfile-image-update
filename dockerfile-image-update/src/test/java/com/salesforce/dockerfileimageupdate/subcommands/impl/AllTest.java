@@ -90,7 +90,6 @@ public class AllTest {
         PullRequests pullRequests = mock(PullRequests.class);
         GitHubJsonStore imageTagStore = mock(GitHubJsonStore.class);
         ImageTagStoreContent imageTagStoreContent = mock(ImageTagStoreContent.class);
-        ImageStoreUtil imageStoreUtil = mock(ImageStoreUtil.class);
 
         List<ImageTagStoreContent> storeContents = mock(LinkedList.class);
 

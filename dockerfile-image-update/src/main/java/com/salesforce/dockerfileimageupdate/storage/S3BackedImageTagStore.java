@@ -80,11 +80,15 @@ public class S3BackedImageTagStore implements ImageTagStore {
 
         for (Map.Entry<String, Date> set : sortedResult.entrySet()) {
             String key = set.getKey();
-            String image = convertS3ObjectKeyToImageString(key);
-            S3Object o = getS3Object(store, image);
-            String tag = getTagValueFromObject(o);
-            ImageTagStoreContent imageTagStoreContent = new ImageTagStoreContent(image, tag);
-            imageNameWithTagSortedByAccessDate.add(imageTagStoreContent);
+            try {
+                S3Object o = getS3Object(store, key);
+                String image = convertS3ObjectKeyToImageString(key);
+                String tag = getTagValueFromObject(o);
+                ImageTagStoreContent imageTagStoreContent = new ImageTagStoreContent(image, tag);
+                imageNameWithTagSortedByAccessDate.add(imageTagStoreContent);
+            } catch (Exception e){
+                log.error("Encountered issues reading S3 object with key {}. Exception: {}", key, e);
+            }
         }
         return imageNameWithTagSortedByAccessDate;
     }
