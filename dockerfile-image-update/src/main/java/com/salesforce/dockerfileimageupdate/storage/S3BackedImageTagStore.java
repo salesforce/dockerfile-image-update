@@ -93,13 +93,10 @@ public class S3BackedImageTagStore implements ImageTagStore {
         return imageNameWithTagSortedByAccessDate;
     }
 
-    private String getTagValueFromObject(S3Object o) {
+    private String getTagValueFromObject(S3Object o) throws IOException {
         String tag = "";
-        try (S3ObjectInputStream is = o.getObjectContent()) {
-            tag = CharStreams.toString(new InputStreamReader(is, Charsets.UTF_8));
-        } catch (IOException e) {
-            log.error("Could not get the tag value. Exception: ", e.getMessage());
-        }
+        S3ObjectInputStream is = o.getObjectContent();
+        tag = CharStreams.toString(new InputStreamReader(is, Charsets.UTF_8));
         return tag;
     }
 

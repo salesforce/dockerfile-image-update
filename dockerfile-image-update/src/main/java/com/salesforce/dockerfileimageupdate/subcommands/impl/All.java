@@ -35,7 +35,7 @@ public class All implements ExecutableWithNamespace {
     private DockerfileGitHubUtil dockerfileGitHubUtil;
 
     @Override
-    public void execute(final Namespace ns, final DockerfileGitHubUtil dockerfileGitHubUtil) {
+    public void execute(final Namespace ns, final DockerfileGitHubUtil dockerfileGitHubUtil) throws Exception {
         loadDockerfileGithubUtil(dockerfileGitHubUtil);
         String store = ns.get(Constants.STORE);
         try {
@@ -45,7 +45,8 @@ public class All implements ExecutableWithNamespace {
             List<ProcessingErrors> imagesThatCouldNotBeProcessed = processImagesWithTag(ns, imageNamesWithTag);
             printSummary(imagesThatCouldNotBeProcessed, numberOfImagesToProcess);
         } catch (Exception e) {
-            log.error("Encountered issues while initializing the image tag store or getting its contents. Exception: ", e);
+            log.error("Encountered issues while initializing the image tag store or getting its contents. Cannot continue. Exception: ", e);
+            System.exit(2);
         }
     }
 
