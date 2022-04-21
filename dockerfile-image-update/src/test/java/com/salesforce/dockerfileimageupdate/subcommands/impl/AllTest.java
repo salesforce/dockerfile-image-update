@@ -9,7 +9,6 @@
 package com.salesforce.dockerfileimageupdate.subcommands.impl;
 
 import com.google.common.collect.ImmutableMap;
-import com.google.gson.JsonElement;
 import com.salesforce.dockerfileimageupdate.model.*;
 import com.salesforce.dockerfileimageupdate.process.*;
 import com.salesforce.dockerfileimageupdate.storage.*;
@@ -17,11 +16,9 @@ import com.salesforce.dockerfileimageupdate.utils.*;
 
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import net.sourceforge.argparse4j.inf.Namespace;
 import org.kohsuke.github.*;
-import org.mockito.Mockito;
 import org.testng.annotations.Test;
 
 import static org.mockito.Matchers.*;
@@ -32,6 +29,7 @@ import static org.testng.Assert.assertEquals;
  * Created by avimanyum on 01/31/22.
  */
 public class AllTest {
+
     @Test
     public void testAllCommandSuccessful() throws Exception {
         Map<String, Object> nsMap = ImmutableMap.of(Constants.IMG,
@@ -41,33 +39,31 @@ public class AllTest {
         Namespace ns = new Namespace(nsMap);
         All all = spy(new All());
         DockerfileGitHubUtil dockerfileGitHubUtil = mock(DockerfileGitHubUtil.class);
-        GitHubJsonStore gitHubJsonStore = mock(GitHubJsonStore.class);
         GitHubPullRequestSender pullRequestSender = mock(GitHubPullRequestSender.class);
         GitForkBranch gitForkBranch = mock(GitForkBranch.class);
         PullRequests pullRequests = mock(PullRequests.class);
-        Set<Map.Entry<String, JsonElement>> imageToTagStore = mock(Set.class);
-        when(dockerfileGitHubUtil.getGitHubJsonStore(anyString())).thenReturn(gitHubJsonStore);
-        when(gitHubJsonStore.parseStoreToImagesMap(dockerfileGitHubUtil, "store")).thenReturn(imageToTagStore);
+        GitHubJsonStore imageTagStore = mock(GitHubJsonStore.class);
+        ImageTagStoreContent imageTagStoreContent = mock(ImageTagStoreContent.class);
+        PagedSearchIterable<GHContent> contentsWithImage = mock(PagedSearchIterable.class);
+        Iterator<ImageTagStoreContent> imageTagStoreContentIterator = mock(Iterator.class);
 
-        Map.Entry<String, JsonElement> imageToTag = mock(Map.Entry.class);
-        Iterator<Map.Entry<String, JsonElement>> imageToTagStoreIterator = mock(Iterator.class);
-        when(imageToTagStoreIterator.next()).thenReturn(imageToTag);
-        when(imageToTagStoreIterator.hasNext()).thenReturn(true, false);
-        when(imageToTagStore.iterator()).thenReturn(imageToTagStoreIterator);
-        JsonElement jsonElement = mock(JsonElement.class);
-        when(imageToTag.getKey()).thenReturn("image1");
-        when(imageToTag.getValue()).thenReturn(jsonElement);
-        when(jsonElement.getAsString()).thenReturn("tag1");
+        List<ImageTagStoreContent> storeContents = mock(LinkedList.class);
+        List<PagedSearchIterable<GHContent>> contentsWithImageList = Collections.singletonList(contentsWithImage);
+        Optional<List<PagedSearchIterable<GHContent>>> optionalContentsWithImageList = Optional.of(contentsWithImageList);
+
+        when(dockerfileGitHubUtil.getGitHubJsonStore("store")).thenReturn(imageTagStore);
+        when(imageTagStoreContentIterator.next()).thenReturn(imageTagStoreContent);
+        when(imageTagStoreContentIterator.hasNext()).thenReturn(true, false);
+        when(imageTagStore.getStoreContent(dockerfileGitHubUtil, "store")).thenReturn(storeContents);
+        when(storeContents.iterator()).thenReturn(imageTagStoreContentIterator);
+        when(imageTagStoreContent.getImageName()).thenReturn("image1");
+        when(imageTagStoreContent.getTag()).thenReturn("tag1");
         when(all.getPullRequestSender(dockerfileGitHubUtil, ns)).thenReturn(pullRequestSender);
         when(all.getGitForkBranch("image1", "tag1", ns)).thenReturn(gitForkBranch);
         when(all.getPullRequests()).thenReturn(pullRequests);
-        PagedSearchIterable<GHContent> contentsWithImage = mock(PagedSearchIterable.class);
-        List<PagedSearchIterable<GHContent>> contentsWithImageList = Collections.singletonList(contentsWithImage);
-        Optional<List<PagedSearchIterable<GHContent>>> optionalContentsWithImageList = Optional.of(contentsWithImageList);
         doNothing().when(pullRequests).prepareToCreate(ns, pullRequestSender,
                 contentsWithImage, gitForkBranch, dockerfileGitHubUtil);
         when(dockerfileGitHubUtil.findFilesWithImage(anyString(), anyMap(),  anyInt())).thenReturn(optionalContentsWithImageList);
-
 
         all.execute(ns, dockerfileGitHubUtil);
         verify(all, times(1)).getGitForkBranch(anyString(), anyString(), any());
@@ -75,8 +71,9 @@ public class AllTest {
         verify(all, times(1)).getPullRequests();
         verify(pullRequests, times(1)).prepareToCreate(ns, pullRequestSender,
                 contentsWithImage, gitForkBranch, dockerfileGitHubUtil);
-        verify(all, times(0)).processErrors(anyString(), anyString(), any(), anyList());
+        verify(all, times(0)).processErrorMessages(anyString(), anyString(), any());
         verify(all, times(1)).printSummary(anyList(), any());
+
     }
 
     @Test
@@ -88,23 +85,24 @@ public class AllTest {
         Namespace ns = new Namespace(nsMap);
         All all = spy(new All());
         DockerfileGitHubUtil dockerfileGitHubUtil = mock(DockerfileGitHubUtil.class);
-        GitHubJsonStore gitHubJsonStore = mock(GitHubJsonStore.class);
         GitHubPullRequestSender pullRequestSender = mock(GitHubPullRequestSender.class);
         GitForkBranch gitForkBranch = mock(GitForkBranch.class);
         PullRequests pullRequests = mock(PullRequests.class);
-        Set<Map.Entry<String, JsonElement>> imageToTagStore = mock(Set.class);
-        when(dockerfileGitHubUtil.getGitHubJsonStore(anyString())).thenReturn(gitHubJsonStore);
-        when(gitHubJsonStore.parseStoreToImagesMap(dockerfileGitHubUtil, "store")).thenReturn(imageToTagStore);
+        GitHubJsonStore imageTagStore = mock(GitHubJsonStore.class);
+        ImageTagStoreContent imageTagStoreContent = mock(ImageTagStoreContent.class);
 
-        Map.Entry<String, JsonElement> imageToTag = mock(Map.Entry.class);
-        Iterator<Map.Entry<String, JsonElement>> imageToTagStoreIterator = mock(Iterator.class);
-        when(imageToTagStoreIterator.next()).thenReturn(imageToTag);
-        when(imageToTagStoreIterator.hasNext()).thenReturn(true, false);
-        when(imageToTagStore.iterator()).thenReturn(imageToTagStoreIterator);
-        JsonElement jsonElement = mock(JsonElement.class);
-        when(imageToTag.getKey()).thenReturn("image1");
-        when(imageToTag.getValue()).thenReturn(jsonElement);
-        when(jsonElement.getAsString()).thenReturn("tag1");
+        List<ImageTagStoreContent> storeContents = mock(LinkedList.class);
+
+        when(dockerfileGitHubUtil.getGitHubJsonStore("store")).thenReturn(imageTagStore);
+        when(imageTagStore.getStoreContent(dockerfileGitHubUtil, "store")).thenReturn(storeContents);
+
+
+        Iterator<ImageTagStoreContent> imageTagStoreContentIterator = mock(Iterator.class);
+        when(imageTagStoreContentIterator.next()).thenReturn(imageTagStoreContent);
+        when(imageTagStoreContentIterator.hasNext()).thenReturn(true, false);
+        when(storeContents.iterator()).thenReturn(imageTagStoreContentIterator);
+        when(imageTagStoreContent.getImageName()).thenReturn("image1");
+        when(imageTagStoreContent.getTag()).thenReturn("tag1");
         when(all.getPullRequestSender(dockerfileGitHubUtil, ns)).thenReturn(pullRequestSender);
         when(all.getGitForkBranch("image1", "tag1", ns)).thenReturn(gitForkBranch);
         when(all.getPullRequests()).thenReturn(pullRequests);
@@ -121,7 +119,7 @@ public class AllTest {
         verify(all, times(1)).getPullRequests();
         verify(pullRequests, times(0)).prepareToCreate(ns, pullRequestSender,
                 contentsWithImage, gitForkBranch, dockerfileGitHubUtil);
-        verify(all, times(0)).processErrors(anyString(), anyString(), any(), anyList());
+        verify(all, times(0)).processErrorMessages(anyString(), anyString(), any());
         verify(all, times(1)).printSummary(anyList(), any());
     }
 
@@ -134,23 +132,26 @@ public class AllTest {
         Namespace ns = new Namespace(nsMap);
         All all = spy(new All());
         DockerfileGitHubUtil dockerfileGitHubUtil = mock(DockerfileGitHubUtil.class);
-        GitHubJsonStore gitHubJsonStore = mock(GitHubJsonStore.class);
         GitHubPullRequestSender pullRequestSender = mock(GitHubPullRequestSender.class);
         GitForkBranch gitForkBranch = mock(GitForkBranch.class);
         PullRequests pullRequests = mock(PullRequests.class);
-        Set<Map.Entry<String, JsonElement>> imageToTagStore = mock(Set.class);
-        when(dockerfileGitHubUtil.getGitHubJsonStore(anyString())).thenReturn(gitHubJsonStore);
-        when(gitHubJsonStore.parseStoreToImagesMap(dockerfileGitHubUtil, "store")).thenReturn(imageToTagStore);
+        GitHubJsonStore imageTagStore = mock(GitHubJsonStore.class);
+        ImageTagStoreContent imageTagStoreContent = mock(ImageTagStoreContent.class);
 
-        Map.Entry<String, JsonElement> imageToTag = mock(Map.Entry.class);
-        Iterator<Map.Entry<String, JsonElement>> imageToTagStoreIterator = mock(Iterator.class);
-        when(imageToTagStoreIterator.next()).thenReturn(imageToTag);
-        when(imageToTagStoreIterator.hasNext()).thenReturn(true, false);
-        when(imageToTagStore.iterator()).thenReturn(imageToTagStoreIterator);
-        JsonElement jsonElement = mock(JsonElement.class);
-        when(imageToTag.getKey()).thenReturn("image1");
-        when(imageToTag.getValue()).thenReturn(jsonElement);
-        when(jsonElement.getAsString()).thenReturn("tag1");
+        List<ImageTagStoreContent> storeContents = mock(LinkedList.class);
+
+
+
+        when(dockerfileGitHubUtil.getGitHubJsonStore("store")).thenReturn(imageTagStore);
+        when(imageTagStore.getStoreContent(dockerfileGitHubUtil, "store")).thenReturn(storeContents);
+
+
+        Iterator<ImageTagStoreContent> imageTagStoreContentIterator = mock(Iterator.class);
+        when(imageTagStoreContentIterator.next()).thenReturn(imageTagStoreContent);
+        when(imageTagStoreContentIterator.hasNext()).thenReturn(true, false);
+        when(storeContents.iterator()).thenReturn(imageTagStoreContentIterator);
+        when(imageTagStoreContent.getImageName()).thenReturn("image1");
+        when(imageTagStoreContent.getTag()).thenReturn("tag1");
         when(all.getPullRequestSender(dockerfileGitHubUtil, ns)).thenReturn(pullRequestSender);
         when(all.getGitForkBranch("image1", "tag1", ns)).thenReturn(gitForkBranch);
         when(all.getPullRequests()).thenReturn(pullRequests);
@@ -166,7 +167,7 @@ public class AllTest {
         verify(all, times(1)).getPullRequests();
         verify(pullRequests, times(0)).prepareToCreate(ns, pullRequestSender,
                 contentsWithImage, gitForkBranch, dockerfileGitHubUtil);
-        verify(all, times(1)).processErrors(anyString(), anyString(), any(), anyList());
+        verify(all, times(1)).processErrorMessages(anyString(), anyString(), any());
         verify(all, times(1)).printSummary(anyList(), any());
     }
 
@@ -179,23 +180,23 @@ public class AllTest {
         Namespace ns = new Namespace(nsMap);
         All all = spy(new All());
         DockerfileGitHubUtil dockerfileGitHubUtil = mock(DockerfileGitHubUtil.class);
-        GitHubJsonStore gitHubJsonStore = mock(GitHubJsonStore.class);
         GitHubPullRequestSender pullRequestSender = mock(GitHubPullRequestSender.class);
         GitForkBranch gitForkBranch = mock(GitForkBranch.class);
         PullRequests pullRequests = mock(PullRequests.class);
-        Set<Map.Entry<String, JsonElement>> imageToTagStore = mock(Set.class);
-        when(dockerfileGitHubUtil.getGitHubJsonStore(anyString())).thenReturn(gitHubJsonStore);
-        when(gitHubJsonStore.parseStoreToImagesMap(dockerfileGitHubUtil, "store")).thenReturn(imageToTagStore);
+        GitHubJsonStore imageTagStore = mock(GitHubJsonStore.class);
+        ImageTagStoreContent imageTagStoreContent = mock(ImageTagStoreContent.class);
 
-        Map.Entry<String, JsonElement> imageToTag = mock(Map.Entry.class);
-        Iterator<Map.Entry<String, JsonElement>> imageToTagStoreIterator = mock(Iterator.class);
-        when(imageToTagStoreIterator.next()).thenReturn(imageToTag);
-        when(imageToTagStoreIterator.hasNext()).thenReturn(true, false);
-        when(imageToTagStore.iterator()).thenReturn(imageToTagStoreIterator);
-        JsonElement jsonElement = mock(JsonElement.class);
-        when(imageToTag.getKey()).thenReturn("image1");
-        when(imageToTag.getValue()).thenReturn(jsonElement);
-        when(jsonElement.getAsString()).thenReturn("tag1");
+        List<ImageTagStoreContent> storeContents = mock(LinkedList.class);
+        when(dockerfileGitHubUtil.getGitHubJsonStore("store")).thenReturn(imageTagStore);
+        when(imageTagStore.getStoreContent(dockerfileGitHubUtil, "store")).thenReturn(storeContents);
+
+
+        Iterator<ImageTagStoreContent> imageTagStoreContentIterator = mock(Iterator.class);
+        when(imageTagStoreContentIterator.next()).thenReturn(imageTagStoreContent);
+        when(imageTagStoreContentIterator.hasNext()).thenReturn(true, false);
+        when(storeContents.iterator()).thenReturn(imageTagStoreContentIterator);
+        when(imageTagStoreContent.getImageName()).thenReturn("image1");
+        when(imageTagStoreContent.getTag()).thenReturn("tag1");
         when(all.getPullRequestSender(dockerfileGitHubUtil, ns)).thenReturn(pullRequestSender);
         when(all.getGitForkBranch("image1", "tag1", ns)).thenReturn(gitForkBranch);
         when(all.getPullRequests()).thenReturn(pullRequests);
@@ -213,22 +214,16 @@ public class AllTest {
         verify(all, times(1)).getPullRequests();
         verify(pullRequests, times(1)).prepareToCreate(ns, pullRequestSender,
                 contentsWithImage, gitForkBranch, dockerfileGitHubUtil);
-        verify(all, times(1)).processErrors(anyString(), anyString(), any(), anyList());
+        verify(all, times(1)).processErrorMessages(anyString(), anyString(), any());
         verify(all, times(1)).printSummary(anyList(), any());
     }
 
     @Test
-    public void testProcessErrors() {
-        All all = spy(new All());
-        String image = "image1";
-        String tag = "tag";
-        Exception e = new Exception();
-        List<ProcessingErrors> processingErrorsList = new ArrayList<>();
-        AtomicInteger numberOfImagesFailedToProcess = new AtomicInteger(0);
-
-        all.processErrors(image, tag, e, processingErrorsList);
-
-        assertEquals(processingErrorsList.size(), 1);
+    public void testProcessErrorMessages() {
+        All all = new All();
+        Exception exception = mock(Exception.class);
+        ProcessingErrors processingErrors = new ProcessingErrors("imageName", "tag", Optional.of(exception));
+        assertEquals(processingErrors.getClass(), all.processErrorMessages("imageName", "tag", Optional.of(exception)).getClass());
     }
 
     @Test
@@ -236,15 +231,16 @@ public class AllTest {
         ProcessingErrors processingErrors = mock(ProcessingErrors.class);
         All all = spy(new All());
         List<ProcessingErrors> processingErrorsList = Collections.singletonList(processingErrors);
-        AtomicInteger numberOfImagesToProcess = new AtomicInteger(2);
+        Integer numberOfImagesToProcess = 2;
         Exception failure = mock(Exception.class);
         when(processingErrors.getFailure()).thenReturn(Optional.of(failure));
 
         all.printSummary(processingErrorsList, numberOfImagesToProcess);
 
-        verify(processingErrors, times(1)).getImageNameAndTag();
+        verify(processingErrors, times(1)).getImageName();
+        verify(processingErrors, times(1)).getTag();
         verify(processingErrors, times(2)).getFailure();
-        assertEquals(numberOfImagesToProcess.get(), 2);
+        assertEquals(numberOfImagesToProcess, 2);
     }
 
     @Test
@@ -252,13 +248,14 @@ public class AllTest {
         ProcessingErrors processingErrors = mock(ProcessingErrors.class);
         All all = spy(new All());
         List<ProcessingErrors> processingErrorsList = Collections.emptyList();
-        AtomicInteger numberOfImagesToProcess = new AtomicInteger(2);
+        Integer numberOfImagesToProcess = 2;
 
         all.printSummary(processingErrorsList, numberOfImagesToProcess);
 
-        verify(processingErrors, times(0)).getImageNameAndTag();
+        verify(processingErrors, times(0)).getImageName();
+        verify(processingErrors, times(0)).getTag();
         verify(processingErrors, times(0)).getFailure();
-        assertEquals(numberOfImagesToProcess.get(), 2);
+        assertEquals(numberOfImagesToProcess, 2);
     }
 
     @Test

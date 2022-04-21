@@ -8,14 +8,15 @@
 
 package com.salesforce.dockerfileimageupdate.subcommands.impl;
 
-
 import com.salesforce.dockerfileimageupdate.SubCommand;
 import com.salesforce.dockerfileimageupdate.model.GitForkBranch;
 import com.salesforce.dockerfileimageupdate.process.ForkableRepoValidator;
 import com.salesforce.dockerfileimageupdate.process.GitHubPullRequestSender;
+import com.salesforce.dockerfileimageupdate.storage.ImageTagStore;
 import com.salesforce.dockerfileimageupdate.subcommands.ExecutableWithNamespace;
 import com.salesforce.dockerfileimageupdate.utils.Constants;
 import com.salesforce.dockerfileimageupdate.utils.DockerfileGitHubUtil;
+import com.salesforce.dockerfileimageupdate.utils.ImageStoreUtil;
 import com.salesforce.dockerfileimageupdate.utils.PullRequests;
 import net.sourceforge.argparse4j.inf.Namespace;
 import org.kohsuke.github.GHContent;
@@ -33,18 +34,22 @@ import java.util.Optional;
 public class Parent implements ExecutableWithNamespace {
 
     private static final Logger log = LoggerFactory.getLogger(Parent.class);
-
     DockerfileGitHubUtil dockerfileGitHubUtil;
 
     @Override
     public void execute(final Namespace ns, DockerfileGitHubUtil dockerfileGitHubUtil)
             throws IOException, InterruptedException {
         loadDockerfileGithubUtil(dockerfileGitHubUtil);
+        String store = ns.get(Constants.STORE);
         String img = ns.get(Constants.IMG);
         String tag = ns.get(Constants.TAG);
-
         log.info("Updating store...");
-        this.dockerfileGitHubUtil.getGitHubJsonStore(ns.get(Constants.STORE)).updateStore(img, tag);
+        try {
+            ImageTagStore imageTagStore = ImageStoreUtil.initializeImageTagStore(this.dockerfileGitHubUtil, store);
+            imageTagStore.updateStore(img, tag);
+        } catch (Exception e) {
+            log.error("Could not initialize the Image tage store. Exception: ", e);
+        }
 
         if (ns.get(Constants.SKIP_PR_CREATION)) {
             log.info("Since the flag {} is set to True, the PR creation steps will "
@@ -71,6 +76,7 @@ public class Parent implements ExecutableWithNamespace {
             }
         }
     }
+
 
     protected PullRequests getPullRequests(){
         return new PullRequests();

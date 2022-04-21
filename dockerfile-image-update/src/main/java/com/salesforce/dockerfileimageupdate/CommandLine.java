@@ -8,7 +8,6 @@
 
 package com.salesforce.dockerfileimageupdate;
 
-
 import com.google.common.reflect.ClassPath;
 import com.salesforce.dockerfileimageupdate.subcommands.ExecutableWithNamespace;
 import com.salesforce.dockerfileimageupdate.utils.Constants;
@@ -38,7 +37,7 @@ public class CommandLine {
     private CommandLine () { }
 
     public static void main(String[] args)
-            throws IOException, IllegalAccessException, InstantiationException, InterruptedException {
+            throws Exception {
         ArgumentParser parser = getArgumentParser();
 
         Set<ClassPath.ClassInfo> allClasses = findSubcommands(parser);

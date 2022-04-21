@@ -3,16 +3,22 @@ package com.salesforce.dockerfileimageupdate.utils;
 import java.util.Optional;
 
 public class ProcessingErrors {
-    private final String imageNameAndTag;
+    private final String imageName;
+    private final String tag;
     private final Optional<Exception> failure;
 
-    public ProcessingErrors(String imageNameAndTag, Optional<Exception> failure) {
-        this.imageNameAndTag = imageNameAndTag;
+    public ProcessingErrors(String imageName, String tag, Optional<Exception> failure) {
+        this.imageName = imageName;
+        this.tag = tag;
         this.failure = failure;
     }
 
-    public String getImageNameAndTag() {
-        return imageNameAndTag;
+    public String getImageName() {
+        return imageName;
+    }
+
+    public String getTag() {
+        return tag;
     }
 
     public Optional<Exception> getFailure() {

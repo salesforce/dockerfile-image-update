@@ -8,13 +8,15 @@
 
 package com.salesforce.dockerfileimageupdate.subcommands.impl;
 
-import com.google.gson.JsonElement;
 import com.salesforce.dockerfileimageupdate.SubCommand;
 import com.salesforce.dockerfileimageupdate.model.*;
 import com.salesforce.dockerfileimageupdate.process.*;
+import com.salesforce.dockerfileimageupdate.storage.ImageTagStore;
+import com.salesforce.dockerfileimageupdate.storage.ImageTagStoreContent;
 import com.salesforce.dockerfileimageupdate.subcommands.ExecutableWithNamespace;
 import com.salesforce.dockerfileimageupdate.utils.Constants;
 import com.salesforce.dockerfileimageupdate.utils.DockerfileGitHubUtil;
+import com.salesforce.dockerfileimageupdate.utils.ImageStoreUtil;
 import com.salesforce.dockerfileimageupdate.utils.ProcessingErrors;
 import com.salesforce.dockerfileimageupdate.utils.PullRequests;
 import net.sourceforge.argparse4j.inf.Namespace;
@@ -24,7 +26,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
 
 @SubCommand(help="updates all repositories' Dockerfiles",
         requiredParams = {Constants.STORE})
@@ -34,11 +35,22 @@ public class All implements ExecutableWithNamespace {
     private DockerfileGitHubUtil dockerfileGitHubUtil;
 
     @Override
-    public void execute(final Namespace ns, final DockerfileGitHubUtil dockerfileGitHubUtil)
-            throws IOException, InterruptedException {
+    public void execute(final Namespace ns, final DockerfileGitHubUtil dockerfileGitHubUtil) throws Exception {
         loadDockerfileGithubUtil(dockerfileGitHubUtil);
-        Set<Map.Entry<String, JsonElement>> imageToTagStore =
-                this.dockerfileGitHubUtil.getGitHubJsonStore(ns.get(Constants.STORE)).parseStoreToImagesMap(dockerfileGitHubUtil, ns.get(Constants.STORE));
+        String store = ns.get(Constants.STORE);
+        try {
+            ImageTagStore imageTagStore = ImageStoreUtil.initializeImageTagStore(this.dockerfileGitHubUtil, store);
+            List<ImageTagStoreContent> imageNamesWithTag = imageTagStore.getStoreContent(dockerfileGitHubUtil, store);
+            Integer numberOfImagesToProcess = imageNamesWithTag.size();
+            List<ProcessingErrors> imagesThatCouldNotBeProcessed = processImagesWithTag(ns, imageNamesWithTag);
+            printSummary(imagesThatCouldNotBeProcessed, numberOfImagesToProcess);
+        } catch (Exception e) {
+            log.error("Encountered issues while initializing the image tag store or getting its contents. Cannot continue. Exception: ", e);
+            System.exit(2);
+        }
+    }
+
+    protected List<ProcessingErrors> processImagesWithTag(Namespace ns, List<ImageTagStoreContent> imageNamesWithTag) {
         Integer gitApiSearchLimit = ns.get(Constants.GIT_API_SEARCH_LIMIT);
         Map<String, Boolean> orgsToIncludeInSearch = new HashMap<>();
         if (ns.get(Constants.GIT_ORG) != null) {
@@ -47,63 +59,67 @@ public class All implements ExecutableWithNamespace {
             // the org gets included in the search query.
             orgsToIncludeInSearch.put(ns.get(Constants.GIT_ORG), true);
         }
+        Optional<Exception> failureMessage;
         List<ProcessingErrors> imagesThatCouldNotBeProcessed = new LinkedList<>();
-        AtomicInteger numberOfImagesToProcess = new AtomicInteger();
-        for (Map.Entry<String, JsonElement> imageToTag : imageToTagStore) {
-            numberOfImagesToProcess.getAndIncrement();
-            String image = imageToTag.getKey();
-            String tag = imageToTag.getValue().getAsString();
-            try {
-                PullRequests pullRequests = getPullRequests();
-                GitHubPullRequestSender pullRequestSender = getPullRequestSender(dockerfileGitHubUtil, ns);
-                GitForkBranch gitForkBranch = getGitForkBranch(image, tag, ns);
-
-                log.info("Finding Dockerfiles with the image name {}...", image);
-
-                Optional<List<PagedSearchIterable<GHContent>>> contentsWithImage =
-                        this.dockerfileGitHubUtil.findFilesWithImage(image, orgsToIncludeInSearch, gitApiSearchLimit);
-
-                if (contentsWithImage.isPresent()) {
-                    contentsWithImage.get().forEach(pagedSearchIterable -> {
-                        try {
-                            pullRequests.prepareToCreate(ns, pullRequestSender,
-                                    pagedSearchIterable, gitForkBranch, dockerfileGitHubUtil);
-                        } catch (IOException e) {
-                            log.error("Could not send pull request for image {}.", image);
-                            processErrors(image, tag, e, imagesThatCouldNotBeProcessed);
-                        }
-                    });
-                }
-            } catch (GHException | IOException e){
-                log.error("Could not perform Github search for the image {}. Trying to proceed...", image);
-                processErrors(image, tag, e, imagesThatCouldNotBeProcessed);
-            }
+        for (ImageTagStoreContent content : imageNamesWithTag) {
+            String image = content.getImageName();
+            String tag = content.getTag();
+            failureMessage = processImageWithTag(image, tag, ns, orgsToIncludeInSearch, gitApiSearchLimit);
+            failureMessage.ifPresent(message -> imagesThatCouldNotBeProcessed.add(processErrorMessages(image, tag, Optional.of(message))));
         }
-        printSummary(imagesThatCouldNotBeProcessed, numberOfImagesToProcess);
+        return imagesThatCouldNotBeProcessed;
     }
 
-    protected void printSummary(List<ProcessingErrors> imagesThatCouldNotBeProcessed, AtomicInteger numberOfImagesToProcess) {
-        AtomicInteger numberOfImagesFailedToProcess = new AtomicInteger(imagesThatCouldNotBeProcessed.size());
-        AtomicInteger numberOfImagesSuccessfullyProcessed = new AtomicInteger(numberOfImagesToProcess.get() - numberOfImagesFailedToProcess.get());
-        log.info("The total number of images to process from image tag store: {}", numberOfImagesToProcess.get());
-        log.info("The total number of images that were successfully processed: {}", numberOfImagesSuccessfullyProcessed.get());
-        if (numberOfImagesFailedToProcess.get() > 0) {
-            log.warn("The total number of images that failed to be processed: {}. The following list shows the images that could not be processed.", numberOfImagesFailedToProcess.get());
+    protected Optional<Exception> processImageWithTag(String image, String tag, Namespace ns, Map<String, Boolean> orgsToIncludeInSearch, Integer gitApiSearchLimit) {
+        Optional<Exception> failureMessage = Optional.empty();
+        try {
+            PullRequests pullRequests = getPullRequests();
+            GitHubPullRequestSender pullRequestSender = getPullRequestSender(dockerfileGitHubUtil, ns);
+            GitForkBranch gitForkBranch = getGitForkBranch(image, tag, ns);
+
+            log.info("Finding Dockerfiles with the image name {}...", image);
+            Optional<List<PagedSearchIterable<GHContent>>> contentsWithImage =
+                    this.dockerfileGitHubUtil.findFilesWithImage(image, orgsToIncludeInSearch, gitApiSearchLimit);
+            if (contentsWithImage.isPresent()) {
+                Iterator<PagedSearchIterable<GHContent>> it = contentsWithImage.get().iterator();
+                while (it.hasNext()){
+                    try {
+                        pullRequests.prepareToCreate(ns, pullRequestSender,
+                                it.next(), gitForkBranch, dockerfileGitHubUtil);
+                    } catch (IOException e) {
+                        log.error("Could not send pull request for image {}.", image);
+                        failureMessage = Optional.of(e);
+                    }
+                }
+            }
+
+        } catch (GHException | IOException e){
+            log.error("Could not perform Github search for the image {}. Trying to proceed...", image);
+            failureMessage = Optional.of(e);
+        }
+        return failureMessage;
+    }
+
+    protected void printSummary(List<ProcessingErrors> imagesThatCouldNotBeProcessed, Integer numberOfImagesToProcess) {
+        Integer numberOfImagesFailedToProcess = imagesThatCouldNotBeProcessed.size();
+        Integer numberOfImagesSuccessfullyProcessed = numberOfImagesToProcess - numberOfImagesFailedToProcess;
+        log.info("The total number of images to process from image tag store: {}", numberOfImagesToProcess);
+        log.info("The total number of images that were successfully processed: {}", numberOfImagesSuccessfullyProcessed);
+        if (numberOfImagesFailedToProcess > 0) {
+            log.warn("The total number of images that failed to be processed: {}. The following list shows the images that could not be processed.", numberOfImagesFailedToProcess);
             imagesThatCouldNotBeProcessed.forEach(imageThatCouldNotBeProcessed -> {
                     if (imageThatCouldNotBeProcessed.getFailure().isPresent()) {
-                        log.warn("Image: {}, Exception: {}", imageThatCouldNotBeProcessed.getImageNameAndTag(), imageThatCouldNotBeProcessed.getFailure());
+                        log.warn("Image: {}:{}, Exception: {}", imageThatCouldNotBeProcessed.getImageName(), imageThatCouldNotBeProcessed.getTag(), imageThatCouldNotBeProcessed.getFailure());
                     } else {
-                        log.warn("Image: {}, Exception: {}", imageThatCouldNotBeProcessed.getImageNameAndTag(), "Failure reason not known.");
+                        log.warn("Image: {}:{}, Exception: Failure reason not known.", imageThatCouldNotBeProcessed.getImageName(), imageThatCouldNotBeProcessed.getTag());
                     }
                 }
             );
         }
     }
 
-    protected void processErrors(String image, String tag, Exception e, List<ProcessingErrors> imagesThatCouldNotBeProcessed) {
-        String imageNameAndTag = image + ":" + tag;
-        ProcessingErrors processingErrors = new ProcessingErrors(imageNameAndTag, Optional.of(e));
-        imagesThatCouldNotBeProcessed.add(processingErrors);
+    protected ProcessingErrors processErrorMessages(String imageName, String tag, Optional<Exception> failure) {
+        return new ProcessingErrors(imageName, tag, failure);
     }
 
     protected void loadDockerfileGithubUtil(DockerfileGitHubUtil _dockerfileGitHubUtil) {

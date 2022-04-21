@@ -21,6 +21,6 @@ import java.io.IOException;
 public interface ExecutableWithNamespace {
 
     void execute(Namespace ns, DockerfileGitHubUtil dockerfileGitHubUtil)
-            throws IOException, IllegalAccessException, InstantiationException, InterruptedException;
+            throws Exception;
 
 }

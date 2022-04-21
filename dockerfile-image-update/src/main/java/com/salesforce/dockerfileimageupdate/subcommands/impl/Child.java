@@ -11,9 +11,11 @@ package com.salesforce.dockerfileimageupdate.subcommands.impl;
 import com.salesforce.dockerfileimageupdate.SubCommand;
 import com.salesforce.dockerfileimageupdate.model.GitForkBranch;
 import com.salesforce.dockerfileimageupdate.model.PullRequestInfo;
+import com.salesforce.dockerfileimageupdate.storage.ImageTagStore;
 import com.salesforce.dockerfileimageupdate.subcommands.ExecutableWithNamespace;
 import com.salesforce.dockerfileimageupdate.utils.Constants;
 import com.salesforce.dockerfileimageupdate.utils.DockerfileGitHubUtil;
+import com.salesforce.dockerfileimageupdate.utils.ImageStoreUtil;
 import net.sourceforge.argparse4j.inf.Namespace;
 import org.kohsuke.github.GHRepository;
 import org.slf4j.Logger;
@@ -32,9 +34,16 @@ public class Child implements ExecutableWithNamespace {
         String branch = ns.get(Constants.GIT_BRANCH);
         String img = ns.get(Constants.IMG);
         String forceTag = ns.get(Constants.FORCE_TAG);
+        String store = ns.get(Constants.STORE);
+        ImageStoreUtil imageStoreUtil = getImageStoreUtil();
+        try {
+            ImageTagStore imageTagStore = imageStoreUtil.initializeImageTagStore(dockerfileGitHubUtil, store);
+            /* Updates store if a store is specified. */
+            imageTagStore.updateStore(img, forceTag);
+        } catch (Exception e) {
+            log.error("Could not initialize the Image tage store. Exception: ", e.getMessage());
+        }
 
-        /* Updates store if a store is specified. */
-        dockerfileGitHubUtil.getGitHubJsonStore(ns.get(Constants.STORE)).updateStore(img, forceTag);
 
         log.info("Retrieving repository and creating fork...");
         GHRepository repo = dockerfileGitHubUtil.getRepo(ns.get(Constants.GIT_REPO));
@@ -60,5 +69,9 @@ public class Child implements ExecutableWithNamespace {
                 gitForkBranch.getBranchName(),
                 fork,
                 pullRequestInfo);
+    }
+
+    protected ImageStoreUtil getImageStoreUtil(){
+        return new ImageStoreUtil();
     }
 }
