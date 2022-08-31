@@ -59,12 +59,12 @@ public class GitHubJsonStore implements ImageTagStore {
     }
 
     /**
-     * This methods will check if the tag store at {@param path}
+     * This methods will check if the tag store at path
      * is created or not, if not it will create a new tag store.
      *
      * @param repo {@link GHRepository} git repository object.
      * @param path filename with path with in repo for the tag store.
-     * @throws IOException when tag store at {@param path}
+     * @throws IOException when tag store at path
      *                     can not be created.
      */
     public void initializeTagStoreIfRequired(GHRepository repo, String path) throws IOException {

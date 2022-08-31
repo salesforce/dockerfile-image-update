@@ -51,7 +51,7 @@ public class S3BackedImageTagStore implements ImageTagStore {
     /**
      * This method gets the content of the image tag store backed by S3.
      *
-     * @param dockerfileGitHubUtil
+     * @param dockerfileGitHubUtil {@code DockerfileGitHubUtil} Object
      * @param storeName The name of the store.
      * @return List of ImageTagStoreContent objects that contain the image name and the image tag.
      */

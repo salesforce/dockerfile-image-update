@@ -398,6 +398,8 @@ public class DockerfileGitHubUtil {
      * @param parent parent repo to base from
      * @param fork fork repo where we'll create or modify the {@code gitForkBranch}
      * @param gitForkBranch desired branch to create or update based on the parent's default branch
+     * @throws IOException if there is any failure while I/O.
+     * @throws InterruptedException if interrupted during updating forked branch
      */
     public void createOrUpdateForkBranchToParentDefault(GHRepository parent, GHRepository fork, GitForkBranch gitForkBranch) throws IOException, InterruptedException {
         GHBranch parentBranch = parent.getBranch(parent.getDefaultBranch());
@@ -433,6 +435,10 @@ public class DockerfileGitHubUtil {
      *
      * @param org GitHub organization
      * @param img image to find
+     * @param gitApiSearchLimit git api search limit
+     * @throws IOException if there is any failure while I/O from git.
+     * @throws InterruptedException if interrupted while fetching git content
+     * @return {@code Optional} of {@code PagedSearchIterable}
      */
     public Optional<List<PagedSearchIterable<GHContent>>> getGHContents(String org, String img, Integer gitApiSearchLimit)
             throws IOException, InterruptedException {
