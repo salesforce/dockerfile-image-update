@@ -16,6 +16,7 @@ public interface ImageTagStore {
      *
      * @param img the name of the image that needs to be updated.
      * @param tag the version of the image that it needs to update to.
+     * @throws IOException when fails to update tag store
      */
     void updateStore(String img, String tag) throws IOException;
 

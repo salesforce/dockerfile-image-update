@@ -114,6 +114,7 @@ public class GitHubPullRequestSender {
      *
      * @param pathToDockerfilesInParentRepo processing multimap
      * @param parentRepoName name of parent repo to find
+     * @return {@code GHRepository} return the fork from existing record
      */
     protected GHRepository getForkFromExistingRecordToProcess(Multimap<String, GitHubContentToProcess> pathToDockerfilesInParentRepo,
                                                             String parentRepoName) {
