@@ -16,6 +16,7 @@ public interface ImageTagStore {
      *
      * @param img the name of the image that needs to be updated.
      * @param tag the version of the image that it needs to update to.
+     * @throws IOException when fails to update tag store
      */
     void updateStore(String img, String tag) throws IOException;
 
@@ -25,6 +26,9 @@ public interface ImageTagStore {
      * @param dockerfileGitHubUtil the dockerfileGitHubUtil object that is used to interact with an underlying Git repo.
      * @param storeName the name of the store whose content needs to be fetched.
      * @return A Map of image name to image version.
+     * @throws IOException when fails to get the tag store content
+     * @throws InterruptedException when interrupted while getting the tag store content
      */
+
     List<ImageTagStoreContent> getStoreContent(DockerfileGitHubUtil dockerfileGitHubUtil, String storeName) throws IOException, InterruptedException;
 }

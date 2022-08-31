@@ -25,11 +25,12 @@ public class ShouldForkResult {
         return new ShouldForkResult(false, reason);
     }
 
+
     /**
-     * Allows for chaining ShouldForkResult instances such that and() will return the first
-     * ShouldForkResult which results in isForkable() == false.
-     *
+     * Allows for chaining ShouldForkResult instances such that and() will
+     * return the first ShouldForkResult which results in isForkable() == false.
      * @param otherShouldForkResult the other ShouldForkResult to return if this is forkable.
+     * @return chainable {@code ShouldForkResult}
      */
     public ShouldForkResult and(ShouldForkResult otherShouldForkResult) {
         if (isForkable()) {
