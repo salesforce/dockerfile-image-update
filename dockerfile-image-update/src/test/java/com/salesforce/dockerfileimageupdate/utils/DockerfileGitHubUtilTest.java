@@ -406,6 +406,26 @@ public class DockerfileGitHubUtilTest {
         assertEquals(dockerfileGitHubUtil.tryRetrievingContent(new GHRepository(), "path", "branch"), content);
     }
 
+    @Test
+    public void testTryRetrievingBlob() throws IOException {
+        gitHubUtil = mock(GitHubUtil.class);
+        GHBlob content = mock(GHBlob.class);
+        when(gitHubUtil.tryRetrievingBlob(any(), anyString(), anyString())).thenReturn(content);
+        dockerfileGitHubUtil = new DockerfileGitHubUtil(gitHubUtil);
+        assertEquals(dockerfileGitHubUtil.tryRetrievingBlob(new GHRepository(), "path", "branch"), content);
+    }
+
+    @Test(
+            expectedExceptions = IOException.class,
+            expectedExceptionsMessageRegExp = "error while reading blob")
+    public void testTryRetrievingBlobException() throws IOException {
+        gitHubUtil = mock(GitHubUtil.class);
+        GHBlob content = mock(GHBlob.class);
+        when(gitHubUtil.tryRetrievingBlob(any(), anyString(), anyString())).thenThrow(new IOException("error while reading blob"));
+        dockerfileGitHubUtil = new DockerfileGitHubUtil(gitHubUtil);
+        assertNotEquals(dockerfileGitHubUtil.tryRetrievingBlob(new GHRepository(), "path", "branch"), content);
+    }
+
 
     @DataProvider
     public Object[][] inputBranchesImagesAndTags() {

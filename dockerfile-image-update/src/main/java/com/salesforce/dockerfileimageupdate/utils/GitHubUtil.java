@@ -196,6 +196,11 @@ public class GitHubUtil {
         return content;
     }
 
+    public GHBlob tryRetrievingBlob(GHRepository repo, String path, String branch)
+            throws IOException {
+        return repo.getCommit(branch).getTree().getEntry(path).asBlob();
+    }
+
     /* Workaround: The GitHub API caches API calls for up to 60 seconds, so back-to-back API calls with the same
      * command will return the same thing. i.e. the above command listRepositories will return the same output if
      * this tool is invoked twice in a row, even though it should return different lists, because of the new forks.

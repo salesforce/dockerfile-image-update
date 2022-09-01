@@ -69,7 +69,7 @@ public class S3BackedImageTagStore implements ImageTagStore {
         return imageNamesWithTag;
     }
 
-    private List<ImageTagStoreContent> getStoreContentSortedByAccessDate(Map<String, Date> imageNameWithAccessTime) throws InterruptedException {
+    private List<ImageTagStoreContent> getStoreContentSortedByAccessDate(Map<String, Date> imageNameWithAccessTime) {
         List<ImageTagStoreContent> imageNameWithTagSortedByAccessDate = new ArrayList<>();
         LinkedHashMap<String, Date> sortedResult = new LinkedHashMap<>();
         // Sort the content by the access date so that the file which was accessed most recently gets processed first
