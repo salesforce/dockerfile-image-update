@@ -196,7 +196,8 @@ public class GitHubUtil {
         return content;
     }
 
-    public GHBlob tryRetrievingBlob(GHRepository repo, String path, String branch) throws IOException {
+    public GHBlob tryRetrievingBlob(GHRepository repo, String path, String branch)
+            throws IOException {
         return repo.getCommit(branch).getTree().getEntry(path).asBlob();
     }
 

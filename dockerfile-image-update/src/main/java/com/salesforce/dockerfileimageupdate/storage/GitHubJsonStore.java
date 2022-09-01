@@ -24,7 +24,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import org.kohsuke.github.GHBlob;
 import org.kohsuke.github.GHCommit;
-import org.kohsuke.github.GHContent;
 import org.kohsuke.github.GHMyself;
 import org.kohsuke.github.GHRepository;
 import org.slf4j.Logger;
@@ -142,8 +141,8 @@ public class GitHubJsonStore implements ImageTagStore {
         String login = myself.getLogin();
         GHRepository store = dockerfileGitHubUtil.getRepo(Paths.get(login, storeName).toString());
 
-        GHBlob storeContent = dockerfileGitHubUtil.tryRetrievingBlob(store, Constants.STORE_JSON_FILE,
-                store.getDefaultBranch());
+        GHBlob storeContent = dockerfileGitHubUtil.tryRetrievingBlob(store,
+                Constants.STORE_JSON_FILE, store.getDefaultBranch());
 
         if (storeContent == null) {
             return Collections.emptySet();
@@ -163,7 +162,8 @@ public class GitHubJsonStore implements ImageTagStore {
         return imagesJson.getAsJsonObject().entrySet();
     }
 
-    public List<ImageTagStoreContent> getStoreContent(DockerfileGitHubUtil dockerfileGitHubUtil, String storeName) throws IOException {
+    public List<ImageTagStoreContent> getStoreContent(DockerfileGitHubUtil dockerfileGitHubUtil, String storeName)
+            throws IOException {
         Set<Map.Entry<String, JsonElement>> imageToTagStore = parseStoreToImagesMap(dockerfileGitHubUtil, storeName);
         return imageToTagStore.stream()
                 .map(entry -> new ImageTagStoreContent(entry.getKey(), entry.getValue().getAsString()))

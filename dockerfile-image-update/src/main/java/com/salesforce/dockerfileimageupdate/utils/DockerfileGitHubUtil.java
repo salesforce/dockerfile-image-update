@@ -257,7 +257,8 @@ public class DockerfileGitHubUtil {
         return gitHubUtil.tryRetrievingContent(repo, path, branch);
     }
 
-    public GHBlob tryRetrievingBlob(GHRepository repo, String path, String branch) throws IOException {
+    public GHBlob tryRetrievingBlob(GHRepository repo, String path, String branch)
+            throws IOException {
         return gitHubUtil.tryRetrievingBlob(repo, path, branch);
     }
 
