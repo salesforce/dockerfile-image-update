@@ -137,12 +137,12 @@ public class GitHubJsonStore implements ImageTagStore {
     }
 
     public Set<Map.Entry<String, JsonElement>> parseStoreToImagesMap(DockerfileGitHubUtil dockerfileGitHubUtil, String storeName)
-            throws IOException, InterruptedException {
+            throws IOException {
         GHMyself myself = dockerfileGitHubUtil.getMyself();
         String login = myself.getLogin();
         GHRepository store = dockerfileGitHubUtil.getRepo(Paths.get(login, storeName).toString());
 
-        GHContent storeContent = dockerfileGitHubUtil.tryRetrievingContent(store, Constants.STORE_JSON_FILE,
+        GHBlob storeContent = dockerfileGitHubUtil.tryRetrievingBlob(store, Constants.STORE_JSON_FILE,
                 store.getDefaultBranch());
 
         if (storeContent == null) {
@@ -163,7 +163,7 @@ public class GitHubJsonStore implements ImageTagStore {
         return imagesJson.getAsJsonObject().entrySet();
     }
 
-    public List<ImageTagStoreContent> getStoreContent(DockerfileGitHubUtil dockerfileGitHubUtil, String storeName) throws IOException, InterruptedException {
+    public List<ImageTagStoreContent> getStoreContent(DockerfileGitHubUtil dockerfileGitHubUtil, String storeName) throws IOException {
         Set<Map.Entry<String, JsonElement>> imageToTagStore = parseStoreToImagesMap(dockerfileGitHubUtil, storeName);
         return imageToTagStore.stream()
                 .map(entry -> new ImageTagStoreContent(entry.getKey(), entry.getValue().getAsString()))
