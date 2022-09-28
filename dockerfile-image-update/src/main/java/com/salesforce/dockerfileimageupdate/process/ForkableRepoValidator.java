@@ -41,6 +41,7 @@ public class ForkableRepoValidator {
      *
      * @param parentRepo parent repo we're checking
      * @param searchResultContent search result content we'll check against
+     * @param gitForkBranch forked git branch
      * @return should we fork the parentRepo?
      */
     public ShouldForkResult shouldFork(GHRepository parentRepo,
@@ -57,7 +58,8 @@ public class ForkableRepoValidator {
      * whether that content has a qualifying base image update
      * @param parentRepo parentRepo which we'd fork off of
      * @param searchResultContent search result with path to check in parent repo's default branch (where we'd PR)
-     * @param gitForkBranch information about the imageName we'd like to update with the new tag
+     * @param gitForkBranch information about the imageName we'd like to update with the new tag.
+     * @return {@code ShouldForkResult } Object
      */
     protected ShouldForkResult contentHasChangesInDefaultBranch(GHRepository parentRepo,
                                                                 GHContent searchResultContent,
@@ -90,6 +92,7 @@ public class ForkableRepoValidator {
      *
      * @param content content to check
      * @param gitForkBranch information about the base image we'd like to update
+     * @return {@code Boolean} value signifying whether there are any changes content
      */
     protected boolean hasNoChanges(GHContent content, GitForkBranch gitForkBranch) {
         try (InputStream stream = content.read();
@@ -115,6 +118,7 @@ public class ForkableRepoValidator {
      * If this user is the owner of the repo, do not fork.
      *
      * @param parentRepo parent repo we're checking
+     * @return {@code ShouldForkResult} Object abstracting data if the user is owner of the repo
      */
     protected ShouldForkResult thisUserIsNotOwner(GHRepository parentRepo) {
         try {
@@ -131,6 +135,7 @@ public class ForkableRepoValidator {
      * Check if parentRepo is a fork. Do not fork a fork (for now, at least).
      *
      * @param parentRepo parent repo we're checking
+     * @return {@code ShouldForkResult} Object abstracting data if parentRepo is a fork
      */
     protected ShouldForkResult parentIsFork(GHRepository parentRepo) {
         return parentRepo.isFork() ? shouldNotForkResult(REPO_IS_FORK) : shouldForkResult();
@@ -140,6 +145,7 @@ public class ForkableRepoValidator {
      * Check if parentRepo is archived. We won't be able to update it, so do not fork.
      *
      * @param parentRepo parent repo we're checking
+     * @return {@code ShouldForkResult} Object abstracting data if parentRepo is archived
      */
     protected ShouldForkResult parentIsArchived(GHRepository parentRepo) {
         return parentRepo.isArchived() ? shouldNotForkResult(REPO_IS_ARCHIVED) : shouldForkResult();

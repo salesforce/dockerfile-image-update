@@ -83,6 +83,7 @@ public class GitHubUtil {
     /**
      * Attempt to delete the GitHub repo if there are no pull requests associated with it
      * @param repo the repo to delete
+     * @throws IOException if fails to delete repo.
      */
     public void safeDeleteRepo(GHRepository repo) throws IOException {
         if (!repo.queryPullRequests().state(GHIssueState.OPEN).list().iterator().hasNext()) {
@@ -142,6 +143,8 @@ public class GitHubUtil {
      *
      * @param repo - wait until we can retrieve {@code branch from this repo}
      * @param branchName - the branch to wait for
+     * @return {@code GHBranch} Object for the branchName
+     * @throws InterruptedException if interrupted while retrieving the branch
      */
     protected GHBranch tryRetrievingBranch(GHRepository repo, String branchName) throws InterruptedException {
         for (int i = 0; i < 10; i++) {
@@ -191,6 +194,11 @@ public class GitHubUtil {
             }
         }
         return content;
+    }
+
+    public GHBlob tryRetrievingBlob(GHRepository repo, String path, String branch)
+            throws IOException {
+        return repo.getCommit(branch).getTree().getEntry(path).asBlob();
     }
 
     /* Workaround: The GitHub API caches API calls for up to 60 seconds, so back-to-back API calls with the same

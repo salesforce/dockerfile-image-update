@@ -119,27 +119,36 @@ docker run --rm -e git_api_token -e git_api_url \
 ```
 
 ```commandline
-usage: dockerfile-image-update [-h] [-o ORG] [-b BRANCH] [-g GHAPI] [-f] [-m M] [-c C] COMMAND ...
+usage: dockerfile-image-update [-h] [-l GHAPISEARCHLIMIT] [-o ORG] [-b BRANCH] [-g GHAPI] [-f] [-m M] [-c C] [-e EXCLUDES] [-B B] [-s {true,false}] [-x X] COMMAND ...
 
 Image Updates through Pull Request Automator
 
-optional arguments:
-  -h, --help                   show this help message and exit
-  -o ORG, --org ORG            search within specific organization (default: all of github)
-  -b BRANCH, --branch BRANCH   make pull requests for given branch name (default: master)
-  -g GHAPI, --ghapi GHAPI      link to github api; overrides environment variable
-  -f, --auto-merge             NOT IMPLEMENTED / set to automatically merge pull requests if available
-  -m PULL_REQ_MESSAGE          message to provide for pull requests
-  -c COMMIT_MESSAGE            additional commit message for the commits in pull requests
-  -x IGNORE_IMAGE_STRING       comment snippet after FROM instruction for ignoring a child image. Defaults to 'no-dfiu'
+named arguments:
+  -h, --help             show this help message and exit
+  -l GHAPISEARCHLIMIT, --ghapisearchlimit GHAPISEARCHLIMIT
+                         limit the search results for github api (default: 1000)
+  -o ORG, --org ORG      search within specific organization (default: all of github)
+  -b BRANCH, --branch BRANCH
+                         make pull requests for given branch name (default: master)
+  -g GHAPI, --ghapi GHAPI
+                         link to github api; overrides environment variable
+  -f, --auto-merge       NOT IMPLEMENTED / set to automatically merge pull requests if available
+  -m M                   message to provide for pull requests
+  -c C                   additional commit message for the commits in pull requests
+  -e EXCLUDES, --excludes EXCLUDES
+                         regex of repository names to exclude from pull request generation
+  -B B                   additional body text to include in pull requests
+  -s {true,false}, --skipprcreation {true,false}
+                         Only update image tag store. Skip creating PRs
+  -x X                   comment snippet mentioned in line just before FROM instruction for ignoring a child image. Defaults to 'no-dfiu'
 
 subcommands:
   Specify which feature to perform
 
   COMMAND                FEATURE
+    parent               updates all repositories' Dockerfiles with given base image
     all                  updates all repositories' Dockerfiles
     child                updates one specific repository with given tag
-    parent               updates all repositories' Dockerfiles with given base image
 ```
 
 #### The `all` command

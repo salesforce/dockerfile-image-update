@@ -92,12 +92,13 @@ public class FromInstruction {
     }
 
     /**
-     * Check if this {@code lineInFile} is a FROM instruction, it is referencing {@code imageName} as a base image,
-     * and the tag is not the same as {@code imageTag} (or there is no tag)
-     *
-     * @param lineInFile a single line from a file
-     * @param imageName the base image name we're looking for
-     * @param imageTag the proposed new tag
+     *  Check if this {@code lineInFile} is a FROM instruction,
+     *  it is referencing {@code imageName} as a base image,
+     *  and the tag is not the same as {@code imageTag} (or there is no tag)
+     * @param lineInFile Line a code file
+     * @param imageName images name
+     * @param imageTag tag for imageName
+     * @return {@link Boolean} value isFromInstructionWithThisImageAndOlderTag
      */
     public static boolean isFromInstructionWithThisImageAndOlderTag(String lineInFile, String imageName, String imageTag) {
         if (FromInstruction.isFromInstruction(lineInFile)) {

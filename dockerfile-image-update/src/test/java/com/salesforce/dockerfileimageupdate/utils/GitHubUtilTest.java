@@ -153,6 +153,46 @@ public class GitHubUtilTest {
         verify(repo, times(1)).getFileContent(eq("path"), eq("branch"));
     }
 
+    @Test
+    public void testTryRetrievingBlobSuccess() throws Exception {
+
+        GitHub github = mock(GitHub.class);
+        GHRepository repo = mock(GHRepository.class);
+        GHCommit commit = mock(GHCommit.class);
+        GHTree ghTree = mock(GHTree.class);
+        GHTreeEntry ghTreeEntry = mock(GHTreeEntry.class);
+        GHBlob ghBlob = mock(GHBlob.class);
+        when(repo.getCommit(anyString())).thenReturn(commit);
+        when(commit.getTree()).thenReturn(ghTree);
+        when(ghTree.getEntry(anyString())).thenReturn(ghTreeEntry);
+        when(ghTreeEntry.asBlob()).thenReturn(ghBlob);
+
+        GitHubUtil gitHubUtil = new GitHubUtil(github);
+        assertEquals(gitHubUtil.tryRetrievingBlob(repo, "path", "branch"), ghBlob);
+
+        verify(commit, times(1)).getTree();
+        verify(ghTreeEntry, times(1)).asBlob();
+    }
+
+    @Test(
+            expectedExceptions = IOException.class,
+            expectedExceptionsMessageRegExp = "error while reading commit")
+    public void testTryRetrievingBlobException() throws Exception {
+
+        GitHub github = mock(GitHub.class);
+        GHRepository repo = mock(GHRepository.class);
+        GHCommit commit = mock(GHCommit.class);
+        GHTreeEntry ghTreeEntry = mock(GHTreeEntry.class);
+        GHBlob ghBlob = mock(GHBlob.class);
+        when(repo.getCommit(anyString())).thenThrow(new IOException("error while reading commit"));
+
+        GitHubUtil gitHubUtil = new GitHubUtil(github);
+        assertEquals(gitHubUtil.tryRetrievingBlob(repo, "path", "branch"), ghBlob);
+
+        verify(commit, times(0)).getTree();
+        verify(ghTreeEntry, times(0)).asBlob();
+    }
+
     /* There is a timeout because if this part of the code is broken, it might enter 60 seconds of sleep. */
     @Test(timeOut = 1000)
     public void testGetGHRepositories() throws Exception {
