@@ -15,6 +15,7 @@ import com.salesforce.dockerfileimageupdate.storage.ImageTagStore;
 import com.salesforce.dockerfileimageupdate.subcommands.ExecutableWithNamespace;
 import com.salesforce.dockerfileimageupdate.utils.Constants;
 import com.salesforce.dockerfileimageupdate.utils.DockerfileGitHubUtil;
+import com.salesforce.dockerfileimageupdate.utils.RateLimiter;
 import com.salesforce.dockerfileimageupdate.utils.ImageStoreUtil;
 import net.sourceforge.argparse4j.inf.Namespace;
 import org.kohsuke.github.GHRepository;
@@ -61,6 +62,8 @@ public class Child implements ExecutableWithNamespace {
                         gitForkBranch.getImageTag(),
                         ns.get(Constants.GIT_PR_BODY));
 
+        RateLimiter rateLimiter = getRateLimiter();
+
         dockerfileGitHubUtil.createOrUpdateForkBranchToParentDefault(repo, fork, gitForkBranch);
 
         log.info("Modifying on Github...");
@@ -68,10 +71,13 @@ public class Child implements ExecutableWithNamespace {
         dockerfileGitHubUtil.createPullReq(repo,
                 gitForkBranch.getBranchName(),
                 fork,
-                pullRequestInfo);
+                pullRequestInfo,
+                rateLimiter);
     }
 
     protected ImageStoreUtil getImageStoreUtil(){
         return new ImageStoreUtil();
     }
+
+    protected RateLimiter getRateLimiter() { return new RateLimiter(); }
 }

@@ -11,6 +11,7 @@ package com.salesforce.dockerfileimageupdate.subcommands.impl;
 import com.google.common.collect.ImmutableMap;
 import com.salesforce.dockerfileimageupdate.storage.GitHubJsonStore;
 import com.salesforce.dockerfileimageupdate.utils.DockerfileGitHubUtil;
+import com.salesforce.dockerfileimageupdate.utils.RateLimiter;
 import net.sourceforge.argparse4j.inf.Namespace;
 import org.kohsuke.github.GHRepository;
 import org.testng.annotations.DataProvider;
@@ -48,18 +49,20 @@ public class ChildTest {
         Child child = spy(new Child());
         Namespace ns = new Namespace(inputMap);
         DockerfileGitHubUtil dockerfileGitHubUtil = mock(DockerfileGitHubUtil.class);
+        RateLimiter rateLimiter = spy(new RateLimiter());
         GitHubJsonStore imageTagStore = mock(GitHubJsonStore.class);
         when(dockerfileGitHubUtil.getRepo(any())).thenReturn(new GHRepository());
         when(dockerfileGitHubUtil.getOrCreateFork(any())).thenReturn(new GHRepository());
         doNothing().when(dockerfileGitHubUtil).modifyAllOnGithub(any(), any(), any(), any(), any());
 
         when(dockerfileGitHubUtil.getGitHubJsonStore("test")).thenReturn(imageTagStore);
-        doNothing().when(dockerfileGitHubUtil).createPullReq(any(), anyString(), any(), any());
+        when(child.getRateLimiter()).thenReturn(rateLimiter);
+        doNothing().when(dockerfileGitHubUtil).createPullReq(any(), anyString(), any(), any(), eq(rateLimiter));
 
         child.execute(ns, dockerfileGitHubUtil);
 
         verify(dockerfileGitHubUtil, times(1))
-                .createPullReq(any(), anyString(), any(), any());
+                .createPullReq(any(), anyString(), any(), any(), eq(rateLimiter));
     }
 
     @Test
@@ -72,16 +75,18 @@ public class ChildTest {
                 STORE, "s3://test");
         Namespace ns = new Namespace(nsMap);
         DockerfileGitHubUtil dockerfileGitHubUtil = mock(DockerfileGitHubUtil.class);
+        RateLimiter rateLimiter = spy(new RateLimiter());
 
         when(dockerfileGitHubUtil.getRepo(any())).thenReturn(new GHRepository());
         when(dockerfileGitHubUtil.getOrCreateFork(any())).thenReturn(new GHRepository());
+        when(child.getRateLimiter()).thenReturn(rateLimiter);
         doNothing().when(dockerfileGitHubUtil).modifyAllOnGithub(any(), any(), any(), any(), any());
-        doNothing().when(dockerfileGitHubUtil).createPullReq(any(), anyString(), any(), any());
+        doNothing().when(dockerfileGitHubUtil).createPullReq(any(), anyString(), any(), any(), eq(rateLimiter));
 
         child.execute(ns, dockerfileGitHubUtil);
 
         verify(dockerfileGitHubUtil, times(1))
-                .createPullReq(any(), anyString(), any(), any());
+                .createPullReq(any(), anyString(), any(), any(), eq(rateLimiter));
     }
 
     @Test
@@ -94,12 +99,14 @@ public class ChildTest {
                 STORE, "test");
         Namespace ns = new Namespace(nsMap);
         DockerfileGitHubUtil dockerfileGitHubUtil = mock(DockerfileGitHubUtil.class);
+        RateLimiter rateLimiter = spy(new RateLimiter());
         when(dockerfileGitHubUtil.getRepo(any())).thenReturn(new GHRepository());
         when(dockerfileGitHubUtil.getOrCreateFork(any())).thenReturn(null);
+        when(child.getRateLimiter()).thenReturn(rateLimiter);
         GitHubJsonStore imageTagStore = mock(GitHubJsonStore.class);
         when(dockerfileGitHubUtil.getGitHubJsonStore("test")).thenReturn(imageTagStore);
         child.execute(ns, dockerfileGitHubUtil);
         verify(dockerfileGitHubUtil, never()).createPullReq(any(), any(), any(),
-                any());
+                any(), eq(rateLimiter));
     }
 }

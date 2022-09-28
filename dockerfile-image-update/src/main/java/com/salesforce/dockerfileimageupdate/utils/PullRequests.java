@@ -16,7 +16,8 @@ public class PullRequests {
                                             GitHubPullRequestSender pullRequestSender,
                                             PagedSearchIterable<GHContent> contentsFoundWithImage,
                                             GitForkBranch gitForkBranch,
-                                            DockerfileGitHubUtil dockerfileGitHubUtil) throws IOException {
+                                            DockerfileGitHubUtil dockerfileGitHubUtil,
+                                            RateLimiter rateLimiter) throws IOException {
         Multimap<String, GitHubContentToProcess> pathToDockerfilesInParentRepo =
                 pullRequestSender.forkRepositoriesFoundAndGetPathToDockerfiles(contentsFoundWithImage, gitForkBranch);
         List<IOException> exceptions = new ArrayList<>();
@@ -28,7 +29,7 @@ public class PullRequests {
                 try {
                     dockerfileGitHubUtil.changeDockerfiles(ns,
                             pathToDockerfilesInParentRepo,
-                            forkWithContentPaths.get(), skippedRepos, gitForkBranch);
+                            forkWithContentPaths.get(), skippedRepos, gitForkBranch, rateLimiter);
                 } catch (IOException | InterruptedException e) {
                     log.error(String.format("Error changing Dockerfile for %s", forkWithContentPaths.get().getParent().getFullName()), e);
                     exceptions.add((IOException) e);

@@ -604,17 +604,19 @@ public class DockerfileGitHubUtilTest {
     @Test
     public void testCreatePullReq_Loop() throws Exception {
         gitHubUtil = mock(GitHubUtil.class);
+        RateLimiter rateLimiter = Mockito.spy(new RateLimiter());
 
         when(gitHubUtil.createPullReq(any(), anyString(), any(), anyString(), eq(Constants.PULL_REQ_ID))).thenReturn(-1, -1, -1, 0);
         dockerfileGitHubUtil = new DockerfileGitHubUtil(gitHubUtil);
         PullRequestInfo pullRequestInfo = new PullRequestInfo(null, null, null, null);
-        dockerfileGitHubUtil.createPullReq(new GHRepository(), "branch", new GHRepository(), pullRequestInfo);
+        dockerfileGitHubUtil.createPullReq(new GHRepository(), "branch", new GHRepository(), pullRequestInfo, rateLimiter);
         verify(gitHubUtil, times(4)).createPullReq(any(), anyString(), any(), eq(DEFAULT_TITLE), eq(Constants.PULL_REQ_ID));
     }
 
     @Test
     public void testCreatePullReq_Delete() throws Exception {
         gitHubUtil = mock(GitHubUtil.class);
+        RateLimiter rateLimiter = Mockito.spy(new RateLimiter());
 
         GHRepository forkRepo = mock(GHRepository.class);
         GHPullRequestQueryBuilder prBuilder = mock(GHPullRequestQueryBuilder.class);
@@ -629,7 +631,7 @@ public class DockerfileGitHubUtilTest {
         doCallRealMethod().when(gitHubUtil).safeDeleteRepo(forkRepo);
         dockerfileGitHubUtil = new DockerfileGitHubUtil(gitHubUtil);
         PullRequestInfo pullRequestInfo = new PullRequestInfo(null, null, null, null);
-        dockerfileGitHubUtil.createPullReq(new GHRepository(), "branch", forkRepo, pullRequestInfo);
+        dockerfileGitHubUtil.createPullReq(new GHRepository(), "branch", forkRepo, pullRequestInfo, rateLimiter);
         verify(gitHubUtil, times(1)).createPullReq(any(), anyString(), any(), anyString(), eq(Constants.PULL_REQ_ID));
         verify(forkRepo, times(1)).delete();
     }
@@ -781,6 +783,7 @@ public class DockerfileGitHubUtilTest {
         // (Optional.empty());
         //when(dockerfileGitHubUtil.getRepo(forkedRepo.getFullName())).thenReturn(forkedRepo);
         GHContent forkedRepoContent1 = mock(GHContent.class);
+        RateLimiter rateLimiter = Mockito.spy(new RateLimiter());
         when(gitHubUtil.tryRetrievingContent(eq(forkedRepo),
                 eq("df11"), eq("image-tag"))).thenReturn(forkedRepoContent1);
         GHContent forkedRepoContent2 = mock(GHContent.class);
@@ -790,7 +793,7 @@ public class DockerfileGitHubUtilTest {
                 , eq("tag"), anyString(), anyString());
 
         dockerfileGitHubUtil.changeDockerfiles(ns, pathToDockerfilesInParentRepo,
-                new GitHubContentToProcess(forkedRepo, parentRepo, ""), new ArrayList<>(), gitForkBranch);
+                new GitHubContentToProcess(forkedRepo, parentRepo, ""), new ArrayList<>(), gitForkBranch, rateLimiter);
 
         // Both Dockerfiles retrieved from the same repo
         verify(dockerfileGitHubUtil, times(1)).tryRetrievingContent(eq(forkedRepo),
@@ -804,7 +807,7 @@ public class DockerfileGitHubUtilTest {
 
         // Only one PR created on the repo with changes to both Dockerfiles.
         verify(dockerfileGitHubUtil, times(1)).createPullReq(eq(parentRepo),
-                eq("image-tag"), eq(forkedRepo), any());
+                eq("image-tag"), eq(forkedRepo), any(), eq(rateLimiter));
     }
 
     @DataProvider

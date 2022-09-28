@@ -16,6 +16,7 @@ import com.salesforce.dockerfileimageupdate.storage.ImageTagStoreContent;
 import com.salesforce.dockerfileimageupdate.subcommands.ExecutableWithNamespace;
 import com.salesforce.dockerfileimageupdate.utils.Constants;
 import com.salesforce.dockerfileimageupdate.utils.DockerfileGitHubUtil;
+import com.salesforce.dockerfileimageupdate.utils.RateLimiter;
 import com.salesforce.dockerfileimageupdate.utils.ImageStoreUtil;
 import com.salesforce.dockerfileimageupdate.utils.ProcessingErrors;
 import com.salesforce.dockerfileimageupdate.utils.PullRequests;
@@ -52,6 +53,8 @@ public class All implements ExecutableWithNamespace {
 
     protected List<ProcessingErrors> processImagesWithTag(Namespace ns, List<ImageTagStoreContent> imageNamesWithTag) {
         Integer gitApiSearchLimit = ns.get(Constants.GIT_API_SEARCH_LIMIT);
+        RateLimiter rateLimiter = getRateLimiter();
+
         Map<String, Boolean> orgsToIncludeInSearch = new HashMap<>();
         if (ns.get(Constants.GIT_ORG) != null) {
             // If there is a Git org specified, that needs to be included in the search query. In
@@ -64,13 +67,13 @@ public class All implements ExecutableWithNamespace {
         for (ImageTagStoreContent content : imageNamesWithTag) {
             String image = content.getImageName();
             String tag = content.getTag();
-            failureMessage = processImageWithTag(image, tag, ns, orgsToIncludeInSearch, gitApiSearchLimit);
+            failureMessage = processImageWithTag(image, tag, ns, orgsToIncludeInSearch, gitApiSearchLimit, rateLimiter);
             failureMessage.ifPresent(message -> imagesThatCouldNotBeProcessed.add(processErrorMessages(image, tag, Optional.of(message))));
         }
         return imagesThatCouldNotBeProcessed;
     }
 
-    protected Optional<Exception> processImageWithTag(String image, String tag, Namespace ns, Map<String, Boolean> orgsToIncludeInSearch, Integer gitApiSearchLimit) {
+    protected Optional<Exception> processImageWithTag(String image, String tag, Namespace ns, Map<String, Boolean> orgsToIncludeInSearch, Integer gitApiSearchLimit, RateLimiter rateLimiter) {
         Optional<Exception> failureMessage = Optional.empty();
         try {
             PullRequests pullRequests = getPullRequests();
@@ -85,7 +88,7 @@ public class All implements ExecutableWithNamespace {
                 while (it.hasNext()){
                     try {
                         pullRequests.prepareToCreate(ns, pullRequestSender,
-                                it.next(), gitForkBranch, dockerfileGitHubUtil);
+                                it.next(), gitForkBranch, dockerfileGitHubUtil, rateLimiter);
                     } catch (IOException e) {
                         log.error("Could not send pull request for image {}.", image);
                         failureMessage = Optional.of(e);
@@ -138,4 +141,6 @@ public class All implements ExecutableWithNamespace {
     protected PullRequests getPullRequests(){
         return new PullRequests();
     }
+
+    protected RateLimiter getRateLimiter() { return new RateLimiter(); }
 }

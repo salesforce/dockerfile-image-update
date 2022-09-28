@@ -16,6 +16,7 @@ import com.salesforce.dockerfileimageupdate.storage.ImageTagStore;
 import com.salesforce.dockerfileimageupdate.subcommands.ExecutableWithNamespace;
 import com.salesforce.dockerfileimageupdate.utils.Constants;
 import com.salesforce.dockerfileimageupdate.utils.DockerfileGitHubUtil;
+import com.salesforce.dockerfileimageupdate.utils.RateLimiter;
 import com.salesforce.dockerfileimageupdate.utils.ImageStoreUtil;
 import com.salesforce.dockerfileimageupdate.utils.PullRequests;
 import net.sourceforge.argparse4j.inf.Namespace;
@@ -59,6 +60,7 @@ public class Parent implements ExecutableWithNamespace {
         PullRequests pullRequests = getPullRequests();
         GitHubPullRequestSender pullRequestSender = getPullRequestSender(dockerfileGitHubUtil, ns);
         GitForkBranch gitForkBranch = getGitForkBranch(ns);
+        RateLimiter rateLimiter = getRateLimiter();
         log.info("Finding Dockerfiles with the given image...");
 
         Integer gitApiSearchLimit = ns.get(Constants.GIT_API_SEARCH_LIMIT);
@@ -69,7 +71,7 @@ public class Parent implements ExecutableWithNamespace {
             for (int i = 0; i < contentsFoundWithImage.size(); i++ ) {
                 try {
                     pullRequests.prepareToCreate(ns, pullRequestSender,
-                            contentsFoundWithImage.get(i), gitForkBranch, dockerfileGitHubUtil);
+                            contentsFoundWithImage.get(i), gitForkBranch, dockerfileGitHubUtil, rateLimiter);
                 } catch (IOException e) {
                     log.error("Could not send pull request.", e);
                 }
@@ -94,4 +96,6 @@ public class Parent implements ExecutableWithNamespace {
     protected void loadDockerfileGithubUtil(DockerfileGitHubUtil _dockerfileGitHubUtil) {
         dockerfileGitHubUtil = _dockerfileGitHubUtil;
     }
+
+    protected RateLimiter getRateLimiter() { return new RateLimiter(); }
 }

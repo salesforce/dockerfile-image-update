@@ -16,6 +16,7 @@ import com.salesforce.dockerfileimageupdate.storage.GitHubJsonStore;
 import net.sourceforge.argparse4j.inf.*;
 import org.apache.commons.lang3.StringUtils;
 import org.kohsuke.github.*;
+import io.github.bucket4j.ConsumptionProbe;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -353,7 +354,16 @@ public class DockerfileGitHubUtil {
 
     public void createPullReq(GHRepository origRepo,
                               String branch, GHRepository forkRepo,
-                              PullRequestInfo pullRequestInfo) throws InterruptedException, IOException {
+                              PullRequestInfo pullRequestInfo,
+                              RateLimiter rateLimiter) throws InterruptedException, IOException {
+
+        while (!rateLimiter.checkLimit()) {
+            //we have exceeded the limit and have no more tokens in the bucket
+            //wait for 10s before next try
+            log.info("We have exceeded the limit of PR creation per hour.. sleeping for 10s");
+            Thread.sleep(10000);
+        }
+
         // TODO: This may loop forever in the event of constant -1 pullRequestExitCodes...
         while (true) {
             int pullRequestExitCode = gitHubUtil.createPullReq(origRepo,
@@ -473,7 +483,8 @@ public class DockerfileGitHubUtil {
                                      Multimap<String, GitHubContentToProcess> pathToDockerfilesInParentRepo,
                                      GitHubContentToProcess gitHubContentToProcess,
                                      List<String> skippedRepos,
-                                     GitForkBranch gitForkBranch) throws IOException,
+                                     GitForkBranch gitForkBranch,
+                                     RateLimiter rateLimiter) throws IOException,
             InterruptedException {
         // Should we skip doing a getRepository just to fill in the parent value? We already know this to be the parent...
         GHRepository parent = gitHubContentToProcess.getParent();
@@ -516,7 +527,8 @@ public class DockerfileGitHubUtil {
             createPullReq(parent,
                     gitForkBranch.getBranchName(),
                     forkedRepo,
-                    pullRequestInfo);
+                    pullRequestInfo,
+                    rateLimiter);
         }
     }
 }

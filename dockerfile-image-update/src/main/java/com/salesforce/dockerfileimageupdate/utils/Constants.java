@@ -37,5 +37,8 @@ public class Constants {
     public static final String GIT_API_SEARCH_LIMIT = "ghapisearchlimit";
     public static final String SKIP_PR_CREATION = "skipprcreation";
     public static final String IGNORE_IMAGE_STRING = "x";
+    //max number of PRs to send per hour
+//    public static final int RATE_LIMIT = 30;
+    public static final int RATE_LIMIT = 20;
 
 }
