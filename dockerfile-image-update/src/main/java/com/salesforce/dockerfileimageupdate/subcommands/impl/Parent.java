@@ -71,7 +71,8 @@ public class Parent implements ExecutableWithNamespace {
             for (int i = 0; i < contentsFoundWithImage.size(); i++ ) {
                 try {
                     pullRequests.prepareToCreate(ns, pullRequestSender,
-                            contentsFoundWithImage.get(i), gitForkBranch, dockerfileGitHubUtil, rateLimiter);
+                            contentsFoundWithImage.get(i), gitForkBranch,
+                            dockerfileGitHubUtil, rateLimiter);
                 } catch (IOException e) {
                     log.error("Could not send pull request.", e);
                 }
@@ -97,5 +98,7 @@ public class Parent implements ExecutableWithNamespace {
         dockerfileGitHubUtil = _dockerfileGitHubUtil;
     }
 
-    protected RateLimiter getRateLimiter() { return new RateLimiter(); }
+    protected RateLimiter getRateLimiter() {
+        return new RateLimiter();
+    }
 }

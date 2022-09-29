@@ -67,13 +67,15 @@ public class All implements ExecutableWithNamespace {
         for (ImageTagStoreContent content : imageNamesWithTag) {
             String image = content.getImageName();
             String tag = content.getTag();
-            failureMessage = processImageWithTag(image, tag, ns, orgsToIncludeInSearch, gitApiSearchLimit, rateLimiter);
+            failureMessage = processImageWithTag(image, tag, ns, orgsToIncludeInSearch,
+                    gitApiSearchLimit, rateLimiter);
             failureMessage.ifPresent(message -> imagesThatCouldNotBeProcessed.add(processErrorMessages(image, tag, Optional.of(message))));
         }
         return imagesThatCouldNotBeProcessed;
     }
 
-    protected Optional<Exception> processImageWithTag(String image, String tag, Namespace ns, Map<String, Boolean> orgsToIncludeInSearch, Integer gitApiSearchLimit, RateLimiter rateLimiter) {
+    protected Optional<Exception> processImageWithTag(String image, String tag,
+                                                      Namespace ns, Map<String, Boolean> orgsToIncludeInSearch, Integer gitApiSearchLimit, RateLimiter rateLimiter) {
         Optional<Exception> failureMessage = Optional.empty();
         try {
             PullRequests pullRequests = getPullRequests();

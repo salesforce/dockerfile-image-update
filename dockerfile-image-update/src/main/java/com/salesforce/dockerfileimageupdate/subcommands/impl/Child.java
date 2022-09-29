@@ -62,10 +62,9 @@ public class Child implements ExecutableWithNamespace {
                         gitForkBranch.getImageTag(),
                         ns.get(Constants.GIT_PR_BODY));
 
-        RateLimiter rateLimiter = getRateLimiter();
-
         dockerfileGitHubUtil.createOrUpdateForkBranchToParentDefault(repo, fork, gitForkBranch);
 
+        RateLimiter rateLimiter = getRateLimiter();
         log.info("Modifying on Github...");
         dockerfileGitHubUtil.modifyAllOnGithub(fork, gitForkBranch.getBranchName(), img, forceTag, ns.get(Constants.IGNORE_IMAGE_STRING));
         dockerfileGitHubUtil.createPullReq(repo,
@@ -79,5 +78,7 @@ public class Child implements ExecutableWithNamespace {
         return new ImageStoreUtil();
     }
 
-    protected RateLimiter getRateLimiter() { return new RateLimiter(); }
+    protected RateLimiter getRateLimiter() {
+        return new RateLimiter();
+    }
 }

@@ -3,7 +3,6 @@ package com.salesforce.dockerfileimageupdate.utils;
 import io.github.bucket4j.Bandwidth;
 import io.github.bucket4j.Bucket;
 import io.github.bucket4j.Bucket4j;
-import io.github.bucket4j.ConsumptionProbe;
 import io.github.bucket4j.Refill;
 import java.time.Duration;
 
@@ -11,7 +10,6 @@ public class RateLimiter {
 
     private int rateLimit;
     private Bucket bucket;
-    private ConsumptionProbe probe;
 
     public RateLimiter() {
 
