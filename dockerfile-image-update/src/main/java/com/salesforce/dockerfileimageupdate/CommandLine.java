@@ -64,7 +64,7 @@ public class CommandLine {
                 .help("search within specific organization (default: all of github)");
         /* Currently, because of argument passing reasons, you can only specify one branch. */
         parser.addArgument("-b", "--" + Constants.GIT_BRANCH)
-                .help("make pull requests for given branch name (default: master)");
+                .help("make pull requests for given branch name (default: main)");
         parser.addArgument("-g", "--" + Constants.GIT_API)
                 .help("link to github api; overrides environment variable");
         parser.addArgument("-f", "--auto-merge").action(Arguments.storeTrue())
