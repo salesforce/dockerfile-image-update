@@ -37,8 +37,8 @@ public class AllTest {
                 "tag", Constants.STORE,
                 "store");
         Namespace ns = new Namespace(nsMap);
-        All all = spy(new All());
         RateLimiter rateLimiter = spy(new RateLimiter());
+        All all = spy(new All());
         DockerfileGitHubUtil dockerfileGitHubUtil = mock(DockerfileGitHubUtil.class);
         GitHubPullRequestSender pullRequestSender = mock(GitHubPullRequestSender.class);
         GitForkBranch gitForkBranch = mock(GitForkBranch.class);
@@ -60,9 +60,9 @@ public class AllTest {
         when(imageTagStoreContent.getImageName()).thenReturn("image1");
         when(imageTagStoreContent.getTag()).thenReturn("tag1");
         when(all.getPullRequestSender(dockerfileGitHubUtil, ns)).thenReturn(pullRequestSender);
-        when(all.getRateLimiter()).thenReturn(rateLimiter);
         when(all.getGitForkBranch("image1", "tag1", ns)).thenReturn(gitForkBranch);
         when(all.getPullRequests()).thenReturn(pullRequests);
+        when(all.getRateLimiter()).thenReturn(rateLimiter);
         doNothing().when(pullRequests).prepareToCreate(ns, pullRequestSender,
                 contentsWithImage, gitForkBranch, dockerfileGitHubUtil, rateLimiter);
         when(dockerfileGitHubUtil.findFilesWithImage(anyString(), anyMap(),  anyInt())).thenReturn(optionalContentsWithImageList);
@@ -109,7 +109,6 @@ public class AllTest {
         when(all.getPullRequestSender(dockerfileGitHubUtil, ns)).thenReturn(pullRequestSender);
         when(all.getGitForkBranch("image1", "tag1", ns)).thenReturn(gitForkBranch);
         when(all.getPullRequests()).thenReturn(pullRequests);
-        when(all.getRateLimiter()).thenReturn(rateLimiter);
         PagedSearchIterable<GHContent> contentsWithImage = mock(PagedSearchIterable.class);
         Optional<List<PagedSearchIterable<GHContent>>> optionalContentsWithImageList = Optional.empty();
         doNothing().when(pullRequests).prepareToCreate(ns, pullRequestSender,
@@ -158,6 +157,7 @@ public class AllTest {
         when(imageTagStoreContent.getImageName()).thenReturn("image1");
         when(imageTagStoreContent.getTag()).thenReturn("tag1");
         when(all.getPullRequestSender(dockerfileGitHubUtil, ns)).thenReturn(pullRequestSender);
+        when(all.getRateLimiter()).thenReturn(rateLimiter);
         when(all.getGitForkBranch("image1", "tag1", ns)).thenReturn(gitForkBranch);
         when(all.getPullRequests()).thenReturn(pullRequests);
         when(all.getRateLimiter()).thenReturn(rateLimiter);

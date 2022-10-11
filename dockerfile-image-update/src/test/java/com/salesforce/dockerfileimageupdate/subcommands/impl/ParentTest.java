@@ -206,11 +206,11 @@ public class ParentTest {
                 "store", Constants.SKIP_PR_CREATION,
                 false);
         Namespace ns = new Namespace(nsMap);
+        RateLimiter rateLimiter = spy(new RateLimiter());
         Parent parent = spy(new Parent());
         DockerfileGitHubUtil dockerfileGitHubUtil = mock(DockerfileGitHubUtil.class);
         GitHubJsonStore gitHubJsonStore = mock(GitHubJsonStore.class);
         GitHubPullRequestSender pullRequestSender = mock(GitHubPullRequestSender.class);
-        RateLimiter rateLimiter = spy(new RateLimiter());
         GitForkBranch gitForkBranch = mock(GitForkBranch.class);
         PullRequests pullRequests = mock(PullRequests.class);
         when(dockerfileGitHubUtil.getGitHubJsonStore(anyString())).thenReturn(gitHubJsonStore);

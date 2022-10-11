@@ -362,15 +362,13 @@ public class DockerfileGitHubUtil {
                               PullRequestInfo pullRequestInfo,
                               RateLimiter rateLimiter) throws InterruptedException, IOException {
 
-        while (!rateLimiter.checkLimit()) {
-            //we have exceeded the limit and have no more tokens in the bucket
-            //wait for 10s before next try
-            log.info("We have exceeded the limit of PR creation per hour.. sleeping for 10s");
-            Thread.sleep(10000);
-        }
-
         // TODO: This may loop forever in the event of constant -1 pullRequestExitCodes...
         while (true) {
+            log.info("Trying to consume a token before creating pull request..");
+            // Consume a token from the token bucket.
+            // If a token is not available this method will block until the refill adds one to the bucket.
+            rateLimiter.consume();
+            log.info("Token consumed, proceeding with PR creation..");
             int pullRequestExitCode = gitHubUtil.createPullReq(origRepo,
                     branch, forkRepo, pullRequestInfo.getTitle(), pullRequestInfo.getBody());
             if (pullRequestExitCode == 0) {

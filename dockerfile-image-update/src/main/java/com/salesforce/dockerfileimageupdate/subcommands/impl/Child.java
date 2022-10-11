@@ -37,6 +37,7 @@ public class Child implements ExecutableWithNamespace {
         String forceTag = ns.get(Constants.FORCE_TAG);
         String store = ns.get(Constants.STORE);
         ImageStoreUtil imageStoreUtil = getImageStoreUtil();
+        RateLimiter rateLimiter = getRateLimiter();
         try {
             ImageTagStore imageTagStore = imageStoreUtil.initializeImageTagStore(dockerfileGitHubUtil, store);
             /* Updates store if a store is specified. */
@@ -64,7 +65,6 @@ public class Child implements ExecutableWithNamespace {
 
         dockerfileGitHubUtil.createOrUpdateForkBranchToParentDefault(repo, fork, gitForkBranch);
 
-        RateLimiter rateLimiter = getRateLimiter();
         log.info("Modifying on Github...");
         dockerfileGitHubUtil.modifyAllOnGithub(fork, gitForkBranch.getBranchName(), img, forceTag, ns.get(Constants.IGNORE_IMAGE_STRING));
         dockerfileGitHubUtil.createPullReq(repo,
@@ -77,8 +77,9 @@ public class Child implements ExecutableWithNamespace {
     protected ImageStoreUtil getImageStoreUtil(){
         return new ImageStoreUtil();
     }
-
-    protected RateLimiter getRateLimiter() {
+    
+    protected RateLimiter getRateLimiter(){
         return new RateLimiter();
     }
+
 }

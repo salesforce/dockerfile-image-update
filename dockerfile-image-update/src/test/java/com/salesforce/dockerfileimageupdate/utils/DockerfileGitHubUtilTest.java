@@ -624,7 +624,8 @@ public class DockerfileGitHubUtilTest {
     @Test
     public void testCreatePullReq_Loop() throws Exception {
         gitHubUtil = mock(GitHubUtil.class);
-        RateLimiter rateLimiter = Mockito.spy(new RateLimiter());
+        RateLimiter rateLimiter = mock(RateLimiter.class);
+        doNothing().when(rateLimiter).consume();
 
         when(gitHubUtil.createPullReq(any(), anyString(), any(), anyString(), eq(Constants.PULL_REQ_ID))).thenReturn(-1, -1, -1, 0);
         dockerfileGitHubUtil = new DockerfileGitHubUtil(gitHubUtil);
@@ -636,7 +637,8 @@ public class DockerfileGitHubUtilTest {
     @Test
     public void testCreatePullReq_Delete() throws Exception {
         gitHubUtil = mock(GitHubUtil.class);
-        RateLimiter rateLimiter = Mockito.spy(new RateLimiter());
+        RateLimiter rateLimiter = mock(RateLimiter.class);
+        doNothing().when(rateLimiter).consume();
 
         GHRepository forkRepo = mock(GHRepository.class);
         GHPullRequestQueryBuilder prBuilder = mock(GHPullRequestQueryBuilder.class);
@@ -803,7 +805,7 @@ public class DockerfileGitHubUtilTest {
         // (Optional.empty());
         //when(dockerfileGitHubUtil.getRepo(forkedRepo.getFullName())).thenReturn(forkedRepo);
         GHContent forkedRepoContent1 = mock(GHContent.class);
-        RateLimiter rateLimiter = Mockito.spy(new RateLimiter());
+        RateLimiter rateLimiter = mock(RateLimiter.class);
         when(gitHubUtil.tryRetrievingContent(eq(forkedRepo),
                 eq("df11"), eq("image-tag"))).thenReturn(forkedRepoContent1);
         GHContent forkedRepoContent2 = mock(GHContent.class);
@@ -811,6 +813,7 @@ public class DockerfileGitHubUtilTest {
                 eq("df12"), eq("image-tag"))).thenReturn(forkedRepoContent2);
         doNothing().when(dockerfileGitHubUtil).modifyOnGithub(any(), eq("image-tag"), eq("image")
                 , eq("tag"), anyString(), anyString());
+        doNothing().when(rateLimiter).consume();
 
         dockerfileGitHubUtil.changeDockerfiles(ns, pathToDockerfilesInParentRepo,
                 new GitHubContentToProcess(forkedRepo, parentRepo, ""), new ArrayList<>(), gitForkBranch, rateLimiter);

@@ -38,12 +38,13 @@ public class All implements ExecutableWithNamespace {
     @Override
     public void execute(final Namespace ns, final DockerfileGitHubUtil dockerfileGitHubUtil) throws Exception {
         loadDockerfileGithubUtil(dockerfileGitHubUtil);
+        RateLimiter rateLimiter = getRateLimiter();
         String store = ns.get(Constants.STORE);
         try {
             ImageTagStore imageTagStore = ImageStoreUtil.initializeImageTagStore(this.dockerfileGitHubUtil, store);
             List<ImageTagStoreContent> imageNamesWithTag = imageTagStore.getStoreContent(dockerfileGitHubUtil, store);
             Integer numberOfImagesToProcess = imageNamesWithTag.size();
-            List<ProcessingErrors> imagesThatCouldNotBeProcessed = processImagesWithTag(ns, imageNamesWithTag);
+            List<ProcessingErrors> imagesThatCouldNotBeProcessed = processImagesWithTag(ns, imageNamesWithTag, rateLimiter);
             printSummary(imagesThatCouldNotBeProcessed, numberOfImagesToProcess);
         } catch (Exception e) {
             log.error("Encountered issues while initializing the image tag store or getting its contents. Cannot continue. Exception: ", e);
@@ -51,9 +52,8 @@ public class All implements ExecutableWithNamespace {
         }
     }
 
-    protected List<ProcessingErrors> processImagesWithTag(Namespace ns, List<ImageTagStoreContent> imageNamesWithTag) {
+    protected List<ProcessingErrors> processImagesWithTag(Namespace ns, List<ImageTagStoreContent> imageNamesWithTag, RateLimiter rateLimiter) {
         Integer gitApiSearchLimit = ns.get(Constants.GIT_API_SEARCH_LIMIT);
-        RateLimiter rateLimiter = getRateLimiter();
 
         Map<String, Boolean> orgsToIncludeInSearch = new HashMap<>();
         if (ns.get(Constants.GIT_ORG) != null) {
@@ -144,5 +144,7 @@ public class All implements ExecutableWithNamespace {
         return new PullRequests();
     }
 
-    protected RateLimiter getRateLimiter() { return new RateLimiter(); }
+    protected RateLimiter getRateLimiter(){
+        return new RateLimiter();
+    }
 }

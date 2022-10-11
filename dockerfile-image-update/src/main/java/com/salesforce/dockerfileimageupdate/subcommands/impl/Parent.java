@@ -97,8 +97,9 @@ public class Parent implements ExecutableWithNamespace {
     protected void loadDockerfileGithubUtil(DockerfileGitHubUtil _dockerfileGitHubUtil) {
         dockerfileGitHubUtil = _dockerfileGitHubUtil;
     }
-
-    protected RateLimiter getRateLimiter() {
+    
+    protected RateLimiter getRateLimiter(){
         return new RateLimiter();
     }
+
 }
