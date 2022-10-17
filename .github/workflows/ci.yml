@@ -7,17 +7,17 @@ on:
     - 'README.md'
     - 'SECURITY.md'
     branches:
-      - master
+      - main
   pull_request:
     branches:
-      - master
+      - main
 jobs:
   build-test:
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'dockerfile-image-update-') == false
     steps:
       - name: checkout
-        uses: actions/checkout@master
+        uses: actions/checkout@main
         with:
           ref: ${{ github.ref }}
       - name: docker build
@@ -52,7 +52,7 @@ jobs:
     needs: [build-test, get-next-version]
     steps:
       - name: checkout
-        uses: actions/checkout@master
+        uses: actions/checkout@main
         with:
           ref: ${{ github.ref }}
       - name: Download itest dir
@@ -84,7 +84,7 @@ jobs:
     needs: build-test
     steps:
       - name: checkout
-        uses: actions/checkout@master
+        uses: actions/checkout@main
         with:
           ref: ${{ github.ref }}
       - name: Download main project dir
