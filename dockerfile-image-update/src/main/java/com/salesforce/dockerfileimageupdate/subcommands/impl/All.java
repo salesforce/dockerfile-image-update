@@ -52,7 +52,8 @@ public class All implements ExecutableWithNamespace {
             ImageTagStore imageTagStore = ImageStoreUtil.initializeImageTagStore(this.dockerfileGitHubUtil, store);
             List<ImageTagStoreContent> imageNamesWithTag = imageTagStore.getStoreContent(dockerfileGitHubUtil, store);
             Integer numberOfImagesToProcess = imageNamesWithTag.size();
-            List<ProcessingErrors> imagesThatCouldNotBeProcessed = processImagesWithTag(ns, imageNamesWithTag, rateLimiter);
+            List<ProcessingErrors> imagesThatCouldNotBeProcessed = processImagesWithTag(ns, imageNamesWithTag,
+                    rateLimiter);
             printSummary(imagesThatCouldNotBeProcessed, numberOfImagesToProcess);
         } catch (Exception e) {
             log.error("Encountered issues while initializing the image tag store or getting its contents. Cannot continue. Exception: ", e);
@@ -60,7 +61,8 @@ public class All implements ExecutableWithNamespace {
         }
     }
 
-    protected List<ProcessingErrors> processImagesWithTag(Namespace ns, List<ImageTagStoreContent> imageNamesWithTag, RateLimiter rateLimiter) {
+    protected List<ProcessingErrors> processImagesWithTag(Namespace ns, List<ImageTagStoreContent> imageNamesWithTag,
+                                                          RateLimiter rateLimiter) {
         Integer gitApiSearchLimit = ns.get(Constants.GIT_API_SEARCH_LIMIT);
 
         Map<String, Boolean> orgsToIncludeInSearch = new HashMap<>();
@@ -83,7 +85,8 @@ public class All implements ExecutableWithNamespace {
     }
 
     protected Optional<Exception> processImageWithTag(String image, String tag,
-                                                      Namespace ns, Map<String, Boolean> orgsToIncludeInSearch, Integer gitApiSearchLimit, RateLimiter rateLimiter) {
+                                                      Namespace ns, Map<String, Boolean> orgsToIncludeInSearch,
+                                                      Integer gitApiSearchLimit, RateLimiter rateLimiter) {
         Optional<Exception> failureMessage = Optional.empty();
         try {
             PullRequests pullRequests = getPullRequests();

@@ -31,7 +31,8 @@ public class RateLimiter {
         Bandwidth limit = Bandwidth.classic(rateLimit, refill);
         this.bucket = Bucket.builder()
                 .addLimit(limit)
-                //this is internal limit to avoid spikes and distribute the load uniformly over DEFAULT_RATE_LIMIT_DURATION
+                //this is internal limit to avoid spikes and distribute the load uniformly over
+                // DEFAULT_RATE_LIMIT_DURATION
                 //one token added per DEFAULT_TOKEN_ADDING_RATE
                 .addLimit(Bandwidth.classic(1, Refill.intervally(1, tokenAddingRate)))
                 .build();

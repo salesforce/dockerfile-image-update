@@ -15,7 +15,6 @@ import com.salesforce.dockerfileimageupdate.search.GitHubImageSearchTermList;
 import com.salesforce.dockerfileimageupdate.storage.GitHubJsonStore;
 import net.sourceforge.argparse4j.inf.*;
 import org.apache.commons.lang3.StringUtils;
-import io.github.bucket4j.ConsumptionProbe;
 import org.kohsuke.github.*;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
