@@ -21,6 +21,7 @@ import net.sourceforge.argparse4j.inf.Namespace;
 import org.kohsuke.github.GHRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import java.time.Duration;
 
 import java.io.IOException;
 
@@ -37,7 +38,12 @@ public class Child implements ExecutableWithNamespace {
         String forceTag = ns.get(Constants.FORCE_TAG);
         String store = ns.get(Constants.STORE);
         ImageStoreUtil imageStoreUtil = getImageStoreUtil();
-        RateLimiter rateLimiter = getRateLimiter();
+        RateLimiter rateLimiter = null;
+        if (ns.get(Constants.USE_RATE_LIMITING)) {
+            //rateLimiting is true, PR throttling will be done in this run
+            log.info("Use rateLimiting is true, hence PRs will be throttled in this run..");
+            rateLimiter = getRateLimiter(ns);
+        }
         try {
             ImageTagStore imageTagStore = imageStoreUtil.initializeImageTagStore(dockerfileGitHubUtil, store);
             /* Updates store if a store is specified. */
@@ -77,9 +83,22 @@ public class Child implements ExecutableWithNamespace {
     protected ImageStoreUtil getImageStoreUtil(){
         return new ImageStoreUtil();
     }
-    
-    protected RateLimiter getRateLimiter(){
-        return new RateLimiter();
+
+    protected RateLimiter getRateLimiter(Namespace ns){
+        long rateLimit = Constants.DEFAULT_RATE_LIMIT;
+        Duration rateLimitDuration = Constants.DEFAULT_RATE_LIMIT_DURATION;
+        Duration tokenAddingRate = Constants.DEFAULT_TOKEN_ADDING_RATE;
+
+        if(ns.get(Constants.RATE_LIMIT)!=null){
+            rateLimit = ns.get(Constants.RATE_LIMIT);
+        }
+        if(ns.get(Constants.RATE_LIMIT_DURATION)!=null){
+            rateLimitDuration = ns.get(Constants.RATE_LIMIT_DURATION);
+        }
+        if(ns.get(Constants.TOKEN_ADDING_RATE)!=null){
+            tokenAddingRate = ns.get(Constants.TOKEN_ADDING_RATE);
+        }
+        return new RateLimiter(rateLimit, rateLimitDuration, tokenAddingRate);
     }
 
 }

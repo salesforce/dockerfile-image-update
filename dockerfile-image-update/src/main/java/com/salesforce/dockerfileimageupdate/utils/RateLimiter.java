@@ -12,7 +12,7 @@ public class RateLimiter {
     private Duration rateLimitDuration;
     private Duration tokenAddingRate;
     private Bucket bucket;
-
+    
     public RateLimiter() {
         this(Constants.DEFAULT_RATE_LIMIT, Constants.DEFAULT_RATE_LIMIT_DURATION, Constants.DEFAULT_TOKEN_ADDING_RATE);
     }

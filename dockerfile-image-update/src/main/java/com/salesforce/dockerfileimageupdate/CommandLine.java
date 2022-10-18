@@ -26,6 +26,7 @@ import java.util.Comparator;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
+import java.time.Duration;
 
 /**
  * Created by minho-park on 6/29/2016.
@@ -81,6 +82,19 @@ public class CommandLine {
                 .type(Boolean.class)
                 .setDefault(false)
                 .help("Only update image tag store. Skip creating PRs");
+        parser.addArgument("-u", "--" + Constants.USE_RATE_LIMITING)
+                .type(Boolean.class)
+                .setDefault(false)
+                .help("Use RateLimiting when sending PRs");
+        parser.addArgument("-r", "--" + Constants.RATE_LIMIT)
+                .type(Long.class)
+                .help("Max number of PRs to be sent per " + Constants.RATE_LIMIT_DURATION);
+        parser.addArgument("-rl", "--" + Constants.RATE_LIMIT_DURATION)
+                .type(Duration.class)
+                .help("Rate limit duration");
+        parser.addArgument("-t", "--" + Constants.TOKEN_ADDING_RATE)
+                .type(Duration.class)
+                .help("Token adding rate.");
         parser.addArgument("-x")
                 .help("comment snippet mentioned in line just before FROM instruction for ignoring a child image. " +
                         "Defaults to 'no-dfiu'");

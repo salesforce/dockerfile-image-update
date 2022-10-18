@@ -24,6 +24,7 @@ import net.sourceforge.argparse4j.inf.Namespace;
 import org.kohsuke.github.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import java.time.Duration;
 
 import java.io.IOException;
 import java.util.*;
@@ -38,7 +39,14 @@ public class All implements ExecutableWithNamespace {
     @Override
     public void execute(final Namespace ns, final DockerfileGitHubUtil dockerfileGitHubUtil) throws Exception {
         loadDockerfileGithubUtil(dockerfileGitHubUtil);
-        RateLimiter rateLimiter = getRateLimiter();
+        
+        RateLimiter rateLimiter = null;
+        if (ns.get(Constants.USE_RATE_LIMITING)) {
+            //rateLimiting is true, PR throttling will be done in this run
+            log.info("Use rateLimiting is true, hence PRs will be throttled in this run..");
+            rateLimiter = getRateLimiter(ns);
+        }
+        
         String store = ns.get(Constants.STORE);
         try {
             ImageTagStore imageTagStore = ImageStoreUtil.initializeImageTagStore(this.dockerfileGitHubUtil, store);
@@ -144,7 +152,20 @@ public class All implements ExecutableWithNamespace {
         return new PullRequests();
     }
 
-    protected RateLimiter getRateLimiter(){
-        return new RateLimiter();
+    protected RateLimiter getRateLimiter(Namespace ns){
+        long rateLimit = Constants.DEFAULT_RATE_LIMIT;
+        Duration rateLimitDuration = Constants.DEFAULT_RATE_LIMIT_DURATION;
+        Duration tokenAddingRate = Constants.DEFAULT_TOKEN_ADDING_RATE;
+        
+        if(ns.get(Constants.RATE_LIMIT)!=null){
+            rateLimit = ns.get(Constants.RATE_LIMIT);
+        }
+        if(ns.get(Constants.RATE_LIMIT_DURATION)!=null){
+            rateLimitDuration = ns.get(Constants.RATE_LIMIT_DURATION);
+        }
+        if(ns.get(Constants.TOKEN_ADDING_RATE)!=null){
+            tokenAddingRate = ns.get(Constants.TOKEN_ADDING_RATE);
+        }
+        return new RateLimiter(rateLimit, rateLimitDuration, tokenAddingRate);
     }
 }

@@ -38,6 +38,10 @@ public class Constants {
     public static final String GIT_API_SEARCH_LIMIT = "ghapisearchlimit";
     public static final String SKIP_PR_CREATION = "skipprcreation";
     public static final String IGNORE_IMAGE_STRING = "x";
+    public static final String USE_RATE_LIMITING = "useratelimiting";
+    public static final String RATE_LIMIT = "rateLimit";
+    public static final String RATE_LIMIT_DURATION = "rateLimitDuration";
+    public static final String TOKEN_ADDING_RATE = "tokenAddingRate";
     //max number of PRs to be sent per DEFAULT_RATE_LIMIT_DURATION(per hour in this case)
     public static final long DEFAULT_RATE_LIMIT = 30;
     public static final Duration DEFAULT_RATE_LIMIT_DURATION = Duration.ofHours(1);

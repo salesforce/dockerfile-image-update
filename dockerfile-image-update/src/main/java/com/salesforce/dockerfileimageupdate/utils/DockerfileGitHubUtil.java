@@ -364,11 +364,13 @@ public class DockerfileGitHubUtil {
 
         // TODO: This may loop forever in the event of constant -1 pullRequestExitCodes...
         while (true) {
-            log.info("Trying to consume a token before creating pull request..");
-            // Consume a token from the token bucket.
-            // If a token is not available this method will block until the refill adds one to the bucket.
-            rateLimiter.consume();
-            log.info("Token consumed, proceeding with PR creation..");
+            if(rateLimiter != null) {
+                log.info("Trying to consume a token before creating pull request..");
+                // Consume a token from the token bucket.
+                // If a token is not available this method will block until the refill adds one to the bucket.
+                rateLimiter.consume();
+                log.info("Token consumed, proceeding with PR creation..");
+            }
             int pullRequestExitCode = gitHubUtil.createPullReq(origRepo,
                     branch, forkRepo, pullRequestInfo.getTitle(), pullRequestInfo.getBody());
             if (pullRequestExitCode == 0) {

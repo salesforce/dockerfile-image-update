@@ -24,6 +24,7 @@ import org.kohsuke.github.GHContent;
 import org.kohsuke.github.PagedSearchIterable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import java.time.Duration;
 
 import java.io.IOException;
 import java.util.List;
@@ -60,7 +61,14 @@ public class Parent implements ExecutableWithNamespace {
         PullRequests pullRequests = getPullRequests();
         GitHubPullRequestSender pullRequestSender = getPullRequestSender(dockerfileGitHubUtil, ns);
         GitForkBranch gitForkBranch = getGitForkBranch(ns);
-        RateLimiter rateLimiter = getRateLimiter();
+        
+        RateLimiter rateLimiter = null;
+        if (ns.get(Constants.USE_RATE_LIMITING)) {
+            //rateLimiting is true, PR throttling will be done in this run
+            log.info("Use rateLimiting is true, hence PRs will be throttled in this run..");
+            rateLimiter = getRateLimiter(ns);
+        }
+        
         log.info("Finding Dockerfiles with the given image...");
 
         Integer gitApiSearchLimit = ns.get(Constants.GIT_API_SEARCH_LIMIT);
@@ -97,9 +105,22 @@ public class Parent implements ExecutableWithNamespace {
     protected void loadDockerfileGithubUtil(DockerfileGitHubUtil _dockerfileGitHubUtil) {
         dockerfileGitHubUtil = _dockerfileGitHubUtil;
     }
-    
-    protected RateLimiter getRateLimiter(){
-        return new RateLimiter();
+
+    protected RateLimiter getRateLimiter(Namespace ns){
+        long rateLimit = Constants.DEFAULT_RATE_LIMIT;
+        Duration rateLimitDuration = Constants.DEFAULT_RATE_LIMIT_DURATION;
+        Duration tokenAddingRate = Constants.DEFAULT_TOKEN_ADDING_RATE;
+
+        if(ns.get(Constants.RATE_LIMIT)!=null){
+            rateLimit = ns.get(Constants.RATE_LIMIT);
+        }
+        if(ns.get(Constants.RATE_LIMIT_DURATION)!=null){
+            rateLimitDuration = ns.get(Constants.RATE_LIMIT_DURATION);
+        }
+        if(ns.get(Constants.TOKEN_ADDING_RATE)!=null){
+            tokenAddingRate = ns.get(Constants.TOKEN_ADDING_RATE);
+        }
+        return new RateLimiter(rateLimit, rateLimitDuration, tokenAddingRate);
     }
 
 }
