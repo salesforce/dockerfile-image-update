@@ -1,5 +1,5 @@
 ![Multi-Module Maven Build / Deploy](https://github.com/salesforce/dockerfile-image-update/workflows/Multi-Module%20Maven%20Build%20/%20Deploy/badge.svg)
-[![codecov](https://codecov.io/gh/salesforce/dockerfile-image-update/branch/master/graph/badge.svg)](https://codecov.io/gh/salesforce/dockerfile-image-update)
+[![codecov](https://codecov.io/gh/salesforce/dockerfile-image-update/branch/main/graph/badge.svg)](https://codecov.io/gh/salesforce/dockerfile-image-update)
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.salesforce.dockerfile-image-update/dockerfile-image-update/badge.svg?maxAge=3600)](https://maven-badges.herokuapp.com/maven-central/com.salesforce.dockerfile-image-update/dockerfile-image-update)
 [![Docker Image Version (latest semver)](https://img.shields.io/docker/v/salesforce/dockerfile-image-update?label=Docker%20version&sort=semver)](https://hub.docker.com/r/salesforce/dockerfile-image-update/tags)
 
@@ -129,7 +129,7 @@ named arguments:
                          limit the search results for github api (default: 1000)
   -o ORG, --org ORG      search within specific organization (default: all of github)
   -b BRANCH, --branch BRANCH
-                         make pull requests for given branch name (default: master)
+                         make pull requests for given branch name (default: main)
   -g GHAPI, --ghapi GHAPI
                          link to github api; overrides environment variable
   -f, --auto-merge       NOT IMPLEMENTED / set to automatically merge pull requests if available
@@ -232,7 +232,7 @@ java -jar dockerfile-image-update-1.0-SNAPSHOT.jar <COMMAND> <PARAMETERS>
 
 ### Creating a new feature
 
-Under [dockerfile-image-update/src/main/java/com/salesforce/dva/dockerfileimageupdate/subcommands/impl](https://github.com/salesforce/dockerfile-image-update/tree/master/dockerfile-image-update/src/main/java/com/salesforce/dockerfileimageupdate/subcommands/impl),
+Under [dockerfile-image-update/src/main/java/com/salesforce/dva/dockerfileimageupdate/subcommands/impl](https://github.com/salesforce/dockerfile-image-update/tree/main/dockerfile-image-update/src/main/java/com/salesforce/dockerfileimageupdate/subcommands/impl),
 create a new class `YOUR_FEATURE.java`.
 Make sure it implements `ExecutableWithNamespace` and has the `SubCommand`
 annotation with a `help`, `requiredParams`, and `optionalParams`.
@@ -247,7 +247,7 @@ Run unit tests by running `mvn test`.
 Before you run the integration tests (locally):
 
 1. Make sure that you have access to the github orgs specified in
-   [TestCommon.ORGS](https://github.com/salesforce/dockerfile-image-update/blob/master/dockerfile-image-update-itest/src/main/java/com/salesforce/dockerfileimageupdate/itest/tests/TestCommon.java#L33).
+   [TestCommon.ORGS](https://github.com/salesforce/dockerfile-image-update/blob/main/dockerfile-image-update-itest/src/main/java/com/salesforce/dockerfileimageupdate/itest/tests/TestCommon.java#L33).
    You likely will need to change it to three orgs where you have permissions
    to create repositories.
 1. Make sure you have `git_api_url=https://api.github.com` in `/dockerfile-image-update-itest/itest.env`,
@@ -282,7 +282,7 @@ to manually trigger the release process. For now, that looks like the following:
 #### 1. Versioned Git Tag
 
 * Decide what version you desire to have. If you want to bump the major or minor
-  version then you need to bump the `MVN_SNAPSHOT_VERSION` in the [Makefile](https://github.com/salesforce/dockerfile-image-update/blob/master/Makefile#L5)
+  version then you need to bump the `MVN_SNAPSHOT_VERSION` in the [Makefile](https://github.com/salesforce/dockerfile-image-update/blob/main/Makefile#L5)
   and in the
   [Dockerfile](https://github.com/salesforce/dockerfile-image-update/blob/afalko-maj-minor/Dockerfile#L4)
   before proceeding to the next steps. For example

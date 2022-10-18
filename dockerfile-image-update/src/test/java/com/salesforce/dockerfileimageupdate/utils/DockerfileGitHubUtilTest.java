@@ -430,17 +430,17 @@ public class DockerfileGitHubUtilTest {
     @DataProvider
     public Object[][] inputBranchesImagesAndTags() {
         return new Object[][] {
-                {"master", "image1", "image1", "6", "7", 1},
+                {"main", "image1", "image1", "6", "7", 1},
                 {"branch", "image1", "image2", "7", "7", 0},
-                {"master", "image1", "image1", "6", "7", 1},
+                {"main", "image1", "image1", "6", "7", 1},
                 {"branch2", "image1", "image2", "6", "7", 0},
-                {"master", "image1", "image1", "6", "7", 1},
+                {"main", "image1", "image1", "6", "7", 1},
                 {"branch", "image1", "image1", "7", "7", 0},
-                {"master", "image1", "image2", "6", "7", 0},
+                {"main", "image1", "image2", "6", "7", 0},
                 {"branch3", "image1", "image1", "6", "7", 1},
-                {"master", "image1", "image1", "6", "7", 1},
+                {"main", "image1", "image1", "6", "7", 1},
                 {"branch", "image1", "image1", "7", "7", 0},
-                {"master", "image1", "image1", "6", "7", 1},
+                {"main", "image1", "image1", "6", "7", 1},
                 {"branch5", "image1", "image1", "6", "7", 1},
         };
     }
