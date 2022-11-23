@@ -70,13 +70,13 @@ public class AllTest {
         when(dockerfileGitHubUtil.findFilesWithImage(anyString(), anyMap(),  anyInt())).thenReturn(optionalContentsWithImageList);
 
         all.execute(ns, dockerfileGitHubUtil);
-        verify(all, times(1)).getGitForkBranch(anyString(), anyString(), any());
-        verify(all, times(1)).getPullRequestSender(dockerfileGitHubUtil, ns);
-        verify(all, times(1)).getPullRequests();
-        verify(pullRequests, times(1)).prepareToCreate(ns, pullRequestSender,
+        verify(all).getGitForkBranch(anyString(), anyString(), any());
+        verify(all).getPullRequestSender(dockerfileGitHubUtil, ns);
+        verify(all).getPullRequests();
+        verify(pullRequests).prepareToCreate(ns, pullRequestSender,
                 contentsWithImage, gitForkBranch, dockerfileGitHubUtil, rateLimiter);
         verify(all, times(0)).processErrorMessages(anyString(), anyString(), any());
-        verify(all, times(1)).printSummary(anyList(), any());
+        verify(all).printSummary(anyList(), any());
 
     }
 
@@ -121,13 +121,13 @@ public class AllTest {
 
 
         all.execute(ns, dockerfileGitHubUtil);
-        verify(all, times(1)).getGitForkBranch(anyString(), anyString(), any());
-        verify(all, times(1)).getPullRequestSender(dockerfileGitHubUtil, ns);
-        verify(all, times(1)).getPullRequests();
+        verify(all).getGitForkBranch(anyString(), anyString(), any());
+        verify(all).getPullRequestSender(dockerfileGitHubUtil, ns);
+        verify(all).getPullRequests();
         verify(pullRequests, times(0)).prepareToCreate(ns, pullRequestSender,
                 contentsWithImage, gitForkBranch, dockerfileGitHubUtil, rateLimiter);
         verify(all, times(0)).processErrorMessages(anyString(), anyString(), any());
-        verify(all, times(1)).printSummary(anyList(), any());
+        verify(all).printSummary(anyList(), any());
     }
 
     @Test
@@ -171,13 +171,13 @@ public class AllTest {
 
 
         all.execute(ns, dockerfileGitHubUtil);
-        verify(all, times(1)).getGitForkBranch(anyString(), anyString(), any());
-        verify(all, times(1)).getPullRequestSender(dockerfileGitHubUtil, ns);
-        verify(all, times(1)).getPullRequests();
+        verify(all).getGitForkBranch(anyString(), anyString(), any());
+        verify(all).getPullRequestSender(dockerfileGitHubUtil, ns);
+        verify(all).getPullRequests();
         verify(pullRequests, times(0)).prepareToCreate(ns, pullRequestSender,
                 contentsWithImage, gitForkBranch, dockerfileGitHubUtil,rateLimiter);
-        verify(all, times(1)).processErrorMessages(anyString(), anyString(), any());
-        verify(all, times(1)).printSummary(anyList(), any());
+        verify(all).processErrorMessages(anyString(), anyString(), any());
+        verify(all).printSummary(anyList(), any());
     }
 
     @Test
@@ -219,13 +219,13 @@ public class AllTest {
 
 
         all.execute(ns, dockerfileGitHubUtil);
-        verify(all, times(1)).getGitForkBranch(anyString(), anyString(), any());
-        verify(all, times(1)).getPullRequestSender(dockerfileGitHubUtil, ns);
-        verify(all, times(1)).getPullRequests();
-        verify(pullRequests, times(1)).prepareToCreate(ns, pullRequestSender,
+        verify(all).getGitForkBranch(anyString(), anyString(), any());
+        verify(all).getPullRequestSender(dockerfileGitHubUtil, ns);
+        verify(all).getPullRequests();
+        verify(pullRequests).prepareToCreate(ns, pullRequestSender,
                 contentsWithImage, gitForkBranch, dockerfileGitHubUtil, null);
-        verify(all, times(1)).processErrorMessages(anyString(), anyString(), any());
-        verify(all, times(1)).printSummary(anyList(), any());
+        verify(all).processErrorMessages(anyString(), anyString(), any());
+        verify(all).printSummary(anyList(), any());
     }
 
     @Test
@@ -247,8 +247,8 @@ public class AllTest {
 
         all.printSummary(processingErrorsList, numberOfImagesToProcess);
 
-        verify(processingErrors, times(1)).getImageName();
-        verify(processingErrors, times(1)).getTag();
+        verify(processingErrors).getImageName();
+        verify(processingErrors).getTag();
         verify(processingErrors, times(2)).getFailure();
         assertEquals(numberOfImagesToProcess, 2);
     }
