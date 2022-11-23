@@ -108,8 +108,8 @@ public class S3BackedImageTagStoreTest {
 
         List<ImageTagStoreContent> actualResult = s3BackedImageTagStore.getStoreContent(dockerfileGitHubUtil, "store");
 
-        verify(amazonS3, times(1)).getObject("store", key1);
-        verify(amazonS3, times(1)).getObject("store", key2);
+        verify(amazonS3).getObject("store", key1);
+        verify(amazonS3).getObject("store", key2);
         assertEquals(actualResult.size(), 2);
         assertEquals(actualResult.get(0).getImageName(), image2);
         assertEquals(actualResult.get(0).getTag(), tag2);

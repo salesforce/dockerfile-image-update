@@ -654,8 +654,8 @@ public class DockerfileGitHubUtilTest {
         dockerfileGitHubUtil = new DockerfileGitHubUtil(gitHubUtil);
         PullRequestInfo pullRequestInfo = new PullRequestInfo(null, null, null, null);
         dockerfileGitHubUtil.createPullReq(new GHRepository(), "branch", forkRepo, pullRequestInfo, rateLimiter);
-        verify(gitHubUtil, times(1)).createPullReq(any(), anyString(), any(), anyString(), eq(Constants.PULL_REQ_ID));
-        verify(forkRepo, times(1)).delete();
+        verify(gitHubUtil).createPullReq(any(), anyString(), any(), anyString(), eq(Constants.PULL_REQ_ID));
+        verify(forkRepo).delete();
     }
     @Test
     public void testGetGHContents() throws Exception {
@@ -746,7 +746,7 @@ public class DockerfileGitHubUtilTest {
 
         dockerfileGitHubUtil.createOrUpdateForkBranchToParentDefault(parent, fork, gitForkBranch);
 
-        verify(returnedRef, times(1)).updateTo(sha, true);
+        verify(returnedRef).updateTo(sha, true);
     }
 
     @Test
@@ -766,7 +766,7 @@ public class DockerfileGitHubUtilTest {
 
         dockerfileGitHubUtil.createOrUpdateForkBranchToParentDefault(parent, fork, gitForkBranch);
 
-        verify(fork, times(1)).createRef(anyString(), matches(sha));
+        verify(fork).createRef(anyString(), matches(sha));
     }
 
     @Test
@@ -819,9 +819,9 @@ public class DockerfileGitHubUtilTest {
                 new GitHubContentToProcess(forkedRepo, parentRepo, ""), new ArrayList<>(), gitForkBranch, rateLimiter);
 
         // Both Dockerfiles retrieved from the same repo
-        verify(dockerfileGitHubUtil, times(1)).tryRetrievingContent(eq(forkedRepo),
+        verify(dockerfileGitHubUtil).tryRetrievingContent(eq(forkedRepo),
                 eq("df11"), eq("image-tag"));
-        verify(dockerfileGitHubUtil, times(1)).tryRetrievingContent(eq(forkedRepo),
+        verify(dockerfileGitHubUtil).tryRetrievingContent(eq(forkedRepo),
                 eq("df12"), eq("image-tag"));
 
         // Both Dockerfiles modified
@@ -829,7 +829,7 @@ public class DockerfileGitHubUtilTest {
                 .modifyOnGithub(any(), eq("image-tag"), eq("image"), eq("tag"), anyString(), anyString());
 
         // Only one PR created on the repo with changes to both Dockerfiles.
-        verify(dockerfileGitHubUtil, times(1)).createPullReq(eq(parentRepo),
+        verify(dockerfileGitHubUtil).createPullReq(eq(parentRepo),
                 eq("image-tag"), eq(forkedRepo), any(), eq(rateLimiter));
     }
 

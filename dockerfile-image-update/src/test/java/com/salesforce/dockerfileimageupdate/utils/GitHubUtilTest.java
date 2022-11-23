@@ -40,7 +40,7 @@ public class GitHubUtilTest {
         when(github.getRepository(eq("repo"))).thenReturn(new GHRepository());
         GitHubUtil gitHubUtil = new GitHubUtil(github);
         gitHubUtil.getRepo("repo");
-        verify(github, times(1)).getRepository(eq("repo"));
+        verify(github).getRepository(eq("repo"));
     }
 
     @Test
@@ -57,7 +57,7 @@ public class GitHubUtilTest {
         GitHub github = mock(GitHub.class);
         GitHubUtil gitHubUtil = new GitHubUtil(github);
         gitHubUtil.startSearch();
-        verify(github, times(1)).searchContent();
+        verify(github).searchContent();
     }
 
     @Test
@@ -66,7 +66,7 @@ public class GitHubUtilTest {
         GitHubUtil gitHubUtil = new GitHubUtil(github);
         GHRepository repo = mock(GHRepository.class);
         gitHubUtil.createFork(repo);
-        verify(repo, times(1)).fork();
+        verify(repo).fork();
     }
 
     @Test
@@ -77,7 +77,7 @@ public class GitHubUtilTest {
         when(repo.fork())
                 .thenThrow(new IOException("Some issue with forking occurred and the library throws an IOException"));
         assertNull(gitHubUtil.createFork(repo));
-        verify(repo, times(1)).fork();
+        verify(repo).fork();
     }
 
     @Test
@@ -90,7 +90,7 @@ public class GitHubUtilTest {
         GHRepository forkRepo = mock(GHRepository.class);
         when(forkRepo.getOwnerName()).thenReturn("owner");
         assertEquals(gitHubUtil.createPullReq(origRepo, "branch", forkRepo, "title", "body"), 0);
-        verify(origRepo, times(1)).createPullRequest(eq("title"), eq("owner:branch"), eq("main"), eq("body"));
+        verify(origRepo).createPullRequest(eq("title"), eq("owner:branch"), eq("main"), eq("body"));
     }
 
     @Test
@@ -104,7 +104,7 @@ public class GitHubUtilTest {
         GHRepository forkRepo = mock(GHRepository.class);
         when(forkRepo.getOwnerName()).thenReturn("owner");
         assertEquals(gitHubUtil.createPullReq(origRepo, "branch", forkRepo, "title", "body"), 0);
-        verify(origRepo, times(1)).createPullRequest(eq("title"), eq("owner:branch"), eq("main"), eq("body"));
+        verify(origRepo).createPullRequest(eq("title"), eq("owner:branch"), eq("main"), eq("body"));
     }
 
     @Test
@@ -118,7 +118,7 @@ public class GitHubUtilTest {
         GHRepository forkRepo = mock(GHRepository.class);
         when(forkRepo.getOwnerName()).thenReturn("owner");
         assertEquals(gitHubUtil.createPullReq(origRepo, "branch", forkRepo, "title", "body"), 1);
-        verify(origRepo, times(1)).createPullRequest(eq("title"), eq("owner:branch"), eq("main"), eq("body"));
+        verify(origRepo).createPullRequest(eq("title"), eq("owner:branch"), eq("main"), eq("body"));
     }
     @Test
     public void testCreatePullReq_errorCase1_withInvalidCode() throws Exception {
@@ -140,7 +140,7 @@ public class GitHubUtilTest {
         when(github.getRepository(eq("repo"))).thenReturn(new GHRepository());
         GitHubUtil gitHubUtil = new GitHubUtil(github);
         gitHubUtil.tryRetrievingRepository("repo");
-        verify(github, times(1)).getRepository(eq("repo"));
+        verify(github).getRepository(eq("repo"));
     }
 
     @Test
@@ -150,7 +150,7 @@ public class GitHubUtilTest {
         when(repo.getFileContent(eq("path"), eq("branch"))).thenReturn(new GHContent());
         GitHubUtil gitHubUtil = new GitHubUtil(github);
         gitHubUtil.tryRetrievingContent(repo, "path", "branch");
-        verify(repo, times(1)).getFileContent(eq("path"), eq("branch"));
+        verify(repo).getFileContent(eq("path"), eq("branch"));
     }
 
     @Test
@@ -170,8 +170,8 @@ public class GitHubUtilTest {
         GitHubUtil gitHubUtil = new GitHubUtil(github);
         assertEquals(gitHubUtil.tryRetrievingBlob(repo, "path", "branch"), ghBlob);
 
-        verify(commit, times(1)).getTree();
-        verify(ghTreeEntry, times(1)).asBlob();
+        verify(commit).getTree();
+        verify(ghTreeEntry).asBlob();
     }
 
     @Test(
@@ -306,7 +306,7 @@ public class GitHubUtilTest {
         when(fork.getBranch(any())).thenReturn(null, branch);
 
         assertEquals(gitHubUtil.tryRetrievingBranch(fork, "somebranch"), branch);
-        verify(gitHubUtil, times(1)).waitFor(TimeUnit.SECONDS.toMillis(1));
+        verify(gitHubUtil).waitFor(TimeUnit.SECONDS.toMillis(1));
     }
 
     @Test

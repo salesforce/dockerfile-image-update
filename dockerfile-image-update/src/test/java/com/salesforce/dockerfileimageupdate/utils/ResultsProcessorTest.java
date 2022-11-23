@@ -32,7 +32,7 @@ public class ResultsProcessorTest {
                     mockLogger);
             fail();
         } catch (IOException exception) {
-            verify(mockLogger, times(1)).info(REPOS_SKIPPED_MESSAGE, skippedRepos);
+            verify(mockLogger).info(REPOS_SKIPPED_MESSAGE, skippedRepos);
         }
     }
 

@@ -64,7 +64,7 @@ public class ChildTest {
 
         child.execute(ns, dockerfileGitHubUtil);
 
-        verify(dockerfileGitHubUtil, times(1))
+        verify(dockerfileGitHubUtil)
                 .createPullReq(any(), anyString(), any(), any(), eq(rateLimiter));
     }
 
@@ -87,7 +87,7 @@ public class ChildTest {
 
         child.execute(ns, dockerfileGitHubUtil);
 
-        verify(dockerfileGitHubUtil, times(1))
+        verify(dockerfileGitHubUtil)
                 .createPullReq(any(), anyString(), any(), any(), eq(null));
     }
 

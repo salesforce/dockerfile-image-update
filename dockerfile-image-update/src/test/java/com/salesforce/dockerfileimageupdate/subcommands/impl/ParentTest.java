@@ -113,10 +113,10 @@ public class ParentTest {
 
         parent.execute(ns, dockerfileGitHubUtil);
 
-        verify(parent, times(1)).getGitForkBranch(ns);
-        verify(parent, times(1)).getPullRequestSender(dockerfileGitHubUtil, ns);
-        verify(parent, times(1)).getPullRequests();
-        verify(pullRequests, times(1)).prepareToCreate(ns, pullRequestSender,
+        verify(parent).getGitForkBranch(ns);
+        verify(parent).getPullRequestSender(dockerfileGitHubUtil, ns);
+        verify(parent).getPullRequests();
+        verify(pullRequests).prepareToCreate(ns, pullRequestSender,
                 contentsWithImage, gitForkBranch, dockerfileGitHubUtil, null);
     }
 
@@ -152,10 +152,10 @@ public class ParentTest {
 
         parent.execute(ns, dockerfileGitHubUtil);
 
-        verify(parent, times(1)).getGitForkBranch(ns);
-        verify(parent, times(1)).getPullRequestSender(dockerfileGitHubUtil, ns);
-        verify(parent, times(1)).getPullRequests();
-        verify(pullRequests, times(1)).prepareToCreate(ns, pullRequestSender,
+        verify(parent).getGitForkBranch(ns);
+        verify(parent).getPullRequestSender(dockerfileGitHubUtil, ns);
+        verify(parent).getPullRequests();
+        verify(pullRequests).prepareToCreate(ns, pullRequestSender,
                 contentsWithImage, gitForkBranch, dockerfileGitHubUtil, rateLimiter);
     }
 
