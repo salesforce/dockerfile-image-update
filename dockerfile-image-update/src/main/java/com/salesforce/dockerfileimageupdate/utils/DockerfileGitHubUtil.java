@@ -366,7 +366,8 @@ public class DockerfileGitHubUtil {
             if(rateLimiter != null) {
                 log.info("Trying to consume a token before creating pull request..");
                 // Consume a token from the token bucket.
-                // If a token is not available this method will block until the refill adds one to the bucket.
+                // If a token is not available this method will block until
+                // the refill adds one to the bucket.
                 rateLimiter.consume();
                 log.info("Token consumed, proceeding with PR creation..");
             }

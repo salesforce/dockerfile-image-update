@@ -42,7 +42,7 @@ public class Constants {
     public static final String RATE_LIMIT = "rateLimit";
     public static final String RATE_LIMIT_DURATION = "rateLimitDuration";
     public static final String TOKEN_ADDING_RATE = "tokenAddingRate";
-    //max number of PRs to be sent per DEFAULT_RATE_LIMIT_DURATION(per hour in this case)
+    //max number of PRs to be sent (or tokens to be added)  per DEFAULT_RATE_LIMIT_DURATION(per hour in this case)
     public static final long DEFAULT_RATE_LIMIT = 30;
     public static final Duration DEFAULT_RATE_LIMIT_DURATION = Duration.ofHours(1);
     //token adding rate(here:a token added every 2 mins in the bucket)

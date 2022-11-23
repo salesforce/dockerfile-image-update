@@ -89,7 +89,7 @@ public class CommandLine {
         parser.addArgument("-r", "--" + Constants.RATE_LIMIT)
                 .type(Long.class)
                 .help("Max number of PRs to be sent per " + Constants.RATE_LIMIT_DURATION);
-        parser.addArgument("-rl", "--" + Constants.RATE_LIMIT_DURATION)
+        parser.addArgument("-d", "--" + Constants.RATE_LIMIT_DURATION)
                 .type(Duration.class)
                 .help("Rate limit duration");
         parser.addArgument("-t", "--" + Constants.TOKEN_ADDING_RATE)
