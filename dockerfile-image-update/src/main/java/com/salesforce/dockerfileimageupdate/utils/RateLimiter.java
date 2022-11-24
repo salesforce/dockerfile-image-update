@@ -5,6 +5,19 @@ import io.github.bucket4j.Bucket;
 import io.github.bucket4j.Refill;
 import java.time.Duration;
 
+/**
+ * Created by tarishij17
+ * RateLimiter is based on token bucket algorithm.
+ * With every PR sent by DFIU tool, a token will be consumed, ensuring that a PR will be raised only when there is a token left in the bucket.
+ * Initially bucket will have a fixed number of tokens equal to the 'rateLimit' value.
+ * The bucket will be refilled with tokens at the end of every 'rateLimitDuration' with 'rateLimit' tokens
+ *  ensuring that at any point of time, the number of tokens in the bucket won't exceed the 'rateLimit' value,
+ * thus limiting the rate at which PRs would be raised.
+ * To keep the refill rate uniform, one token will be added to the bucket every 'tokenAddingRate'.
+ * If no tokens are left in the bucket, then PR won't be raised and
+ * program will hault until next token is available.
+ */
+
 //based on token-bucket algorithm
 public class RateLimiter {
 
@@ -22,7 +35,7 @@ public class RateLimiter {
         this.rateLimit = rateLimit;
         this.rateLimitDuration = rateLimitDuration;
         this.tokenAddingRate = tokenAddingRate;
-        //refill the bucket at the end of every 'period' with 'rateLimit' tokens,
+        //refill the bucket at the end of every 'rateLimitDuration' with 'rateLimit' tokens,
         // not exceeding the max capacity
         Refill refill = Refill.intervally(rateLimit, rateLimitDuration);
         //initially bucket will have no. of tokens equal to its max capacity i.e

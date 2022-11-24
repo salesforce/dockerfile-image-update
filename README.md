@@ -141,6 +141,12 @@ named arguments:
   -s {true,false}, --skipprcreation {true,false}
                          Only update image tag store. Skip creating PRs
   -x X                   comment snippet mentioned in line just before FROM instruction for ignoring a child image. Defaults to 'no-dfiu'
+  -u, --useratelimiting {true,false}
+                         Use RateLimiting for throttling the number of PRs DFIU will cut over a period of time. Throttling works based on token-bucket algorithm. Defaults to false
+  -d, --rateLimitDuration
+                         Rate Limit duration. Defaults to Duration.ofHours(1). (Considered only when -u/--useratelimiting is true) 
+  -r, --rateLimit        Maximum number of PRs to be sent per --rateLimitDuration. Defaults to 30. (Considered only when -u/--useratelimiting is true)
+  -t, --tokenAddingRate  Rate at which tokens are added in the bucket. A token will be needed with every PR cut. Defaults to Duration.ofMinutes(2) i.e a token will be added every 2 mins in the bucket. (Considered only when -u/--useratelimiting is true)
 
 subcommands:
   Specify which feature to perform
@@ -211,6 +217,26 @@ Example:
 
 ```
 FROM imagename:imagetag # no-dfiu
+```
+
+### PR throttling
+
+In case you want to throttle the number of PRs cut by DFIU over a period of time, 
+set --useratelimiting flag as true.
+
+##### Default case:
+
+```
+example usage: dockerfile-image-update --useratelimiting true all image-tag-store-repo-falcon
+```
+Above example will throttle the number of PRs cut based on default values as mentioned above i.e.,
+maximum 30 PRs(configured by -r/--rateLimit) could be sent within a period of 1hour (configured by -d/--rateLimitDuration). To distribute the load uniformly and avoid sudden spikes,
+ at max only 1 PR could be sent in every 2 mins(configured by -t/--tokenAddingRate). The process will go in waiting state until next PR could be sent. 
+
+##### Configuring the rate limit:
+
+```
+example usage: dockerfile-image-update --useratelimiting true --rateLimitDuration Duration.ofMinutes(30) --rateLimit 15 all image-tag-store-repo-falcon
 ```
 
 ## Developer Guide
