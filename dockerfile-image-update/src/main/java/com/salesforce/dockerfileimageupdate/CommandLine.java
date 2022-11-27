@@ -90,11 +90,11 @@ public class CommandLine {
                 .type(Long.class)
                 .help("Max number of PRs to be sent per " + Constants.RATE_LIMIT_DURATION);
         parser.addArgument("-d", "--" + Constants.RATE_LIMIT_DURATION)
-                .type(Duration.class)
-                .help("Rate limit duration");
+                .type(String.class)
+                .help("Rate limit duration specified in ISO-8601 duration format");
         parser.addArgument("-t", "--" + Constants.TOKEN_ADDING_RATE)
-                .type(Duration.class)
-                .help("Token adding rate.");
+                .type(String.class)
+                .help("Token adding rate specified in ISO-8601 duration format.");
         parser.addArgument("-x")
                 .help("comment snippet mentioned in line just before FROM instruction for ignoring a child image. " +
                         "Defaults to 'no-dfiu'");

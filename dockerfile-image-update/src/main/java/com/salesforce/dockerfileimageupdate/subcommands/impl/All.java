@@ -164,10 +164,10 @@ public class All implements ExecutableWithNamespace {
             rateLimit = ns.get(Constants.RATE_LIMIT);
         }
         if(ns.get(Constants.RATE_LIMIT_DURATION)!=null){
-            rateLimitDuration = ns.get(Constants.RATE_LIMIT_DURATION);
+            rateLimitDuration = Duration.parse(ns.get(Constants.RATE_LIMIT_DURATION));
         }
         if(ns.get(Constants.TOKEN_ADDING_RATE)!=null){
-            tokenAddingRate = ns.get(Constants.TOKEN_ADDING_RATE);
+            tokenAddingRate = Duration.parse(ns.get(Constants.TOKEN_ADDING_RATE));
         }
         return new RateLimiter(rateLimit, rateLimitDuration, tokenAddingRate);
     }

@@ -144,9 +144,9 @@ named arguments:
   -u, --useratelimiting {true,false}
                          Use RateLimiting for throttling the number of PRs DFIU will cut over a period of time. Throttling works based on token-bucket algorithm. Defaults to false
   -d, --rateLimitDuration
-                         Rate Limit duration. Defaults to Duration.ofHours(1). (Considered only when -u/--useratelimiting is true) 
+                         Rate Limit duration specified in ISO-8601 duration format. Defaults to Duration.ofHours(1). (Considered only when -u/--useratelimiting is true) 
   -r, --rateLimit        Maximum number of PRs to be sent per --rateLimitDuration. Defaults to 30. (Considered only when -u/--useratelimiting is true)
-  -t, --tokenAddingRate  Rate at which tokens are added in the bucket. A token will be needed with every PR cut. Defaults to Duration.ofMinutes(2) i.e a token will be added every 2 mins in the bucket. (Considered only when -u/--useratelimiting is true)
+  -t, --tokenAddingRate  Rate at which tokens are added in the bucket specified in ISO-8601 duration format. A token will be needed with every PR cut. Defaults to Duration.ofMinutes(2) i.e a token will be added every 2 mins in the bucket. (Considered only when -u/--useratelimiting is true)
 
 subcommands:
   Specify which feature to perform
@@ -236,7 +236,7 @@ maximum 30 PRs(configured by -r/--rateLimit) could be sent within a period of 1h
 ##### Configuring the rate limit:
 
 ```
-example usage: dockerfile-image-update --useratelimiting true --rateLimitDuration Duration.ofMinutes(30) --rateLimit 15 all image-tag-store-repo-falcon
+example usage: dockerfile-image-update --useratelimiting true --rateLimitDuration PT30M --rateLimit 15 all image-tag-store-repo-falcon
 ```
 
 ## Developer Guide
