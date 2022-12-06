@@ -2,6 +2,7 @@ package com.salesforce.dockerfileimageupdate.process;
 
 import com.salesforce.dockerfileimageupdate.model.FromInstruction;
 import com.salesforce.dockerfileimageupdate.model.GitForkBranch;
+import com.salesforce.dockerfileimageupdate.model.ImageKeyValuePair;
 import com.salesforce.dockerfileimageupdate.model.ShouldForkResult;
 import com.salesforce.dockerfileimageupdate.utils.DockerfileGitHubUtil;
 import org.kohsuke.github.GHContent;
@@ -101,6 +102,8 @@ public class ForkableRepoValidator {
             String line;
             while ( (line = reader.readLine()) != null ) {
                 if (FromInstruction.isFromInstructionWithThisImageAndOlderTag(line,
+                        gitForkBranch.getImageName(), gitForkBranch.getImageTag()) &&
+                        ImageKeyValuePair.isImageKeyValuePairWithThisImageAndOlderTag(line,
                         gitForkBranch.getImageName(), gitForkBranch.getImageTag())) {
                     return false;
                 }

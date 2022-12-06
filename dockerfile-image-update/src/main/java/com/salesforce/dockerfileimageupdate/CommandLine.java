@@ -48,7 +48,7 @@ public class CommandLine {
         DockerfileGitHubUtil dockerfileGitHubUtil = initializeDockerfileGithubUtil(ns.get(Constants.GIT_API));
 
         /* Execute given command. */
-        ((ExecutableWithNamespace)runClass.newInstance()).execute(ns, dockerfileGitHubUtil);
+        ((ExecutableWithNamespace)runClass.getDeclaredConstructor().newInstance()).execute(ns, dockerfileGitHubUtil);
     }
 
     static ArgumentParser getArgumentParser() {

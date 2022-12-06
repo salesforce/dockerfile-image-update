@@ -93,7 +93,10 @@ public class DockerfileGitHubUtil {
         // Filename search appears to yield better / more results than language:Dockerfile
         // Root cause: linguist doesn't currently deal with prefixes of files:
         // https://github.com/github/linguist/issues/4566
+        // This will work in OR mode i.e, either filename is Dockerfile or docker-compose
         search.filename("Dockerfile");
+        search.filename("docker-compose");
+
         if (!orgsToIncludeOrExclude.isEmpty()) {
             StringBuilder includeOrExcludeOrgsQuery = new StringBuilder();
             for (Map.Entry<String, Boolean> org : orgsToIncludeOrExclude.entrySet()){
@@ -334,6 +337,14 @@ public class DockerfileGitHubUtil {
                 modified = true;
             }
             outputLine = fromInstruction.toString();
+        } else if (ImageKeyValuePair.isImageKeyValuePair(line)) {
+            ImageKeyValuePair imageKeyValuePair = new ImageKeyValuePair(line);
+            if (imageKeyValuePair.hasBaseImage(imageToFind) &&
+                    imageKeyValuePair.hasADifferentTag(tag)) {
+                imageKeyValuePair = imageKeyValuePair.getImageKeyValuePairWithNewTag(tag);
+                modified = true;
+            }
+            outputLine = imageKeyValuePair.toString();
         }
         stringBuilder.append(outputLine).append("\n");
         return modified;
