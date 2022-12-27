@@ -31,12 +31,12 @@ public class RateLimiter {
     private final Duration tokenAddingRate;
     private final Bucket bucket;
 
-    private RateLimiter() {
+    public RateLimiter() {
         this(Constants.DEFAULT_RATE_LIMIT, Constants.DEFAULT_RATE_LIMIT_DURATION,
                 Constants.DEFAULT_TOKEN_ADDING_RATE);
     }
 
-    private RateLimiter(long rateLimit, Duration rateLimitDuration, Duration tokenAddingRate) {
+    public RateLimiter(long rateLimit, Duration rateLimitDuration, Duration tokenAddingRate) {
         this.rateLimit = rateLimit;
         this.rateLimitDuration = rateLimitDuration;
         this.tokenAddingRate = tokenAddingRate;
@@ -55,7 +55,7 @@ public class RateLimiter {
                 .build();
     }
 
-    public static RateLimiter getRateLimiter(Namespace ns) {
+    public RateLimiter getRateLimiter(Namespace ns) {
         if (ns.get(Constants.USE_RATE_LIMITING)) {
             log.info("Use rateLimiting is enabled, the PRs will be throttled in this run..");
             long rateLimit = Constants.DEFAULT_RATE_LIMIT;

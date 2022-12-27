@@ -15,6 +15,7 @@ import net.sourceforge.argparse4j.inf.Namespace;
 import org.kohsuke.github.GHRepository;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
+import com.salesforce.dockerfileimageupdate.utils.RateLimiter;
 
 import java.util.Map;
 
@@ -34,12 +35,14 @@ public class ChildTest {
                         GIT_REPO, "test",
                         IMG, "test",
                         FORCE_TAG, "test",
-                        STORE, "test")},
+                        STORE, "test",
+                        USE_RATE_LIMITING, true)},
                 {ImmutableMap.of(
                         GIT_REPO, "test",
                         IMG, "test",
                         FORCE_TAG, "test",
-                        STORE, "test")},
+                        STORE, "test",
+                        USE_RATE_LIMITING, true)},
         };
     }
 
@@ -48,18 +51,22 @@ public class ChildTest {
         Child child = spy(new Child());
         Namespace ns = new Namespace(inputMap);
         DockerfileGitHubUtil dockerfileGitHubUtil = mock(DockerfileGitHubUtil.class);
+        RateLimiter rateLimiter = spy(new RateLimiter(DEFAULT_RATE_LIMIT,DEFAULT_RATE_LIMIT_DURATION
+                ,DEFAULT_TOKEN_ADDING_RATE));
         GitHubJsonStore imageTagStore = mock(GitHubJsonStore.class);
         when(dockerfileGitHubUtil.getRepo(any())).thenReturn(new GHRepository());
         when(dockerfileGitHubUtil.getOrCreateFork(any())).thenReturn(new GHRepository());
         doNothing().when(dockerfileGitHubUtil).modifyAllOnGithub(any(), any(), any(), any(), any());
 
         when(dockerfileGitHubUtil.getGitHubJsonStore("test")).thenReturn(imageTagStore);
-        doNothing().when(dockerfileGitHubUtil).createPullReq(any(), anyString(), any(), any());
+        when(rateLimiter.getRateLimiter(ns)).thenReturn(rateLimiter);
+
+        doNothing().when(dockerfileGitHubUtil).createPullReq(any(), anyString(), any(), any(), eq(rateLimiter));
 
         child.execute(ns, dockerfileGitHubUtil);
 
         verify(dockerfileGitHubUtil, times(1))
-                .createPullReq(any(), anyString(), any(), any());
+                .createPullReq(any(), anyString(), any(), any(), any(RateLimiter.class));
     }
 
     @Test
@@ -69,19 +76,20 @@ public class ChildTest {
                 GIT_REPO, "test",
                 IMG, "test",
                 FORCE_TAG, "test",
-                STORE, "s3://test");
+                STORE, "s3://test",
+                USE_RATE_LIMITING, false);
         Namespace ns = new Namespace(nsMap);
         DockerfileGitHubUtil dockerfileGitHubUtil = mock(DockerfileGitHubUtil.class);
 
         when(dockerfileGitHubUtil.getRepo(any())).thenReturn(new GHRepository());
         when(dockerfileGitHubUtil.getOrCreateFork(any())).thenReturn(new GHRepository());
         doNothing().when(dockerfileGitHubUtil).modifyAllOnGithub(any(), any(), any(), any(), any());
-        doNothing().when(dockerfileGitHubUtil).createPullReq(any(), anyString(), any(), any());
+        doNothing().when(dockerfileGitHubUtil).createPullReq(any(), anyString(), any(), any(),eq(null));
 
         child.execute(ns, dockerfileGitHubUtil);
 
         verify(dockerfileGitHubUtil, times(1))
-                .createPullReq(any(), anyString(), any(), any());
+                .createPullReq(any(), anyString(), any(), any(), eq(null));
     }
 
     @Test
@@ -91,15 +99,19 @@ public class ChildTest {
                 GIT_REPO, "test",
                 IMG, "test",
                 FORCE_TAG, "test",
-                STORE, "test");
+                STORE, "test",
+                USE_RATE_LIMITING, true);
         Namespace ns = new Namespace(nsMap);
         DockerfileGitHubUtil dockerfileGitHubUtil = mock(DockerfileGitHubUtil.class);
+        RateLimiter rateLimiter = spy(new RateLimiter(DEFAULT_RATE_LIMIT,DEFAULT_RATE_LIMIT_DURATION
+                ,DEFAULT_TOKEN_ADDING_RATE));
         when(dockerfileGitHubUtil.getRepo(any())).thenReturn(new GHRepository());
         when(dockerfileGitHubUtil.getOrCreateFork(any())).thenReturn(null);
+        when(rateLimiter.getRateLimiter(ns)).thenReturn(rateLimiter);
         GitHubJsonStore imageTagStore = mock(GitHubJsonStore.class);
         when(dockerfileGitHubUtil.getGitHubJsonStore("test")).thenReturn(imageTagStore);
         child.execute(ns, dockerfileGitHubUtil);
         verify(dockerfileGitHubUtil, never()).createPullReq(any(), any(), any(),
-                any());
+                any(), eq(rateLimiter));
     }
 }
