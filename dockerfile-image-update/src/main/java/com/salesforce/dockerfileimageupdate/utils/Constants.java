@@ -39,7 +39,7 @@ public class Constants {
     public static final String GIT_API_SEARCH_LIMIT = "ghapisearchlimit";
     public static final String SKIP_PR_CREATION = "skipprcreation";
     public static final String IGNORE_IMAGE_STRING = "x";
-    public static final String USE_RATE_LIMITING = "useratelimiting";
+    public static final String USE_RATE_LIMITING = "useRatelimiting";
     public static final String RATE_LIMIT = "rateLimit";
     public static final String RATE_LIMIT_DURATION = "rateLimitDuration";
     public static final String TOKEN_ADDING_RATE = "tokenAddingRate";

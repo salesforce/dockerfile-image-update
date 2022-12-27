@@ -3,6 +3,7 @@ package com.salesforce.dockerfileimageupdate.utils;
 import io.github.bucket4j.Bandwidth;
 import io.github.bucket4j.Bucket;
 import io.github.bucket4j.Refill;
+import io.github.bucket4j.TimeMeter;
 import java.time.Duration;
 import net.sourceforge.argparse4j.inf.Namespace;
 import org.slf4j.Logger;
@@ -36,10 +37,12 @@ public class RateLimiter {
                 Constants.DEFAULT_TOKEN_ADDING_RATE);
     }
 
-    public RateLimiter(long rateLimit, Duration rateLimitDuration, Duration tokenAddingRate) {
+    public <T extends TimeMeter> RateLimiter(long rateLimit, Duration rateLimitDuration,
+                                             Duration tokenAddingRate, T customTimeMeter) {
         this.rateLimit = rateLimit;
         this.rateLimitDuration = rateLimitDuration;
         this.tokenAddingRate = tokenAddingRate;
+        customTimeMeter = customTimeMeter != null ? customTimeMeter : (T) TimeMeter.SYSTEM_MILLISECONDS;
         // refill the bucket at the end of every 'rateLimitDuration' with 'rateLimit' tokens,
         // not exceeding the max capacity
         Refill refill = Refill.intervally(rateLimit, rateLimitDuration);
@@ -52,7 +55,14 @@ public class RateLimiter {
                 // DEFAULT_RATE_LIMIT_DURATION
                 // one token added per DEFAULT_TOKEN_ADDING_RATE
                 .addLimit(Bandwidth.classic(1, Refill.intervally(1, tokenAddingRate)))
+                .withCustomTimePrecision(customTimeMeter)
                 .build();
+    }
+
+    public RateLimiter(long rateLimit, Duration rateLimitDuration,
+                       Duration tokenAddingRate) {
+        this(rateLimit, rateLimitDuration, tokenAddingRate, null);
+
     }
 
     public RateLimiter getRateLimiter(Namespace ns) {

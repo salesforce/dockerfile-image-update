@@ -89,7 +89,9 @@ public class CommandLine {
                 .type(Boolean.class)
                 .setDefault(false)
                 .required(false)
-                .help("Use RateLimiting when sending PRs. Defaults to false");
+                .help("Use RateLimiting when sending PRs. Defaults to false means no RateLimiting." +
+                        "dependent arguments(-r , -d, -t ) are optional. The defaults will be used" +
+                        "for the dependent arguments");
         parser.addArgument("-r", "--" + Constants.RATE_LIMIT)
                 .type(Long.class)
                 .required(false)
