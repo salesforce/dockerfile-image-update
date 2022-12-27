@@ -37,11 +37,11 @@ public class RateLimiter {
                 Constants.DEFAULT_TOKEN_ADDING_RATE);
     }
 
-    public <T extends TimeMeter> RateLimiter(long rateLimit, Duration rateLimitDuration,
-                                             Duration tokenAddingRate, T customTimeMeter) {
-        this.rateLimit = rateLimit;
-        this.rateLimitDuration = rateLimitDuration;
-        this.tokenAddingRate = tokenAddingRate;
+    public <T extends TimeMeter> RateLimiter(long rLimit, Duration rLimitDuration,
+                                             Duration tokAddingRate, T customTimeMeter) {
+        rateLimit = rLimit;
+        rateLimitDuration = rLimitDuration;
+        tokenAddingRate = tokAddingRate;
         customTimeMeter = customTimeMeter != null ? customTimeMeter : (T) TimeMeter.SYSTEM_MILLISECONDS;
         // refill the bucket at the end of every 'rateLimitDuration' with 'rateLimit' tokens,
         // not exceeding the max capacity
@@ -68,20 +68,10 @@ public class RateLimiter {
     public RateLimiter getRateLimiter(Namespace ns) {
         if (ns.get(Constants.USE_RATE_LIMITING)) {
             log.info("Use rateLimiting is enabled, the PRs will be throttled in this run..");
-            long rateLimit = Constants.DEFAULT_RATE_LIMIT;
-            Duration rateLimitDuration = Constants.DEFAULT_RATE_LIMIT_DURATION;
-            Duration tokenAddingRate = Constants.DEFAULT_TOKEN_ADDING_RATE;
-
-            if (ns.get(Constants.RATE_LIMIT) != null) {
-                rateLimit = ns.get(Constants.RATE_LIMIT);
-            }
-            if (ns.get(Constants.RATE_LIMIT_DURATION) != null) {
-                rateLimitDuration = Duration.parse(ns.get(Constants.RATE_LIMIT_DURATION));
-            }
-            if (ns.get(Constants.TOKEN_ADDING_RATE) != null) {
-                tokenAddingRate = Duration.parse(ns.get(Constants.TOKEN_ADDING_RATE));
-            }
-            return new RateLimiter(rateLimit, rateLimitDuration, tokenAddingRate);
+            long rLimit = ns.get(Constants.RATE_LIMIT) != null ? ns.get(Constants.RATE_LIMIT) : Constants.DEFAULT_RATE_LIMIT;
+            Duration rLimitDuration = ns.get(Constants.RATE_LIMIT_DURATION) != null ? Duration.parse(ns.get(Constants.RATE_LIMIT_DURATION)) : Constants.DEFAULT_RATE_LIMIT_DURATION;
+            Duration tokAddingRate = ns.get(Constants.TOKEN_ADDING_RATE) != null ? Duration.parse(ns.get(Constants.TOKEN_ADDING_RATE)) : Constants.DEFAULT_TOKEN_ADDING_RATE;
+            return new RateLimiter(rLimit, rLimitDuration, tokAddingRate);
         }
         log.info("Use rateLimiting is disabled, the PRs will not be throttled in this run..");
         return null;
