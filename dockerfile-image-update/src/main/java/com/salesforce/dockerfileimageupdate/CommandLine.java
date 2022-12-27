@@ -26,6 +26,7 @@ import java.util.Comparator;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
+import static com.salesforce.dockerfileimageupdate.utils.Constants.*;
 
 /**
  * Created by minho-park on 6/29/2016.
@@ -84,6 +85,29 @@ public class CommandLine {
         parser.addArgument("-x")
                 .help("comment snippet mentioned in line just before FROM instruction for ignoring a child image. " +
                         "Defaults to 'no-dfiu'");
+        parser.addArgument("-u", "--" + Constants.USE_RATE_LIMITING)
+                .type(Boolean.class)
+                .setDefault(false)
+                .required(false)
+                .help("Use RateLimiting when sending PRs. Defaults to false");
+        parser.addArgument("-r", "--" + Constants.RATE_LIMIT)
+                .type(Long.class)
+                .required(false)
+                .help("Max number of PRs to be sent per " + Constants.RATE_LIMIT_DURATION +
+                        "Defaults to " + DEFAULT_RATE_LIMIT +
+                        " and is considered only when -u argument is true");
+        parser.addArgument("-d", "--" + Constants.RATE_LIMIT_DURATION)
+                .type(String.class)
+                .required(false)
+                .help("Rate limit duration specified in ISO-8601 duration format." +
+                        "Defaults to " + DEFAULT_RATE_LIMIT_DURATION.toHours() +
+                        " hours and is considered only when -u argument is true");
+        parser.addArgument("-t", "--" + Constants.TOKEN_ADDING_RATE)
+                .type(String.class)
+                .required(false)
+                .help("Token adding rate specified in ISO-8601 duration format." +
+                        "Defaults to " + DEFAULT_TOKEN_ADDING_RATE.toMinutes() +
+                        " minutes and is considered only when -u argument is true");
         return parser;
     }
 
