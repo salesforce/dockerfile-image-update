@@ -9,21 +9,21 @@ import net.sourceforge.argparse4j.inf.Namespace;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * Created by tarishij17
- * RateLimiter is based on token bucket algorithm.
- * With every PR sent by DFIU tool, a token will be consumed,
- * ensuring that a PR will be raised only when there is a token left in the bucket.
- * Initially bucket will have a fixed number of tokens equal to the 'rateLimit' value.
- * The bucket will be refilled with tokens at the end of every 'rateLimitDuration' with 'rateLimit' tokens
- * ensuring that at any point of time, the number of tokens in the bucket won't exceed the 'rateLimit' value,
- * thus limiting the rate at which PRs would be raised.
- * To keep the refill rate uniform, one token will be added to the bucket every 'tokenAddingRate'.
- * If no tokens are left in the bucket, then PR won't be raised and
- * program will halt until next token is available.
- */
 
-//based on token-bucket algorithm
+/**
+ * This class uses <a href="https://en.wikipedia.org/wiki/Token_buckete">Token bucket</a>
+ * algorithm to evenly process the available resources in a given amount of time.
+ * <pre>
+ * With every PR sent by DFIU tool, a token will be consumed. This will ensure that a PR will
+ * be raised only when there is a token left in the bucket. Initially bucket will have a fixed
+ * number of tokens equal to the 'rateLimit' value. The bucket will be refilled with tokens at
+ * the end of every 'rateLimitDuration' with 'rateLimit' tokens ensuring that at any point of
+ * time, the number of tokens in the bucket won't exceed the 'rateLimit', limiting the rate at
+ * which PRs would be raised. To keep the refill rate uniform, one token will be added to the
+ * bucket every 'tokenAddingRate'. If no tokens are left in the bucket, then PR won't be raised
+ * and program will halt until next token is available.
+ * <pre>
+ */
 public class RateLimiter {
 
     private static final Logger log = LoggerFactory.getLogger(RateLimiter.class);
@@ -37,6 +37,19 @@ public class RateLimiter {
                 Constants.DEFAULT_TOKEN_ADDING_RATE);
     }
 
+    /**
+     * constructor to initialize RateLimiter with required arguments.
+     * If time meter is specified, the system default will be chosen.
+     * @param rLimit maximum count of PRs to be sent per rLimitDuration
+     * @param rLimitDuration Rate Limit duration
+     * @param tokAddingRate Rate at which tokens are added in the bucket
+     * @param customTimeMeter Clock to be used for bucketing the tokens.
+     *                        Defaults to TimeMeter.SYSTEM_MILLISECONDS
+     * @param <T> Implementing class for customTimeMeter must be a class
+     *           extending TimeMeter
+     * @see TimeMeter
+     * @see TimeMeter#SYSTEM_MILLISECONDS
+     */
     public <T extends TimeMeter> RateLimiter(long rLimit, Duration rLimitDuration,
                                              Duration tokAddingRate, T customTimeMeter) {
         rateLimit = rLimit;
@@ -65,6 +78,15 @@ public class RateLimiter {
 
     }
 
+    /**
+     * This method will create and return an object of type RateLimiter based on the
+     * variables set in the Namespace. If all the required variables are not set, it
+     * will use the program default values.
+     * @param ns Namespace {@see net.sourceforge.argparse4j.inf.Namespace}
+     * @return RateLimiter object
+     * @see net.sourceforge.argparse4j.inf.Namespace Namespace
+     */
+
     public RateLimiter getRateLimiter(Namespace ns) {
         if (ns.get(Constants.USE_RATE_LIMITING)) {
             log.info("Use rateLimiting is enabled, the PRs will be throttled in this run..");
@@ -77,6 +99,13 @@ public class RateLimiter {
         return null;
     }
 
+    /**
+     * This method consumes a token from the bucked.
+     * It blocks the execution when no token is available
+     * for consumption.
+     * @throws InterruptedException when interrupted
+     * @see RateLimiter#bucket
+     */
     public void consume() throws InterruptedException {
         bucket.asBlocking().consume(1);
     }
