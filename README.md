@@ -1,5 +1,5 @@
 ![Multi-Module Maven Build / Deploy](https://github.com/salesforce/dockerfile-image-update/workflows/Multi-Module%20Maven%20Build%20/%20Deploy/badge.svg)
-[![codecov](https://codecov.io/gh/salesforce/dockerfile-image-update/branch/master/graph/badge.svg)](https://codecov.io/gh/salesforce/dockerfile-image-update)
+[![codecov](https://codecov.io/gh/salesforce/dockerfile-image-update/branch/main/graph/badge.svg)](https://codecov.io/gh/salesforce/dockerfile-image-update)
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.salesforce.dockerfile-image-update/dockerfile-image-update/badge.svg?maxAge=3600)](https://maven-badges.herokuapp.com/maven-central/com.salesforce.dockerfile-image-update/dockerfile-image-update)
 [![Docker Image Version (latest semver)](https://img.shields.io/docker/v/salesforce/dockerfile-image-update?label=Docker%20version&sort=semver)](https://hub.docker.com/r/salesforce/dockerfile-image-update/tags)
 
@@ -119,27 +119,36 @@ docker run --rm -e git_api_token -e git_api_url \
 ```
 
 ```commandline
-usage: dockerfile-image-update [-h] [-o ORG] [-b BRANCH] [-g GHAPI] [-f] [-m M] [-c C] COMMAND ...
+usage: dockerfile-image-update [-h] [-l GHAPISEARCHLIMIT] [-o ORG] [-b BRANCH] [-g GHAPI] [-f] [-m M] [-c C] [-e EXCLUDES] [-B B] [-s {true,false}] [-x X] COMMAND ...
 
 Image Updates through Pull Request Automator
 
-optional arguments:
-  -h, --help                   show this help message and exit
-  -o ORG, --org ORG            search within specific organization (default: all of github)
-  -b BRANCH, --branch BRANCH   make pull requests for given branch name (default: master)
-  -g GHAPI, --ghapi GHAPI      link to github api; overrides environment variable
-  -f, --auto-merge             NOT IMPLEMENTED / set to automatically merge pull requests if available
-  -m PULL_REQ_MESSAGE          message to provide for pull requests
-  -c COMMIT_MESSAGE            additional commit message for the commits in pull requests
-  -x IGNORE_IMAGE_STRING       comment snippet after FROM instruction for ignoring a child image. Defaults to 'no-dfiu'
+named arguments:
+  -h, --help             show this help message and exit
+  -l GHAPISEARCHLIMIT, --ghapisearchlimit GHAPISEARCHLIMIT
+                         limit the search results for github api (default: 1000)
+  -o ORG, --org ORG      search within specific organization (default: all of github)
+  -b BRANCH, --branch BRANCH
+                         make pull requests for given branch name (default: main)
+  -g GHAPI, --ghapi GHAPI
+                         link to github api; overrides environment variable
+  -f, --auto-merge       NOT IMPLEMENTED / set to automatically merge pull requests if available
+  -m M                   message to provide for pull requests
+  -c C                   additional commit message for the commits in pull requests
+  -e EXCLUDES, --excludes EXCLUDES
+                         regex of repository names to exclude from pull request generation
+  -B B                   additional body text to include in pull requests
+  -s {true,false}, --skipprcreation {true,false}
+                         Only update image tag store. Skip creating PRs
+  -x X                   comment snippet mentioned in line just before FROM instruction for ignoring a child image. Defaults to 'no-dfiu'
 
 subcommands:
   Specify which feature to perform
 
   COMMAND                FEATURE
+    parent               updates all repositories' Dockerfiles with given base image
     all                  updates all repositories' Dockerfiles
     child                updates one specific repository with given tag
-    parent               updates all repositories' Dockerfiles with given base image
 ```
 
 #### The `all` command
@@ -223,7 +232,7 @@ java -jar dockerfile-image-update-1.0-SNAPSHOT.jar <COMMAND> <PARAMETERS>
 
 ### Creating a new feature
 
-Under [dockerfile-image-update/src/main/java/com/salesforce/dva/dockerfileimageupdate/subcommands/impl](https://github.com/salesforce/dockerfile-image-update/tree/master/dockerfile-image-update/src/main/java/com/salesforce/dockerfileimageupdate/subcommands/impl),
+Under [dockerfile-image-update/src/main/java/com/salesforce/dva/dockerfileimageupdate/subcommands/impl](https://github.com/salesforce/dockerfile-image-update/tree/main/dockerfile-image-update/src/main/java/com/salesforce/dockerfileimageupdate/subcommands/impl),
 create a new class `YOUR_FEATURE.java`.
 Make sure it implements `ExecutableWithNamespace` and has the `SubCommand`
 annotation with a `help`, `requiredParams`, and `optionalParams`.
@@ -238,7 +247,7 @@ Run unit tests by running `mvn test`.
 Before you run the integration tests (locally):
 
 1. Make sure that you have access to the github orgs specified in
-   [TestCommon.ORGS](https://github.com/salesforce/dockerfile-image-update/blob/master/dockerfile-image-update-itest/src/main/java/com/salesforce/dockerfileimageupdate/itest/tests/TestCommon.java#L33).
+   [TestCommon.ORGS](https://github.com/salesforce/dockerfile-image-update/blob/main/dockerfile-image-update-itest/src/main/java/com/salesforce/dockerfileimageupdate/itest/tests/TestCommon.java#L33).
    You likely will need to change it to three orgs where you have permissions
    to create repositories.
 1. Make sure you have `git_api_url=https://api.github.com` in `/dockerfile-image-update-itest/itest.env`,
@@ -273,7 +282,7 @@ to manually trigger the release process. For now, that looks like the following:
 #### 1. Versioned Git Tag
 
 * Decide what version you desire to have. If you want to bump the major or minor
-  version then you need to bump the `MVN_SNAPSHOT_VERSION` in the [Makefile](https://github.com/salesforce/dockerfile-image-update/blob/master/Makefile#L5)
+  version then you need to bump the `MVN_SNAPSHOT_VERSION` in the [Makefile](https://github.com/salesforce/dockerfile-image-update/blob/main/Makefile#L5)
   and in the
   [Dockerfile](https://github.com/salesforce/dockerfile-image-update/blob/afalko-maj-minor/Dockerfile#L4)
   before proceeding to the next steps. For example
