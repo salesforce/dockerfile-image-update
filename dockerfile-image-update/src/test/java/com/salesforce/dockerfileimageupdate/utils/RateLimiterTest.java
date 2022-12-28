@@ -18,7 +18,13 @@ public class RateLimiterTest {
         return new Object[][]{{2, 10, 5}, {4, 16, 4}};
     }
 
-    @Test(dataProvider = "rateLimitingData")
+    /**
+     * TODO
+     * This test is to test the rate Limiter against the wall clock.
+     * This will run at least the rate limit seconds. This needs to be refactored
+     * with millis or probably removed
+     */
+    /*@Test(dataProvider = "rateLimitingData")
     public void testingAgainstWallClock(int rateLimit, int durationLimit, int tokenAddingRate) throws Exception {
         FutureTask futureTask = new FutureTask(new RateLimiterCallable
                 (new RateLimiterEvent(null, rateLimit, durationLimit, tokenAddingRate)));
@@ -34,7 +40,7 @@ public class RateLimiterTest {
         assertTrue((endTime - startTime) > (tokenAddingRate * 1_000L));
         assertEquals(t1.getState().toString(), Thread.State.TERMINATED.toString());
         assertEquals(futureTask.get(), Optional.ofNullable(null));
-    }
+    }*/
 
     /**
      * Using Custom Clock to increment clock counter
