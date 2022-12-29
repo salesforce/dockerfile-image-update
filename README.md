@@ -224,7 +224,8 @@ set --rate-limit-pr-creations with appropriate value. More example below
 ##### Default case:
 
 ```
-example usage: dockerfile-image-update --useratelimiting 500 all image-tag-store-repo-falcon
+example usage: dockerfile-image-update all image-tag-store-repo-falcon //disabled
+example usage: dockerfile-image-update --rate-limit-pr-creations 500 all image-tag-store-repo-falcon //enabled
 ```
 By default, this feature is disabled. This will be enabled when argument ``--useratelimiting`` will be passed appropriate value 
 Above example will throttle the number of PRs cut based on default values as mentioned above i.e.,

@@ -9,6 +9,7 @@ import java.util.UnknownFormatConversionException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import net.sourceforge.argparse4j.inf.Namespace;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,7 +32,7 @@ import org.slf4j.LoggerFactory;
 public class RateLimiter {
 
     private static final Logger log = LoggerFactory.getLogger(RateLimiter.class);
-    private final long rateLimit;
+    private final long rate;
     private final Duration rateLimitDuration;
     private final Duration tokenAddingRate;
     private final Bucket bucket;
@@ -57,16 +58,16 @@ public class RateLimiter {
      */
     public <T extends TimeMeter> RateLimiter(long rLimit, Duration rLimitDuration,
                                              Duration tokAddingRate, T customTimeMeter) {
-        rateLimit = rLimit;
+        rate = rLimit;
         rateLimitDuration = rLimitDuration;
         tokenAddingRate = tokAddingRate;
         customTimeMeter = customTimeMeter != null ? customTimeMeter : (T) TimeMeter.SYSTEM_MILLISECONDS;
         // refill the bucket at the end of every 'rateLimitDuration' with 'rateLimit' tokens,
         // not exceeding the max capacity
-        Refill refill = Refill.intervally(rateLimit, rateLimitDuration);
+        Refill refill = Refill.intervally(rate, rateLimitDuration);
         // initially bucket will have no. of tokens equal to its max capacity i.e
         // the value of 'rateLimit'
-        Bandwidth limit = Bandwidth.classic(rateLimit, refill);
+        Bandwidth limit = Bandwidth.classic(rate, refill);
         this.bucket = Bucket.builder()
                 .addLimit(limit)
                 // this is internal limit to avoid spikes and distribute the load uniformly over
@@ -77,9 +78,9 @@ public class RateLimiter {
                 .build();
     }
 
-    public RateLimiter(long rateLimit, Duration rateLimitDuration,
+    public RateLimiter(long rate, Duration rateLimitDuration,
                        Duration tokenAddingRate) {
-        this(rateLimit, rateLimitDuration, tokenAddingRate, null);
+        this(rate, rateLimitDuration, tokenAddingRate, null);
 
     }
 
@@ -89,7 +90,7 @@ public class RateLimiter {
      *
      * @param ns Namespace {@see net.sourceforge.argparse4j.inf.Namespace}
      * @return RateLimiter object if required variable is set in Namespace
-     *          null otherwise.
+     * null otherwise.
      * @see net.sourceforge.argparse4j.inf.Namespace Namespace
      */
     public RateLimiter getRateLimiter(Namespace ns) {
@@ -128,6 +129,9 @@ public class RateLimiter {
      * and logic for populating those after tokenizing the input
      */
     class RateLimitEvent {
+        public final String errorMessage = "Unexpected format or unit encountered, valid input is " +
+                "<integer>-per-<time-unit> where time-init is one of 's', 'm', or 'h'. " +
+                "Example: 500-per-h";
         private final Pattern eventPattern =
                 Pattern.compile("(^[1-9]\\d{0,18})(-per-)?([1-9]\\d{0,18})*([smh]?)", Pattern.CASE_INSENSITIVE);
         private final long rateLimit;
@@ -159,7 +163,7 @@ public class RateLimiter {
         public RateLimitEvent tokenizeAndGetEvent(String input) {
 
             if (input == null) {
-                throw new UnknownFormatConversionException("Can not tokenize/parse a null object");
+                throw new UnknownFormatConversionException(errorMessage);
             }
 
             long rLimit;
@@ -173,7 +177,7 @@ public class RateLimiter {
             Matcher matcher = eventPattern.matcher(input);
 
             if (!matcher.matches()) {
-                throw new UnknownFormatConversionException("input argument is not in valid format and can't be tokenize");
+                throw new UnknownFormatConversionException(errorMessage);
             } else {
                 /**
                  * eventPattern regex is divided into 5 groups
@@ -190,7 +194,7 @@ public class RateLimiter {
                 rateDurationUnitChar = matcher.group(4); //can be empty or char s,m,h
             }
 
-            if (literalConstant == null || literalConstant.isEmpty()) {
+            if (StringUtils.isEmpty(literalConstant)) {
                 //return rate with default duration and token adding rate
                 return new RateLimitEvent(rLimit, Constants.DEFAULT_RATE_LIMIT_DURATION, Constants.DEFAULT_TOKEN_ADDING_RATE);
             }
@@ -216,7 +220,7 @@ public class RateLimiter {
                     break;
                 default:
                     //should not reach here are regex will enforce char, keeping it for any unexpected use case.
-                    throw new UnknownFormatConversionException("Unexpected format encountered, can't tokenize input");
+                    throw new UnknownFormatConversionException(errorMessage);
             }
             return new RateLimitEvent(rLimit, rLimitDuration, tokAddingRate);
         }

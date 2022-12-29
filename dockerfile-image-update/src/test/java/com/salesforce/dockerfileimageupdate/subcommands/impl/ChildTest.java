@@ -77,7 +77,6 @@ public class ChildTest {
                 IMG, "test",
                 FORCE_TAG, "test",
                 STORE, "s3://test"
-               // USE_RATE_LIMITING, false);
                 );
         Namespace ns = new Namespace(nsMap);
         DockerfileGitHubUtil dockerfileGitHubUtil = mock(DockerfileGitHubUtil.class);

@@ -15,13 +15,13 @@ import static org.testng.Assert.*;
 
 public class RateLimiterTest {
 
-    @DataProvider(name = "rateLimitingData")
-    public static Object[][] rateLimitingData() {
+    @DataProvider(name = "dataForTestingRateLimits")
+    public static Object[][] getRateLimitingData() {
         return new Object[][]{{2, 10, 5}, {4, 16, 4}};
     }
 
-    @DataProvider(name = "getRateLimitingData")
-    public static Object[][] getRateLimitingData() {
+    @DataProvider(name = "dataForTestingRateLimitingEventCreation")
+    public static Object[][] getDataForTestingRateLimitingEventCreation() {
         return new Object[][]{
                 {"1234-per-2h", RateLimiter.class, false},
                 {"500", RateLimiter.class, false},
@@ -38,7 +38,7 @@ public class RateLimiterTest {
      * This test is to test the rate Limiter against the wall clock.
      * This will run at least the rate limit seconds.
      */
-    @Test(dataProvider = "rateLimitingData")
+    @Test(dataProvider = "dataForTestingRateLimits")
     public void testingAgainstWallClock(int rateLimit, int durationLimit, int tokenAddingRate) throws Exception {
         FutureTask futureTask = new FutureTask(new RateLimiterCallable
                 (new RateLimitWrapper(null, rateLimit, durationLimit, tokenAddingRate)));
@@ -59,7 +59,7 @@ public class RateLimiterTest {
      *
      * @throws Exception
      */
-    @Test(dataProvider = "rateLimitingData")
+    @Test(dataProvider = "dataForTestingRateLimits")
     public void testingAgainstCustomClock(int rateLimit, int durationLimit, int tokenAddingRate) throws Exception {
         RateLimitWrapper event = new RateLimitWrapper
                 (new MockTimeMeter(), rateLimit, durationLimit, tokenAddingRate);
@@ -75,7 +75,7 @@ public class RateLimiterTest {
         assertEquals(futureTask.get(), Optional.ofNullable(null));
     }
 
-    @Test(dataProvider = "getRateLimitingData")
+    @Test(dataProvider = "dataForTestingRateLimitingEventCreation")
     public void testGetRateLimiter(String envVariableVal, Class expectedReturnType, boolean isnull) {
         Map<String, Object> nsMap = ImmutableMap.of(
                 Constants.RATE_LIMIT_PR_CREATION, envVariableVal);
@@ -148,7 +148,7 @@ class RateLimitWrapper {
 }
 
 class MockTimeMeter implements TimeMeter {
-    private volatile long currentTimeNanos;
+    private long currentTimeNanos;
 
     public MockTimeMeter() {
         currentTimeNanos = 0;
