@@ -36,13 +36,13 @@ public class ChildTest {
                         IMG, "test",
                         FORCE_TAG, "test",
                         STORE, "test",
-                        USE_RATE_LIMITING, true)},
+                        RATE_LIMIT_PR_CREATION, "500-per-60s")},
                 {ImmutableMap.of(
                         GIT_REPO, "test",
                         IMG, "test",
                         FORCE_TAG, "test",
                         STORE, "test",
-                        USE_RATE_LIMITING, true)},
+                        RATE_LIMIT_PR_CREATION, "500-per-60s")},
         };
     }
 
@@ -76,8 +76,9 @@ public class ChildTest {
                 GIT_REPO, "test",
                 IMG, "test",
                 FORCE_TAG, "test",
-                STORE, "s3://test",
-                USE_RATE_LIMITING, false);
+                STORE, "s3://test"
+               // USE_RATE_LIMITING, false);
+                );
         Namespace ns = new Namespace(nsMap);
         DockerfileGitHubUtil dockerfileGitHubUtil = mock(DockerfileGitHubUtil.class);
 
@@ -100,7 +101,7 @@ public class ChildTest {
                 IMG, "test",
                 FORCE_TAG, "test",
                 STORE, "test",
-                USE_RATE_LIMITING, true);
+                RATE_LIMIT_PR_CREATION, "500-per-60s");
         Namespace ns = new Namespace(nsMap);
         DockerfileGitHubUtil dockerfileGitHubUtil = mock(DockerfileGitHubUtil.class);
         RateLimiter rateLimiter = spy(new RateLimiter(DEFAULT_RATE_LIMIT,DEFAULT_RATE_LIMIT_DURATION

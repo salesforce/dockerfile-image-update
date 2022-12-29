@@ -21,6 +21,7 @@ import net.sourceforge.argparse4j.inf.Namespace;
 import org.kohsuke.github.*;
 import org.testng.annotations.Test;
 
+import static com.salesforce.dockerfileimageupdate.utils.Constants.RATE_LIMIT_PR_CREATION;
 import static org.mockito.Matchers.*;
 import static org.mockito.Mockito.*;
 import static org.testng.Assert.assertEquals;
@@ -35,8 +36,8 @@ public class AllTest {
         Map<String, Object> nsMap = ImmutableMap.of(Constants.IMG,
                 "image", Constants.TAG,
                 "tag", Constants.STORE,
-                "store", Constants.USE_RATE_LIMITING,
-                true);
+                "store", RATE_LIMIT_PR_CREATION, "500-per-60s");
+
         Namespace ns = new Namespace(nsMap);
         RateLimiter rateLimiter = spy(new RateLimiter(Constants.DEFAULT_RATE_LIMIT,Constants.DEFAULT_RATE_LIMIT_DURATION
                 ,Constants.DEFAULT_TOKEN_ADDING_RATE));
@@ -86,8 +87,8 @@ public class AllTest {
         Map<String, Object> nsMap = ImmutableMap.of(Constants.IMG,
                 "image", Constants.TAG,
                 "tag", Constants.STORE,
-                "store", Constants.USE_RATE_LIMITING,
-                true);
+                "store", RATE_LIMIT_PR_CREATION, "500-per-60s");
+
         Namespace ns = new Namespace(nsMap);
         All all = spy(new All());
         DockerfileGitHubUtil dockerfileGitHubUtil = mock(DockerfileGitHubUtil.class);
@@ -136,8 +137,7 @@ public class AllTest {
         Map<String, Object> nsMap = ImmutableMap.of(Constants.IMG,
                 "image", Constants.TAG,
                 "tag", Constants.STORE,
-                "store", Constants.USE_RATE_LIMITING,
-                false);
+                "store");
         Namespace ns = new Namespace(nsMap);
         All all = spy(new All());
         DockerfileGitHubUtil dockerfileGitHubUtil = mock(DockerfileGitHubUtil.class);
@@ -188,8 +188,7 @@ public class AllTest {
         Map<String, Object> nsMap = ImmutableMap.of(Constants.IMG,
                 "image", Constants.TAG,
                 "tag", Constants.STORE,
-                "store", Constants.USE_RATE_LIMITING,
-                false);
+                "store");
         Namespace ns = new Namespace(nsMap);
         All all = spy(new All());
         DockerfileGitHubUtil dockerfileGitHubUtil = mock(DockerfileGitHubUtil.class);

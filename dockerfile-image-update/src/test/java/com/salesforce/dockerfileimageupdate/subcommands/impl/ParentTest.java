@@ -19,6 +19,7 @@ import org.kohsuke.github.*;
 import org.testng.annotations.Test;
 
 import java.util.*;
+import static com.salesforce.dockerfileimageupdate.utils.Constants.RATE_LIMIT_PR_CREATION;
 import static org.mockito.Matchers.*;
 import static org.mockito.Mockito.*;
 import static org.testng.Assert.*;
@@ -90,7 +91,6 @@ public class ParentTest {
                 "image", Constants.TAG,
                 "tag", Constants.STORE,
                 "store", Constants.SKIP_PR_CREATION,
-                false, Constants.USE_RATE_LIMITING,
                 false);
         Namespace ns = new Namespace(nsMap);
         Parent parent = spy(new Parent());
@@ -127,8 +127,7 @@ public class ParentTest {
                 "image", Constants.TAG,
                 "tag", Constants.STORE,
                 "s3://store", Constants.SKIP_PR_CREATION,
-                false, Constants.USE_RATE_LIMITING,
-                true);
+                false, RATE_LIMIT_PR_CREATION, "500-per-60s");
         Namespace ns = new Namespace(nsMap);
         Parent parent = spy(new Parent());
         DockerfileGitHubUtil dockerfileGitHubUtil = mock(DockerfileGitHubUtil.class);

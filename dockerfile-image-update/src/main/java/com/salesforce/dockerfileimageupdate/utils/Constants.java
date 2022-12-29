@@ -39,14 +39,11 @@ public class Constants {
     public static final String GIT_API_SEARCH_LIMIT = "ghapisearchlimit";
     public static final String SKIP_PR_CREATION = "skipprcreation";
     public static final String IGNORE_IMAGE_STRING = "x";
-    public static final String USE_RATE_LIMITING = "useRatelimiting";
-    public static final String RATE_LIMIT = "rateLimit";
-    public static final String RATE_LIMIT_DURATION = "rateLimitDuration";
-    public static final String TOKEN_ADDING_RATE = "tokenAddingRate";
+    public static final String RATE_LIMIT_PR_CREATION = "rate-limit-pr-creations";
     //max number of PRs to be sent (or tokens to be added)  per DEFAULT_RATE_LIMIT_DURATION(per hour in this case)
-    public static final long DEFAULT_RATE_LIMIT = 30;
-    public static final Duration DEFAULT_RATE_LIMIT_DURATION = Duration.ofHours(1);
-    //token adding rate(here:a token added every 2 mins in the bucket)
-    public static final Duration DEFAULT_TOKEN_ADDING_RATE = Duration.ofMinutes(2);
+    public static final long DEFAULT_RATE_LIMIT = 60;
+    public static final Duration DEFAULT_RATE_LIMIT_DURATION = Duration.ofMinutes(DEFAULT_RATE_LIMIT);
+    //token adding rate(here:a token added every 2 minutes in the bucket)
+    public static final Duration DEFAULT_TOKEN_ADDING_RATE = Duration.ofMinutes(1);
 
 }

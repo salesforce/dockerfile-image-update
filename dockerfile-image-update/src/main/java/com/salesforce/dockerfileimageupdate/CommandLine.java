@@ -85,31 +85,12 @@ public class CommandLine {
         parser.addArgument("-x")
                 .help("comment snippet mentioned in line just before FROM instruction for ignoring a child image. " +
                         "Defaults to 'no-dfiu'");
-        parser.addArgument("-u", "--" + Constants.USE_RATE_LIMITING)
-                .type(Boolean.class)
-                .setDefault(false)
-                .required(false)
-                .help("Use RateLimiting when sending PRs. Defaults to false means no RateLimiting." +
-                        "dependent arguments(-r , -d, -t ) are optional. The defaults will be used" +
-                        "for the dependent arguments");
-        parser.addArgument("-r", "--" + Constants.RATE_LIMIT)
-                .type(Long.class)
-                .required(false)
-                .help("Max number of PRs to be sent per " + Constants.RATE_LIMIT_DURATION +
-                        "Defaults to " + DEFAULT_RATE_LIMIT +
-                        " and is considered only when -u argument is true");
-        parser.addArgument("-d", "--" + Constants.RATE_LIMIT_DURATION)
+        parser.addArgument("-r", "--" + RATE_LIMIT_PR_CREATION)
                 .type(String.class)
+                .setDefault("")
                 .required(false)
-                .help("Rate limit duration specified in ISO-8601 duration format." +
-                        "Defaults to " + DEFAULT_RATE_LIMIT_DURATION.toHours() +
-                        " hours and is considered only when -u argument is true");
-        parser.addArgument("-t", "--" + Constants.TOKEN_ADDING_RATE)
-                .type(String.class)
-                .required(false)
-                .help("Token adding rate specified in ISO-8601 duration format." +
-                        "Defaults to " + DEFAULT_TOKEN_ADDING_RATE.toMinutes() +
-                        " minutes and is considered only when -u argument is true");
+                .help("Use RateLimiting when sending PRs. RateLimiting is enabled only if this value is set it's disabled by default.");
+
         return parser;
     }
 

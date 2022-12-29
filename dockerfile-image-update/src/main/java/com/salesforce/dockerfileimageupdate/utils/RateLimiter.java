@@ -5,7 +5,11 @@ import io.github.bucket4j.Bucket;
 import io.github.bucket4j.Refill;
 import io.github.bucket4j.TimeMeter;
 import java.time.Duration;
+import java.util.UnknownFormatConversionException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import net.sourceforge.argparse4j.inf.Namespace;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,13 +44,14 @@ public class RateLimiter {
     /**
      * constructor to initialize RateLimiter with required arguments.
      * If time meter is specified, the system default will be chosen.
-     * @param rLimit maximum count of PRs to be sent per rLimitDuration
-     * @param rLimitDuration Rate Limit duration
-     * @param tokAddingRate Rate at which tokens are added in the bucket
+     *
+     * @param rLimit          maximum count of PRs to be sent per rLimitDuration
+     * @param rLimitDuration  Rate Limit duration
+     * @param tokAddingRate   Rate at which tokens are added in the bucket
      * @param customTimeMeter Clock to be used for bucketing the tokens.
      *                        Defaults to TimeMeter.SYSTEM_MILLISECONDS
-     * @param <T> Implementing class for customTimeMeter must be a class
-     *           extending TimeMeter
+     * @param <T>             Implementing class for customTimeMeter must be a class
+     *                        extending TimeMeter
      * @see TimeMeter
      * @see TimeMeter#SYSTEM_MILLISECONDS
      */
@@ -80,20 +85,25 @@ public class RateLimiter {
 
     /**
      * This method will create and return an object of type RateLimiter based on the
-     * variables set in the Namespace. If all the required variables are not set, it
-     * will use the program default values.
+     * variable set in the Namespace.
+     *
      * @param ns Namespace {@see net.sourceforge.argparse4j.inf.Namespace}
-     * @return RateLimiter object
+     * @return RateLimiter object if required variable is set in Namespace
+     *          null otherwise.
      * @see net.sourceforge.argparse4j.inf.Namespace Namespace
      */
-
     public RateLimiter getRateLimiter(Namespace ns) {
-        if (ns.get(Constants.USE_RATE_LIMITING)) {
+        String rateLimitPRCreation = ns.get(Constants.RATE_LIMIT_PR_CREATION);
+        if (rateLimitPRCreation != null) {
+            RateLimitEvent rlEvent;
+            try {
+                rlEvent = new RateLimitEvent().tokenizeAndGetEvent(rateLimitPRCreation);
+            } catch (UnknownFormatConversionException ex) {
+                log.error("Failed to parse ratelimiting argument, will not impose any rate limits", ex);
+                return null;
+            }
             log.info("Use rateLimiting is enabled, the PRs will be throttled in this run..");
-            long rLimit = ns.get(Constants.RATE_LIMIT) != null ? ns.get(Constants.RATE_LIMIT) : Constants.DEFAULT_RATE_LIMIT;
-            Duration rLimitDuration = ns.get(Constants.RATE_LIMIT_DURATION) != null ? Duration.parse(ns.get(Constants.RATE_LIMIT_DURATION)) : Constants.DEFAULT_RATE_LIMIT_DURATION;
-            Duration tokAddingRate = ns.get(Constants.TOKEN_ADDING_RATE) != null ? Duration.parse(ns.get(Constants.TOKEN_ADDING_RATE)) : Constants.DEFAULT_TOKEN_ADDING_RATE;
-            return new RateLimiter(rLimit, rLimitDuration, tokAddingRate);
+            return new RateLimiter(rlEvent.rateLimit, rlEvent.rateLimitDuration, rlEvent.tokenAddingRate);
         }
         log.info("Use rateLimiting is disabled, the PRs will not be throttled in this run..");
         return null;
@@ -103,6 +113,7 @@ public class RateLimiter {
      * This method consumes a token from the bucked.
      * It blocks the execution when no token is available
      * for consumption.
+     *
      * @throws InterruptedException when interrupted
      * @see RateLimiter#bucket
      */
@@ -110,4 +121,104 @@ public class RateLimiter {
         bucket.asBlocking().consume(1);
     }
 
+    /**
+     * Creating this as inner class as existence of this class outside
+     * RateLimiter class will make a little sense. This class is solely
+     * meant to encapsulate the primitives needed for the RateLimiter
+     * and logic for populating those after tokenizing the input
+     */
+    class RateLimitEvent {
+        private final Pattern eventPattern =
+                Pattern.compile("(^[1-9]\\d{0,18})(-per-)?([1-9]\\d{0,18})*([smh]?)", Pattern.CASE_INSENSITIVE);
+        private final long rateLimit;
+        private final Duration rateLimitDuration;
+        private final Duration tokenAddingRate;
+
+        public RateLimitEvent(long rateLimit, Duration rateLimitDuration, Duration tokenAddingRate) {
+            this.rateLimit = rateLimit;
+            this.rateLimitDuration = rateLimitDuration;
+            this.tokenAddingRate = tokenAddingRate;
+        }
+
+        public RateLimitEvent() {
+            this(0, null, null);
+        }
+
+        public long getRateLimit() {
+            return rateLimit;
+        }
+
+        public Duration getRateLimitDuration() {
+            return rateLimitDuration;
+        }
+
+        public Duration getTokenAddingRate() {
+            return tokenAddingRate;
+        }
+
+        public RateLimitEvent tokenizeAndGetEvent(String input) {
+
+            if (input == null) {
+                throw new UnknownFormatConversionException("Can not tokenize/parse a null object");
+            }
+
+            long rLimit;
+            long duration;
+            Duration rLimitDuration;
+            Duration tokAddingRate;
+            String literalConstant;
+            String rateDuration;
+            String rateDurationUnitChar;
+
+            Matcher matcher = eventPattern.matcher(input);
+
+            if (!matcher.matches()) {
+                throw new UnknownFormatConversionException("input argument is not in valid format and can't be tokenize");
+            } else {
+                /**
+                 * eventPattern regex is divided into 5 groups
+                 * 0 group being the whole expression
+                 * 1 group is numeric rate limit value and will always
+                 *                          be present if exp matched
+                 * 2 is literal constant '-per-' and is optional
+                 * 3 is numeric rate duration and is optional
+                 * 4 is a char(s/m/h) and is optional
+                 */
+                rLimit = Long.parseLong(matcher.group(1)); // will always have a numeric value that fits in Long
+                literalConstant = matcher.group(2); // can be null or empty or '-per-'
+                rateDuration = matcher.group(3);// can be null or empty or numeric value
+                rateDurationUnitChar = matcher.group(4); //can be empty or char s,m,h
+            }
+
+            if (literalConstant == null || literalConstant.isEmpty()) {
+                //return rate with default duration and token adding rate
+                return new RateLimitEvent(rLimit, Constants.DEFAULT_RATE_LIMIT_DURATION, Constants.DEFAULT_TOKEN_ADDING_RATE);
+            }
+
+            // value is either going to be a valid number or null. defaulting to 1 unit(every hour/every min and so on)
+            duration = NumberUtils.isParsable(rateDuration) ? Long.parseLong(rateDuration) : 1;
+
+            switch (rateDurationUnitChar) {
+                case "s":
+                case "S":
+                    rLimitDuration = Duration.ofSeconds(duration);
+                    tokAddingRate = Duration.ofSeconds(rLimit / duration);
+                    break;
+                case "m":
+                case "M":
+                    rLimitDuration = Duration.ofMinutes(duration);
+                    tokAddingRate = Duration.ofMinutes(rLimit / duration);
+                    break;
+                case "h":
+                case "H":
+                    rLimitDuration = Duration.ofHours(duration);
+                    tokAddingRate = Duration.ofHours(rLimit / duration);
+                    break;
+                default:
+                    //should not reach here are regex will enforce char, keeping it for any unexpected use case.
+                    throw new UnknownFormatConversionException("Unexpected format encountered, can't tokenize input");
+            }
+            return new RateLimitEvent(rLimit, rLimitDuration, tokAddingRate);
+        }
+    }
 }
