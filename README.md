@@ -219,16 +219,17 @@ FROM imagename:imagetag # no-dfiu
 ### PR throttling
 
 In case you want to throttle the number of PRs cut by DFIU over a period of time,
-set --useratelimiting flag as true.
+set --rate-limit-pr-creations with appropriate value. More example below
 
 ##### Default case:
 
 ```
-example usage: dockerfile-image-update --useratelimiting true all image-tag-store-repo-falcon
+example usage: dockerfile-image-update --useratelimiting 500 all image-tag-store-repo-falcon
 ```
+By default, this feature is disabled. This will be enabled when argument ``--useratelimiting`` will be passed appropriate value 
 Above example will throttle the number of PRs cut based on default values as mentioned above i.e.,
-maximum 30 PRs(configured by -r/--rateLimit) could be sent within a period of 1hour (configured by -d/--rateLimitDuration). To distribute the load uniformly and avoid sudden spikes,
-at max only 1 PR could be sent in every 2 mins(configured by -t/--tokenAddingRate). The process will go in waiting state until next PR could be sent.
+maximum 500 PRs could be sent within a period of 1 hour . To distribute the load uniformly and avoid sudden spikes,
+at max only 8(500/60) PRs could be sent in every 1 min. The process will go in waiting state until next PR could be sent.
 
 ##### Configuring the rate limit:
 
