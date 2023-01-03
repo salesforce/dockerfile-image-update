@@ -38,7 +38,7 @@ public class All implements ExecutableWithNamespace {
     @Override
     public void execute(final Namespace ns, final DockerfileGitHubUtil dockerfileGitHubUtil) throws Exception {
         loadDockerfileGithubUtil(dockerfileGitHubUtil);
-        RateLimiter rateLimiter = new RateLimiter().getRateLimiter(ns);
+        RateLimiter rateLimiter =  RateLimiter.getRateLimiter(ns);
         String store = ns.get(Constants.STORE);
         try {
             ImageTagStore imageTagStore = ImageStoreUtil.initializeImageTagStore(this.dockerfileGitHubUtil, store);

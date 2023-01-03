@@ -4,7 +4,6 @@ import io.github.bucket4j.Bandwidth;
 import io.github.bucket4j.Bucket;
 import io.github.bucket4j.Refill;
 import io.github.bucket4j.TimeMeter;
-import java.util.Optional;
 import java.util.UnknownFormatConversionException;
 import net.sourceforge.argparse4j.inf.Namespace;
 import org.slf4j.Logger;
@@ -76,19 +75,22 @@ public class RateLimiter {
      * null otherwise.
      * @see net.sourceforge.argparse4j.inf.Namespace Namespace
      */
-    public static Optional<RateLimiter> getRateLimiter(Namespace ns) {
+    public static RateLimiter getRateLimiter(Namespace ns) {
         String rateLimitPRCreation = ns.get(Constants.RATE_LIMIT_PR_CREATION);
-        RateLimit rl = null;
+        RateLimiter rateLimiter = null;
+
         if (rateLimitPRCreation != null) {
             try {
-                rl = RateLimit.tokenizeAndGetRateLimit(rateLimitPRCreation);
+                RateLimit rl = RateLimit.tokenizeAndGetRateLimit(rateLimitPRCreation);
+                rateLimiter = new RateLimiter(rl);
                 log.info("Use rateLimiting is enabled, the PRs will be throttled in this run..");
             } catch (UnknownFormatConversionException ex) {
                 log.error("Failed to parse ratelimiting argument, will not impose any rate limits", ex);
             }
+        } else {
+            log.info("Use rateLimiting is disabled, the PRs will not be throttled in this run..");
         }
-        log.info("Use rateLimiting is disabled, the PRs will not be throttled in this run..");
-        return Optional.ofNullable(new RateLimiter(rl));
+        return rateLimiter;
     }
 
     /**

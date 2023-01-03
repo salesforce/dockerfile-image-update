@@ -39,8 +39,7 @@ public class AllTest {
                 "store", RATE_LIMIT_PR_CREATION, "500-per-60s");
 
         Namespace ns = new Namespace(nsMap);
-        RateLimiter rateLimiter = spy(new RateLimiter(Constants.DEFAULT_RATE_LIMIT,Constants.DEFAULT_RATE_LIMIT_DURATION
-                ,Constants.DEFAULT_TOKEN_ADDING_RATE));
+        RateLimiter rateLimiter = spy(new RateLimiter());
         All all = spy(new All());
         DockerfileGitHubUtil dockerfileGitHubUtil = mock(DockerfileGitHubUtil.class);
         GitHubPullRequestSender pullRequestSender = mock(GitHubPullRequestSender.class);
@@ -65,7 +64,6 @@ public class AllTest {
         when(all.getPullRequestSender(dockerfileGitHubUtil, ns)).thenReturn(pullRequestSender);
         when(all.getGitForkBranch("image1", "tag1", ns)).thenReturn(gitForkBranch);
         when(all.getPullRequests()).thenReturn(pullRequests);
-        when(rateLimiter.getRateLimiter(ns)).thenReturn(rateLimiter);
         doNothing().when(pullRequests).prepareToCreate(ns, pullRequestSender,
                 contentsWithImage, gitForkBranch, dockerfileGitHubUtil,
                 rateLimiter);
@@ -93,8 +91,7 @@ public class AllTest {
         All all = spy(new All());
         DockerfileGitHubUtil dockerfileGitHubUtil = mock(DockerfileGitHubUtil.class);
         GitHubPullRequestSender pullRequestSender = mock(GitHubPullRequestSender.class);
-        RateLimiter rateLimiter = spy(new RateLimiter(Constants.DEFAULT_RATE_LIMIT,Constants.DEFAULT_RATE_LIMIT_DURATION
-                ,Constants.DEFAULT_TOKEN_ADDING_RATE));
+        RateLimiter rateLimiter = spy(new RateLimiter());
         GitForkBranch gitForkBranch = mock(GitForkBranch.class);
         PullRequests pullRequests = mock(PullRequests.class);
         GitHubJsonStore imageTagStore = mock(GitHubJsonStore.class);
@@ -142,8 +139,7 @@ public class AllTest {
         All all = spy(new All());
         DockerfileGitHubUtil dockerfileGitHubUtil = mock(DockerfileGitHubUtil.class);
         GitHubPullRequestSender pullRequestSender = mock(GitHubPullRequestSender.class);
-        RateLimiter rateLimiter = spy(new RateLimiter(Constants.DEFAULT_RATE_LIMIT,Constants.DEFAULT_RATE_LIMIT_DURATION
-                ,Constants.DEFAULT_TOKEN_ADDING_RATE));
+        RateLimiter rateLimiter = spy(new RateLimiter());
         GitForkBranch gitForkBranch = mock(GitForkBranch.class);
         PullRequests pullRequests = mock(PullRequests.class);
         GitHubJsonStore imageTagStore = mock(GitHubJsonStore.class);
@@ -158,7 +154,6 @@ public class AllTest {
 
 
         Iterator<ImageTagStoreContent> imageTagStoreContentIterator = mock(Iterator.class);
-        when(rateLimiter.getRateLimiter(ns)).thenReturn(rateLimiter);
         when(imageTagStoreContentIterator.next()).thenReturn(imageTagStoreContent);
         when(imageTagStoreContentIterator.hasNext()).thenReturn(true, false);
         when(storeContents.iterator()).thenReturn(imageTagStoreContentIterator);

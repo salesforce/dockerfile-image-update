@@ -28,8 +28,7 @@ public class PullRequestsTest {
         PagedSearchIterable<GHContent> contentsFoundWithImage = mock(PagedSearchIterable.class);
         GitForkBranch gitForkBranch = mock(GitForkBranch.class);
         DockerfileGitHubUtil dockerfileGitHubUtil = mock(DockerfileGitHubUtil.class);
-        RateLimiter rateLimiter = Mockito.spy(new RateLimiter(Constants.DEFAULT_RATE_LIMIT,Constants.DEFAULT_RATE_LIMIT_DURATION
-                ,Constants.DEFAULT_TOKEN_ADDING_RATE));
+        RateLimiter rateLimiter = Mockito.spy(new RateLimiter());
         Multimap<String, GitHubContentToProcess> pathToDockerfilesInParentRepo = ArrayListMultimap.create();
         GitHubContentToProcess gitHubContentToProcess = mock(GitHubContentToProcess.class);
         pathToDockerfilesInParentRepo.put("repo1", gitHubContentToProcess);
@@ -58,8 +57,7 @@ public class PullRequestsTest {
         GitHubPullRequestSender pullRequestSender = mock(GitHubPullRequestSender.class);
         PagedSearchIterable<GHContent> contentsFoundWithImage = mock(PagedSearchIterable.class);
         GitForkBranch gitForkBranch = mock(GitForkBranch.class);
-        RateLimiter rateLimiter = Mockito.spy(new RateLimiter(Constants.DEFAULT_RATE_LIMIT,Constants.DEFAULT_RATE_LIMIT_DURATION
-                ,Constants.DEFAULT_TOKEN_ADDING_RATE));
+        RateLimiter rateLimiter = Mockito.spy(new RateLimiter());
         DockerfileGitHubUtil dockerfileGitHubUtil = mock(DockerfileGitHubUtil.class);
         Multimap<String, GitHubContentToProcess> pathToDockerfilesInParentRepo = ArrayListMultimap.create();
         GitHubContentToProcess gitHubContentToProcess = mock(GitHubContentToProcess.class);
@@ -97,8 +95,7 @@ public class PullRequestsTest {
         GitHubPullRequestSender pullRequestSender = mock(GitHubPullRequestSender.class);
         PagedSearchIterable<GHContent> contentsFoundWithImage = mock(PagedSearchIterable.class);
         GitForkBranch gitForkBranch = mock(GitForkBranch.class);
-        RateLimiter rateLimiter = Mockito.spy(new RateLimiter(Constants.DEFAULT_RATE_LIMIT,Constants.DEFAULT_RATE_LIMIT_DURATION
-                ,Constants.DEFAULT_TOKEN_ADDING_RATE));
+        RateLimiter rateLimiter = Mockito.spy(new RateLimiter());
         DockerfileGitHubUtil dockerfileGitHubUtil = mock(DockerfileGitHubUtil.class);
         Multimap<String, GitHubContentToProcess> pathToDockerfilesInParentRepo = mock(Multimap.class);
         GitHubContentToProcess gitHubContentToProcess = mock(GitHubContentToProcess.class);

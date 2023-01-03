@@ -51,15 +51,13 @@ public class ChildTest {
         Child child = spy(new Child());
         Namespace ns = new Namespace(inputMap);
         DockerfileGitHubUtil dockerfileGitHubUtil = mock(DockerfileGitHubUtil.class);
-        RateLimiter rateLimiter = spy(new RateLimiter(DEFAULT_RATE_LIMIT,DEFAULT_RATE_LIMIT_DURATION
-                ,DEFAULT_TOKEN_ADDING_RATE));
+        RateLimiter rateLimiter = spy(new RateLimiter());
         GitHubJsonStore imageTagStore = mock(GitHubJsonStore.class);
         when(dockerfileGitHubUtil.getRepo(any())).thenReturn(new GHRepository());
         when(dockerfileGitHubUtil.getOrCreateFork(any())).thenReturn(new GHRepository());
         doNothing().when(dockerfileGitHubUtil).modifyAllOnGithub(any(), any(), any(), any(), any());
 
         when(dockerfileGitHubUtil.getGitHubJsonStore("test")).thenReturn(imageTagStore);
-        when(rateLimiter.getRateLimiter(ns)).thenReturn(rateLimiter);
 
         doNothing().when(dockerfileGitHubUtil).createPullReq(any(), anyString(), any(), any(), eq(rateLimiter));
 
@@ -99,15 +97,12 @@ public class ChildTest {
                 GIT_REPO, "test",
                 IMG, "test",
                 FORCE_TAG, "test",
-                STORE, "test",
-                RATE_LIMIT_PR_CREATION, "500-per-60s");
+                STORE, "test");
         Namespace ns = new Namespace(nsMap);
         DockerfileGitHubUtil dockerfileGitHubUtil = mock(DockerfileGitHubUtil.class);
-        RateLimiter rateLimiter = spy(new RateLimiter(DEFAULT_RATE_LIMIT,DEFAULT_RATE_LIMIT_DURATION
-                ,DEFAULT_TOKEN_ADDING_RATE));
+        RateLimiter rateLimiter = spy(new RateLimiter());
         when(dockerfileGitHubUtil.getRepo(any())).thenReturn(new GHRepository());
         when(dockerfileGitHubUtil.getOrCreateFork(any())).thenReturn(null);
-        when(rateLimiter.getRateLimiter(ns)).thenReturn(rateLimiter);
         GitHubJsonStore imageTagStore = mock(GitHubJsonStore.class);
         when(dockerfileGitHubUtil.getGitHubJsonStore("test")).thenReturn(imageTagStore);
         child.execute(ns, dockerfileGitHubUtil);

@@ -40,16 +40,19 @@ public class RateLimiterTest {
      */
     @Test(dataProvider = "dataForTestingRateLimits")
     public void testingAgainstWallClock(int rateLimit, int durationLimit, int tokenAddingRate) throws Exception {
-        FutureTask futureTask = new FutureTask(new RateLimiterCallable
-                (new RateLimitWrapper(null, rateLimit, durationLimit, tokenAddingRate)));
+        RateLimit rl = new RateLimit(rateLimit, Duration.ofSeconds(durationLimit), Duration.ofSeconds(tokenAddingRate));
+        RateLimitTestEvent event = new RateLimitTestEvent(null, rl);
+        FutureTask futureTask = new FutureTask(new RateLimiterCallable(event));
         Thread t1 = new Thread(futureTask);
         t1.start();
         Thread.sleep(100);
         // the token should be consumed within first 3s leaving the thread in blocked state as it'd be waiting for
         // next token to be available
+
         assertEquals(t1.getState().toString(), Thread.State.TIMED_WAITING.toString());
         t1.join();
         assertEquals(t1.getState().toString(), Thread.State.TERMINATED.toString());
+        assertEquals(event.getProcessedEventCount().get(), rateLimit);
         assertEquals(futureTask.get(), Optional.ofNullable(null));
     }
 
@@ -61,8 +64,8 @@ public class RateLimiterTest {
      */
     @Test(dataProvider = "dataForTestingRateLimits")
     public void testingAgainstCustomClock(int rateLimit, int durationLimit, int tokenAddingRate) throws Exception {
-        RateLimitWrapper event = new RateLimitWrapper
-                (new MockTimeMeter(), rateLimit, durationLimit, tokenAddingRate);
+        RateLimit rl = new RateLimit(rateLimit, Duration.ofSeconds(durationLimit), Duration.ofSeconds(tokenAddingRate));
+        RateLimitTestEvent event = new RateLimitTestEvent(new MockTimeMeter(), rl);
         FutureTask futureTask = new FutureTask(new RateLimiterCallable(event));
         Thread t1 = new Thread(futureTask);
         long startTime = System.currentTimeMillis();
@@ -70,7 +73,7 @@ public class RateLimiterTest {
         t1.join();
         long endTime = System.currentTimeMillis();
         assertTrue((endTime - startTime) < (tokenAddingRate * 1_000L));
-        assertEquals(event.getProcessedEventCount(), rateLimit);
+        assertEquals(event.getProcessedEventCount().get(), rateLimit);
         assertEquals(t1.getState().toString(), Thread.State.TERMINATED.toString());
         assertEquals(futureTask.get(), Optional.ofNullable(null));
     }
@@ -80,7 +83,7 @@ public class RateLimiterTest {
         Map<String, Object> nsMap = ImmutableMap.of(
                 Constants.RATE_LIMIT_PR_CREATION, envVariableVal);
         Namespace ns = new Namespace(nsMap);
-        RateLimiter rateLimiter = new RateLimiter().getRateLimiter(ns);
+        RateLimiter rateLimiter = RateLimiter.getRateLimiter(ns);
 
         if (isnull) {
             assertNull(rateLimiter);
@@ -93,24 +96,23 @@ public class RateLimiterTest {
 
 
 class RateLimiterCallable implements Callable {
-    RateLimitWrapper rateLimitWrapper;
+    RateLimitTestEvent rateLimitTestEvent;
 
-    RateLimiterCallable(RateLimitWrapper rateLimitWrapper) {
-        this.rateLimitWrapper = rateLimitWrapper;
+    RateLimiterCallable(RateLimitTestEvent rateLimitTestEvent) {
+        this.rateLimitTestEvent = rateLimitTestEvent;
     }
 
     @Override
     public Optional<Exception> call() {
         try {
-            RateLimiter rateLimiter = new RateLimiter(rateLimitWrapper.ratelimit, Duration.ofSeconds(rateLimitWrapper.durationLimit),
-                    Duration.ofSeconds(rateLimitWrapper.tokenAddingRate), rateLimitWrapper.getClock());
+            RateLimiter rateLimiter = new RateLimiter(rateLimitTestEvent.getRateLimit(), rateLimitTestEvent.getClock());
             int counter = 0;
-            while (counter++ < rateLimitWrapper.ratelimit) {
+            while (counter++ < rateLimitTestEvent.getRateLimit().getRate()) {
                 rateLimiter.consume();
-                rateLimitWrapper.incrementEventProcessed();
-                assertEquals(Thread.currentThread().getState().toString(), "RUNNABLE");
-                if (rateLimitWrapper.getClock() != null) {
-                    rateLimitWrapper.getClock().addSeconds(rateLimitWrapper.tokenAddingRate);
+                rateLimitTestEvent.incrementEventProcessed();
+
+                if (rateLimitTestEvent.getClock() != null) {
+                    rateLimitTestEvent.getClock().addSeconds(rateLimitTestEvent.getRateLimit().getTokenAddingRate().getSeconds());
                 }
             }
             return Optional.ofNullable(null);
@@ -120,30 +122,30 @@ class RateLimiterCallable implements Callable {
     }
 }
 
-class RateLimitWrapper {
+class RateLimitTestEvent {
     final MockTimeMeter clock;
-    final long ratelimit;
-    final long durationLimit;
-    final long tokenAddingRate;
+    final RateLimit rateLimit;
     final AtomicInteger processedEventCount = new AtomicInteger();
 
-    public RateLimitWrapper(MockTimeMeter clock, long ratelimit, long durationLimit, long tokenAddingRate) {
+    public RateLimitTestEvent(MockTimeMeter clock, RateLimit rateLimit) {
         this.clock = clock;
-        this.ratelimit = ratelimit;
-        this.durationLimit = durationLimit;
-        this.tokenAddingRate = tokenAddingRate;
+        this.rateLimit = rateLimit;
     }
 
     public void incrementEventProcessed() {
         processedEventCount.incrementAndGet();
     }
 
-    public int getProcessedEventCount() {
-        return processedEventCount.get();
-    }
-
     public MockTimeMeter getClock() {
         return clock;
+    }
+
+    public RateLimit getRateLimit() {
+        return rateLimit;
+    }
+
+    public AtomicInteger getProcessedEventCount() {
+        return processedEventCount;
     }
 }
 

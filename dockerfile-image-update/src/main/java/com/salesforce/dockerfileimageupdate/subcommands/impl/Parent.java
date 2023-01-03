@@ -60,7 +60,7 @@ public class Parent implements ExecutableWithNamespace {
         PullRequests pullRequests = getPullRequests();
         GitHubPullRequestSender pullRequestSender = getPullRequestSender(dockerfileGitHubUtil, ns);
         GitForkBranch gitForkBranch = getGitForkBranch(ns);
-        RateLimiter rateLimiter = new RateLimiter().getRateLimiter(ns);
+        RateLimiter rateLimiter = RateLimiter.getRateLimiter(ns);
         log.info("Finding Dockerfiles with the given image...");
 
         Integer gitApiSearchLimit = ns.get(Constants.GIT_API_SEARCH_LIMIT);

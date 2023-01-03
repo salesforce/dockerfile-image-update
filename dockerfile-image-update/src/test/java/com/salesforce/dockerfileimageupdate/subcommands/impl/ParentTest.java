@@ -43,8 +43,7 @@ public class ParentTest {
         PagedSearchIterable<GHContent> contentsWithImage = mock(PagedSearchIterable.class);
         PullRequests pullRequests = mock(PullRequests.class);
         GitHubJsonStore imageTagStore = mock(GitHubJsonStore.class);
-        RateLimiter rateLimiter = spy(new RateLimiter(Constants.DEFAULT_RATE_LIMIT,Constants.DEFAULT_RATE_LIMIT_DURATION
-                ,Constants.DEFAULT_TOKEN_ADDING_RATE));
+        RateLimiter rateLimiter = spy(new RateLimiter());
 
         when(dockerfileGitHubUtil.getGitHubJsonStore("store")).thenReturn(imageTagStore);
 
@@ -72,8 +71,7 @@ public class ParentTest {
         GitForkBranch gitForkBranch = mock(GitForkBranch.class);
         PagedSearchIterable<GHContent> contentsWithImage = mock(PagedSearchIterable.class);
         PullRequests pullRequests = mock(PullRequests.class);
-        RateLimiter rateLimiter = spy(new RateLimiter(Constants.DEFAULT_RATE_LIMIT,Constants.DEFAULT_RATE_LIMIT_DURATION
-                ,Constants.DEFAULT_TOKEN_ADDING_RATE));
+        RateLimiter rateLimiter = spy(new RateLimiter());
 
         parent.execute(ns, dockerfileGitHubUtil);
 
@@ -137,10 +135,7 @@ public class ParentTest {
         PagedSearchIterable<GHContent> contentsWithImage = mock(PagedSearchIterable.class);
         List<PagedSearchIterable<GHContent>> contentsWithImageList = Collections.singletonList(contentsWithImage);
         Optional<List<PagedSearchIterable<GHContent>>> optionalContentsWithImageList = Optional.of(contentsWithImageList);
-        RateLimiter rateLimiter = spy(new RateLimiter(Constants.DEFAULT_RATE_LIMIT,Constants.DEFAULT_RATE_LIMIT_DURATION
-                ,Constants.DEFAULT_TOKEN_ADDING_RATE));
-
-        when(rateLimiter.getRateLimiter(ns)).thenReturn(rateLimiter);
+        RateLimiter rateLimiter = spy(new RateLimiter());
 
         when(parent.getPullRequestSender(dockerfileGitHubUtil, ns)).thenReturn(pullRequestSender);
         when(parent.getGitForkBranch(ns)).thenReturn(gitForkBranch);
@@ -208,8 +203,7 @@ public class ParentTest {
                 "store", Constants.SKIP_PR_CREATION,
                 false);
         Namespace ns = new Namespace(nsMap);
-        RateLimiter rateLimiter = spy(new RateLimiter(Constants.DEFAULT_RATE_LIMIT,Constants.DEFAULT_RATE_LIMIT_DURATION
-                ,Constants.DEFAULT_TOKEN_ADDING_RATE));
+        RateLimiter rateLimiter = spy(new RateLimiter());
         Parent parent = spy(new Parent());
         DockerfileGitHubUtil dockerfileGitHubUtil = mock(DockerfileGitHubUtil.class);
         GitHubJsonStore gitHubJsonStore = mock(GitHubJsonStore.class);
