@@ -4,11 +4,9 @@ import java.time.Duration;
 import java.util.UnknownFormatConversionException;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertThrows;
+import static org.testng.Assert.*;
 
-public class RateLimiterEventTest {
-
+public class RateLimitTest {
     @DataProvider(name = "rateLimitInputSuccessData")
     public static Object[][] rateLimitInputSuccessData() {
         return new Object[][]{
@@ -39,15 +37,14 @@ public class RateLimiterEventTest {
 
     @Test(dataProvider = "rateLimitInputFailureData")
     public void testingFailureTokenizingOfInputString(String rateLimitInputStr, Class ex) {
-        assertThrows(ex, () -> new RateLimiter().new RateLimitEvent().tokenizeAndGetEvent(rateLimitInputStr));
+        assertThrows(ex, () -> RateLimit.tokenizeAndGetRateLimit(rateLimitInputStr));
     }
 
     @Test(dataProvider = "rateLimitInputSuccessData")
     public void testingSuccessTokenizingOfInputString(String rateLimitInputStr, int rateLimitInputArg, Duration rateLimitDurationInputArg, Duration tokenAddingRateInputArg) {
-        RateLimiter.RateLimitEvent rateLimitEvent = new RateLimiter().new RateLimitEvent();
-        rateLimitEvent = rateLimitEvent.tokenizeAndGetEvent(rateLimitInputStr);
-        assertEquals(rateLimitEvent.getRateLimit(), rateLimitInputArg);
-        assertEquals(rateLimitEvent.getRateLimitDuration(), rateLimitDurationInputArg);
-        assertEquals(rateLimitEvent.getTokenAddingRate(), tokenAddingRateInputArg);
+        RateLimit rateLimit = RateLimit.tokenizeAndGetRateLimit(rateLimitInputStr);
+        assertEquals(rateLimit.getRate(), rateLimitInputArg);
+        assertEquals(rateLimit.getDuration(), rateLimitDurationInputArg);
+        assertEquals(rateLimit.getTokenAddingRate(), tokenAddingRateInputArg);
     }
 }
