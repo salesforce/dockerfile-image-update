@@ -14,7 +14,7 @@ import org.apache.commons.lang3.math.NumberUtils;
  * and logic for populating those after tokenizing the input
  */
 public class RateLimit {
-    public static final String errorMessage = "Unexpected format or unit encountered, valid input is " +
+    public static final String ERROR_MESSAGE = "Unexpected format or unit encountered, valid input is " +
             "<integer>-per-<time-unit> where time-init is one of 's', 'm', or 'h'. " +
             "Example: 500-per-h";
     private static final Pattern eventPattern =
@@ -46,7 +46,7 @@ public class RateLimit {
     public static RateLimit tokenizeAndGetRateLimit(String input) {
 
         if (input == null) {
-            throw new UnknownFormatConversionException(errorMessage);
+            throw new UnknownFormatConversionException(ERROR_MESSAGE);
         }
 
         long rLimit;
@@ -59,7 +59,7 @@ public class RateLimit {
         Matcher matcher = eventPattern.matcher(input);
 
         if (!matcher.matches()) {
-            throw new UnknownFormatConversionException(errorMessage);
+            throw new UnknownFormatConversionException(ERROR_MESSAGE);
         } else {
             /**
              * eventPattern regex is divided into 5 groups
@@ -102,7 +102,7 @@ public class RateLimit {
                 break;
             default:
                 //should not reach here are regex will enforce char, keeping it for any unexpected use case.
-                throw new UnknownFormatConversionException(errorMessage);
+                throw new UnknownFormatConversionException(ERROR_MESSAGE);
         }
         return new RateLimit(rLimit, rLimitDuration, tokAddingRate);
     }

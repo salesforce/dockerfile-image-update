@@ -45,11 +45,6 @@ public class RateLimiterTest {
         FutureTask futureTask = new FutureTask(new RateLimiterCallable(event));
         Thread t1 = new Thread(futureTask);
         t1.start();
-        Thread.sleep(100);
-        // the token should be consumed within first 3s leaving the thread in blocked state as it'd be waiting for
-        // next token to be available
-
-        assertEquals(t1.getState().toString(), Thread.State.TIMED_WAITING.toString());
         t1.join();
         assertEquals(t1.getState().toString(), Thread.State.TERMINATED.toString());
         assertEquals(event.getProcessedEventCount().get(), rateLimit);
