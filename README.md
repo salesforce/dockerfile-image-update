@@ -219,16 +219,15 @@ FROM imagename:imagetag # no-dfiu
 ### PR throttling
 
 In case you want to throttle the number of PRs cut by DFIU over a period of time,
-set --rate-limit-pr-creations with appropriate value. More example below
+set --rate-limit-pr-creations with appropriate value. 
 
 ##### Default case:
 
 By default, this feature is disabled. This will be enabled when argument ``--rate-limit-pr-creations`` will be passed
-with
-appropriate value.
+with appropriate value.
 
 ```
-example usage: dockerfile-image-update all image-tag-store-repo-falcon //disabled
+example: dockerfile-image-update all image-tag-store-repo-falcon //throttling will be disabled by default
 ```
 
 ##### Configuring the rate limit:
