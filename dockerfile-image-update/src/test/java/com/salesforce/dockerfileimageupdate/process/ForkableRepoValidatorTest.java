@@ -16,8 +16,8 @@ import static com.salesforce.dockerfileimageupdate.model.ShouldForkResult.should
 import static com.salesforce.dockerfileimageupdate.model.ShouldForkResult.shouldNotForkResult;
 import static com.salesforce.dockerfileimageupdate.process.ForkableRepoValidator.*;
 import static com.salesforce.dockerfileimageupdate.process.GitHubPullRequestSender.REPO_IS_FORK;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.*;

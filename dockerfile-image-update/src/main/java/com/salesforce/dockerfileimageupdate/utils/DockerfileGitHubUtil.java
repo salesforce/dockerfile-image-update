@@ -88,14 +88,23 @@ public class DockerfileGitHubUtil {
     public Optional<List<PagedSearchIterable<GHContent>>> findFilesWithImage(
             String image,
             Map<String, Boolean> orgsToIncludeOrExclude,
-            Integer gitApiSearchLimit) throws IOException {
+            Integer gitApiSearchLimit,
+            String filenamesToSearch) throws IOException {
+
         GHContentSearchBuilder search = gitHubUtil.startSearch();
         // Filename search appears to yield better / more results than language:Dockerfile
         // Root cause: linguist doesn't currently deal with prefixes of files:
         // https://github.com/github/linguist/issues/4566
         // This will work in OR mode i.e, either filename is Dockerfile or docker-compose
-        search.filename("Dockerfile");
-        search.filename("docker-compose");
+        if (StringUtils.isNotBlank(filenamesToSearch)) {
+            String[] filenames = filenamesToSearch.split(",");
+            for (String filename : filenames) {
+                search.filename(filename);
+            }
+        } else {
+            log.error("No filenames provided to search for, exiting!!!");
+            System.exit(-1);
+        }
 
         if (!orgsToIncludeOrExclude.isEmpty()) {
             StringBuilder includeOrExcludeOrgsQuery = new StringBuilder();
@@ -149,7 +158,7 @@ public class DockerfileGitHubUtil {
                     + " of {}. The orgs with the maximum number of hits will be recursively removed"
                     + " to reduce the search space. For every org that is excluded, a separate "
                     + "search will be performed specific to that org.", gitApiSearchLimit);
-            return getSearchResultsExcludingOrgWithMostHits(image, files, orgsToIncludeOrExclude, gitApiSearchLimit);
+            return getSearchResultsExcludingOrgWithMostHits(image, files, orgsToIncludeOrExclude, gitApiSearchLimit, filenamesToSearch);
         }
         List<PagedSearchIterable<GHContent>> filesList = new ArrayList<>();
         filesList.add(files);
@@ -171,7 +180,8 @@ public class DockerfileGitHubUtil {
             String image,
             PagedSearchIterable<GHContent> files,
             Map<String, Boolean> orgsToExclude,
-            Integer gitApiSearchLimit) throws IOException {
+            Integer gitApiSearchLimit,
+            String filenamesToSearch) throws IOException {
         List<PagedSearchIterable<GHContent>> allContentsWithImage = new ArrayList<>();
         String orgWithMaximumHits = getOrgNameWithMaximumHits(files);
         log.info("The org with the maximum number of hits is {}", orgWithMaximumHits);
@@ -180,13 +190,13 @@ public class DockerfileGitHubUtil {
         orgsToInclude.put(orgWithMaximumHits, true);
         log.info("Running search only for the org with maximum hits.");
         Optional<List<PagedSearchIterable<GHContent>>> contentsForOrgWithMaximumHits;
-        contentsForOrgWithMaximumHits = findFilesWithImage(image, orgsToInclude, gitApiSearchLimit);
+        contentsForOrgWithMaximumHits = findFilesWithImage(image, orgsToInclude, gitApiSearchLimit, filenamesToSearch);
 
         final Map<String, Boolean> orgsToExcludeFromSearch = new HashMap<>(orgsToExclude);
         orgsToExcludeFromSearch.put(orgWithMaximumHits, false);
         log.info("Running search by excluding the orgs {}.", orgsToExcludeFromSearch.keySet());
         Optional<List<PagedSearchIterable<GHContent>>> contentsExcludingOrgWithMaximumHits;
-        contentsExcludingOrgWithMaximumHits = findFilesWithImage(image, orgsToExcludeFromSearch, gitApiSearchLimit);
+        contentsExcludingOrgWithMaximumHits = findFilesWithImage(image, orgsToExcludeFromSearch, gitApiSearchLimit, filenamesToSearch);
         if (contentsForOrgWithMaximumHits.isPresent()) {
             allContentsWithImage.addAll(contentsForOrgWithMaximumHits.get());
         }
@@ -452,11 +462,12 @@ public class DockerfileGitHubUtil {
      * @param org GitHub organization
      * @param img image to find
      * @param gitApiSearchLimit git api search limit
+     * @param filenamesToSearch filenames to search for PR creation
      * @throws IOException if there is any failure while I/O from git.
      * @throws InterruptedException if interrupted while fetching git content
      * @return {@code Optional} of {@code PagedSearchIterable}
      */
-    public Optional<List<PagedSearchIterable<GHContent>>> getGHContents(String org, String img, Integer gitApiSearchLimit)
+    public Optional<List<PagedSearchIterable<GHContent>>> getGHContents(String org, String img, Integer gitApiSearchLimit, String filenamesToSearch)
             throws IOException, InterruptedException {
         Optional<List<PagedSearchIterable<GHContent>>> contentsWithImage = Optional.empty();
         Map<String, Boolean> orgsToIncludeInSearch = new HashMap<>();
@@ -467,7 +478,7 @@ public class DockerfileGitHubUtil {
             orgsToIncludeInSearch.put(org, true);
         }
         for (int i = 0; i < 5; i++) {
-            contentsWithImage = findFilesWithImage(img, orgsToIncludeInSearch, gitApiSearchLimit);
+            contentsWithImage = findFilesWithImage(img, orgsToIncludeInSearch, gitApiSearchLimit, filenamesToSearch);
             if (contentsWithImage
                     .orElseThrow(IOException::new)
                     .stream()

@@ -19,7 +19,6 @@ import org.testng.annotations.Test;
 import java.util.Map;
 
 import static com.salesforce.dockerfileimageupdate.utils.Constants.*;
-import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.*;
 
 /**

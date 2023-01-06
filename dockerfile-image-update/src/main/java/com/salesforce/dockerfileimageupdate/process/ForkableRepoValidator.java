@@ -102,7 +102,7 @@ public class ForkableRepoValidator {
             String line;
             while ( (line = reader.readLine()) != null ) {
                 if (FromInstruction.isFromInstructionWithThisImageAndOlderTag(line,
-                        gitForkBranch.getImageName(), gitForkBranch.getImageTag()) &&
+                        gitForkBranch.getImageName(), gitForkBranch.getImageTag()) ||
                         ImageKeyValuePair.isImageKeyValuePairWithThisImageAndOlderTag(line,
                         gitForkBranch.getImageName(), gitForkBranch.getImageTag())) {
                     return false;

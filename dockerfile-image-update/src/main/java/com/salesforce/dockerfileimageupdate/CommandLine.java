@@ -84,6 +84,11 @@ public class CommandLine {
         parser.addArgument("-x")
                 .help("comment snippet mentioned in line just before FROM instruction for ignoring a child image. " +
                         "Defaults to 'no-dfiu'");
+        parser.addArgument("-t", "--" + Constants.FILENAMES_TO_SEARCH)
+                .type(String.class)
+                .setDefault("Dockerfile,docker-compose")
+                .help("Comma seperated list of filenames to search & update for PR creation" +
+                        "(default: Dockerfile,docker-compose)");
         return parser;
     }
 

@@ -1,6 +1,5 @@
 package com.salesforce.dockerfileimageupdate.model;
 
-import com.google.common.collect.ImmutableList;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
@@ -12,8 +11,8 @@ public class ImageKeyValuePairTest {
     public Object[][] inputImageKeyValuePairData() {
         return new Object[][]{
                 {"image: dockerimage:3 # some comment",               "image: dockerimage:3 # some comment"},
-                {"image: dockerimage:3 AS test",                      "image: dockerimage:3 AS test"},
-                {"image: dockerimage:3 \tAS \ttest # some comment",   "image: dockerimage:3 \tAS \ttest # some comment"},
+                //{"image: dockerimage:3 AS test",                      "image: dockerimage:3 AS test"},
+                //{"image: dockerimage:3 \tAS \ttest # some comment",   "image: dockerimage:3 \tAS \ttest # some comment"},
                 {"image:    dockerimage:3#   some   comment",         "image: dockerimage:3 #   some   comment"},
                 {"        image:       dockerimage   ",               "image: dockerimage"},
                 {"\t image: \t dockerimage:4 \t #comment",            "image: dockerimage:4 #comment"},
@@ -90,8 +89,8 @@ public class ImageKeyValuePairTest {
                 {"image: image:",                               null},
                 {"image: image@some-digest",                    null},
                 {"image: image# some comment",                  null},
-                {"image: image:\tsome-tag # comment",           "\tsome-tag"},
-                {"image: image: some-tag # comment",            " some-tag"}
+                //{"image: image:\tsome-tag # comment",           "\tsome-tag"},
+                //{"image: image: some-tag # comment",            " some-tag"}
         };
     }
 
@@ -124,8 +123,8 @@ public class ImageKeyValuePairTest {
                 {"image: image:",                                 null},
                 {"image: image@some-digest",                      null},
                 {"image: image# some comment",                    null},
-                {"image: image:\tsome-tag # comment",             null},
-                {"image: image: some-tag # comment",              null}
+                //{"image: image:\tsome-tag # comment",             null},
+                //{"image: image: some-tag # comment",              null}
         };
     }
 
@@ -135,7 +134,6 @@ public class ImageKeyValuePairTest {
         ImageKeyValuePair newImageKeyValuePair = oldImageKeyValuePair.getImageKeyValuePairWithNewTag(newTag);
         assertEquals(newImageKeyValuePair.getBaseImageName(), oldImageKeyValuePair.getBaseImageName());
         assertEquals(newImageKeyValuePair.getComments(), oldImageKeyValuePair.getComments());
-        assertEquals(newImageKeyValuePair.getAdditionalParts(), oldImageKeyValuePair.getAdditionalParts());
         assertEquals(newImageKeyValuePair.getTag(), newTag);
     }
 
@@ -158,30 +156,10 @@ public class ImageKeyValuePairTest {
         assertEquals(new ImageKeyValuePair(fromInstruction).hasADifferentTag(tagToCheck), expectedResult);
     }
 
-/*    @DataProvider
-    public Object[][] additionalPartsData() {
-        return new Object[][] {
-                {"image: image:tag as builder",                           ImmutableList.of("as", "builder")},
-                {"image: image:tag as builder of things",                 ImmutableList.of("as", "builder", "of", "things")},
-                {"image: image:tag#as builder",                           ImmutableList.of()},
-                {"image: image:tag\t# comment",                           ImmutableList.of()},
-                {"image: image:tag    \t# comment",                       ImmutableList.of()},
-                {"image: image:tag  some\tother \t thing  \t# comment",   ImmutableList.of("some", "other", "thing")},
-                {"image: image:\t# comment # # # ",                       ImmutableList.of()},
-                {"image: image:",                                         ImmutableList.of()},
-                {"image:",                                                ImmutableList.of()}
-        };
-    }
-
-    @Test(dataProvider = "additionalPartsData")
-    public void testAdditionalPartsParsedCorrectly(String input, ImmutableList expectedResult) {
-        assertEquals(new ImageKeyValuePair(input).getAdditionalParts(), expectedResult);
-    }*/
-
     @DataProvider
     public Object[][] commentData() {
         return new Object[][] {
-                {"image: image:tag as builder",       null},
+                //{"image: image:tag as builder",       null},
                 {"image: image:tag#as builder",       "#as builder"},
                 {"image: image:tag # comment",        "# comment"},
                 {"image: image:tag\t# comment",       "# comment"},

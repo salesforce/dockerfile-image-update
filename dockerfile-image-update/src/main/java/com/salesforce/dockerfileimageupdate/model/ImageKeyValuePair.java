@@ -1,14 +1,15 @@
 package com.salesforce.dockerfileimageupdate.model;
 
-import com.google.common.collect.ImmutableList;
 import org.apache.commons.lang3.StringUtils;
 
-import java.util.Arrays;
-import java.util.List;
+import java.util.regex.Pattern;
 
 public class ImageKeyValuePair {
     private static final String IMAGE = "image";
-    private static final String INVALID_IMAGE_VALUE = "You have not provided a valid value for image key.";
+    private static final String INVALID_IMAGE_VALUE = "It is not a valid value for image key.";
+    private static final String INVALID_TAG_VALUE = "It is not a valid value for image tag.";
+    private static final String TAG_VALUE_LATEST = "Tag value is latest. So ignoring it";
+
     /**
      * The name of the base image
      */
@@ -18,19 +19,15 @@ public class ImageKeyValuePair {
      */
     private final String tag;
     /**
-     * As of writing, this could include {@code AS name} to run a multi-stage build
-     */
-    private final List<String> additionalParts;
-    /**
      * Comment starting with #
      */
     private final String comments;
 
     /**
-     * Accepts a FROM instruction line from a Dockerfile
+     * Accepts an image key value pair line from a docker-compose file
      * See {@code isImageKeyValuePair} to ensure you're passing a valid line in.
      *
-     * @param imageKeyValuePair a FROM instruction line from a Dockerfile
+     * @param imageKeyValuePair an Image Key value pair from a docker-compose file e.g: image: imageName:imageTag
      */
     public ImageKeyValuePair(String imageKeyValuePair) {
         if (!isImageKeyValuePair(imageKeyValuePair)) {
@@ -54,14 +51,13 @@ public class ImageKeyValuePair {
             baseImageName = imageAndTag[0];
             if (imageAndTag.length > 1) {
                 tag = imageAndTag[1];
+                validateImageTag(tag);
             } else {
                 tag = null;
             }
-            additionalParts = ImmutableList.of();
         } else {
             baseImageName = null;
             tag = null;
-            additionalParts = ImmutableList.of();
         }
     }
 
@@ -69,13 +65,11 @@ public class ImageKeyValuePair {
      * Internal API to get a new ComposeImageValuePair from an existing object
      * @param baseImageName baseImageName to add
      * @param tag tag to add
-     * @param additionalParts additionalParts to add
      * @param comments comments to add
      */
-    private ImageKeyValuePair(String baseImageName, String tag, List<String> additionalParts, String comments) {
+    private ImageKeyValuePair(String baseImageName, String tag, String comments) {
         this.baseImageName = baseImageName;
         this.tag = tag;
-        this.additionalParts = ImmutableList.copyOf(additionalParts);
         this.comments = comments;
     }
 
@@ -102,7 +96,7 @@ public class ImageKeyValuePair {
      * @return a new FROM with the new image tag
      */
     public ImageKeyValuePair getImageKeyValuePairWithNewTag(String newTag) {
-        return new ImageKeyValuePair(baseImageName, newTag, additionalParts, comments);
+        return new ImageKeyValuePair(baseImageName, newTag, comments);
     }
 
     /**
@@ -127,11 +121,6 @@ public class ImageKeyValuePair {
         stringBuilder.append(baseImageName);
         if (hasTag()) {
             stringBuilder.append(String.format(":%s", tag.trim()));
-        }
-        for (String part : additionalParts) {
-            if (StringUtils.isNotBlank(part)) {
-                stringBuilder.append(String.format(" %s", part.trim()));
-            }
         }
 
         if (hasComments()) {
@@ -183,10 +172,6 @@ public class ImageKeyValuePair {
         return tag;
     }
 
-    public List<String> getAdditionalParts() {
-        return additionalParts;
-    }
-
     public boolean hasComments() {
         return comments != null;
     }
@@ -195,4 +180,14 @@ public class ImageKeyValuePair {
         return comments;
     }
 
+    public static void validateImageTag(String tag) {
+        String tagVersionRegexStr = "([a-zA-Z0-9_]([-._a-zA-Z0-9])*)";
+        Pattern validTag = Pattern.compile(tagVersionRegexStr);
+        if (!validTag.matcher(tag).matches()) {
+            throw new IllegalArgumentException(INVALID_TAG_VALUE);
+        }
+        if (tag.equals("latest")) {
+            throw new IllegalArgumentException(TAG_VALUE_LATEST);
+        }
+    }
 }

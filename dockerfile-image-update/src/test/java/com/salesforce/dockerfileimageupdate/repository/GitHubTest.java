@@ -11,8 +11,8 @@ import org.testng.annotations.Test;
 
 import java.io.IOException;
 
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertFalse;
@@ -65,6 +65,7 @@ public class GitHubTest {
     public void testIsForkStaleReturnsTrue() throws IOException {
         setupGitHubRepo();
         GHBranch mainBranch = mock(GHBranch.class);
+        when(gitHubRepository.getDefaultBranch()).thenReturn("main");
         when(gitHubRepository.getBranch(anyString())).thenReturn(mainBranch);
         fork = mock(GHRepository.class);
         when(fork.getTree(any())).thenThrow(new GHFileNotFoundException("oh noes"));

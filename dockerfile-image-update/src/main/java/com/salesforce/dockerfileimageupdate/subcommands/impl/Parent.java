@@ -56,13 +56,15 @@ public class Parent implements ExecutableWithNamespace {
                     + "be skipped.", Constants.SKIP_PR_CREATION);
             return;
         }
+        String filenamesToSearch = ns.get(Constants.FILENAMES_TO_SEARCH);
+
         PullRequests pullRequests = getPullRequests();
         GitHubPullRequestSender pullRequestSender = getPullRequestSender(dockerfileGitHubUtil, ns);
         GitForkBranch gitForkBranch = getGitForkBranch(ns);
         log.info("Finding Dockerfiles with the given image...");
 
         Integer gitApiSearchLimit = ns.get(Constants.GIT_API_SEARCH_LIMIT);
-        Optional<List<PagedSearchIterable<GHContent>>> contentsWithImage = dockerfileGitHubUtil.getGHContents(ns.get(Constants.GIT_ORG), img, gitApiSearchLimit);
+        Optional<List<PagedSearchIterable<GHContent>>> contentsWithImage = dockerfileGitHubUtil.getGHContents(ns.get(Constants.GIT_ORG), img, gitApiSearchLimit, filenamesToSearch);
 
         if (contentsWithImage.isPresent()) {
             List<PagedSearchIterable<GHContent>> contentsFoundWithImage = contentsWithImage.get();

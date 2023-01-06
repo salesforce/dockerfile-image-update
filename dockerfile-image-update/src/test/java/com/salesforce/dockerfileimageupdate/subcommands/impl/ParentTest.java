@@ -19,7 +19,6 @@ import org.kohsuke.github.*;
 import org.testng.annotations.Test;
 
 import java.util.*;
-import static org.mockito.Matchers.*;
 import static org.mockito.Mockito.*;
 import static org.testng.Assert.*;
 
@@ -104,7 +103,7 @@ public class ParentTest {
         when(parent.getPullRequests()).thenReturn(pullRequests);
         doNothing().when(pullRequests).prepareToCreate(ns, pullRequestSender,
                 contentsWithImage, gitForkBranch, dockerfileGitHubUtil);
-        when(dockerfileGitHubUtil.getGHContents(anyString(), anyString(),  anyInt())).thenReturn(optionalContentsWithImageList);
+        when(dockerfileGitHubUtil.getGHContents(any(), any(), any(), any())).thenReturn(optionalContentsWithImageList);
         when(dockerfileGitHubUtil.getGitHubJsonStore("store")).thenReturn(imageTagStore);
 
         parent.execute(ns, dockerfileGitHubUtil);
@@ -139,7 +138,7 @@ public class ParentTest {
         when(parent.getPullRequests()).thenReturn(pullRequests);
         doNothing().when(pullRequests).prepareToCreate(ns, pullRequestSender,
                 contentsWithImage, gitForkBranch, dockerfileGitHubUtil);
-        when(dockerfileGitHubUtil.getGHContents(anyString(), anyString(),  anyInt())).thenReturn(optionalContentsWithImageList);
+        when(dockerfileGitHubUtil.getGHContents(any(), any(),  any(), any())).thenReturn(optionalContentsWithImageList);
 
 
         parent.execute(ns, dockerfileGitHubUtil);
@@ -215,7 +214,7 @@ public class ParentTest {
         Optional<List<PagedSearchIterable<GHContent>>> optionalContentsWithImageList = Optional.of(contentsWithImageList);
         doThrow(new InterruptedException("Exception")).when(pullRequests).prepareToCreate(ns, pullRequestSender,
                 contentsWithImage, gitForkBranch, dockerfileGitHubUtil);
-        when(dockerfileGitHubUtil.getGHContents(anyString(), anyString(),  anyInt())).thenReturn(optionalContentsWithImageList);
+        when(dockerfileGitHubUtil.getGHContents(anyString(), anyString(),  anyInt(), anyString())).thenReturn(optionalContentsWithImageList);
 
         parent.execute(ns, dockerfileGitHubUtil);
 

@@ -21,7 +21,6 @@ import net.sourceforge.argparse4j.inf.Namespace;
 import org.kohsuke.github.*;
 import org.testng.annotations.Test;
 
-import static org.mockito.Matchers.*;
 import static org.mockito.Mockito.*;
 import static org.testng.Assert.assertEquals;
 
@@ -63,7 +62,7 @@ public class AllTest {
         when(all.getPullRequests()).thenReturn(pullRequests);
         doNothing().when(pullRequests).prepareToCreate(ns, pullRequestSender,
                 contentsWithImage, gitForkBranch, dockerfileGitHubUtil);
-        when(dockerfileGitHubUtil.findFilesWithImage(anyString(), anyMap(),  anyInt())).thenReturn(optionalContentsWithImageList);
+        when(dockerfileGitHubUtil.findFilesWithImage(anyString(), anyMap(),  any(), any())).thenReturn(optionalContentsWithImageList);
 
         all.execute(ns, dockerfileGitHubUtil);
         verify(all, times(1)).getGitForkBranch(anyString(), anyString(), any());
@@ -110,7 +109,7 @@ public class AllTest {
         Optional<List<PagedSearchIterable<GHContent>>> optionalContentsWithImageList = Optional.empty();
         doNothing().when(pullRequests).prepareToCreate(ns, pullRequestSender,
                 contentsWithImage, gitForkBranch, dockerfileGitHubUtil);
-        when(dockerfileGitHubUtil.findFilesWithImage(anyString(), anyMap(),  anyInt())).thenReturn(optionalContentsWithImageList);
+        when(dockerfileGitHubUtil.findFilesWithImage(anyString(), anyMap(),  anyInt(), anyString())).thenReturn(optionalContentsWithImageList);
 
 
         all.execute(ns, dockerfileGitHubUtil);
@@ -158,7 +157,7 @@ public class AllTest {
         PagedSearchIterable<GHContent> contentsWithImage = mock(PagedSearchIterable.class);
         doNothing().when(pullRequests).prepareToCreate(ns, pullRequestSender,
                 contentsWithImage, gitForkBranch, dockerfileGitHubUtil);
-        when(dockerfileGitHubUtil.findFilesWithImage(anyString(), anyMap(),  anyInt())).thenThrow(new GHException("some exception"));
+        when(dockerfileGitHubUtil.findFilesWithImage(anyString(), anyMap(),  any(), any())).thenThrow(new GHException("some exception"));
 
 
         all.execute(ns, dockerfileGitHubUtil);
@@ -205,8 +204,7 @@ public class AllTest {
         Optional<List<PagedSearchIterable<GHContent>>> optionalContentsWithImageList = Optional.of(contentsWithImageList);
         doThrow(new IOException()).when(pullRequests).prepareToCreate(ns, pullRequestSender,
                 contentsWithImage, gitForkBranch, dockerfileGitHubUtil);
-        when(dockerfileGitHubUtil.findFilesWithImage(anyString(), anyMap(),  anyInt())).thenReturn(optionalContentsWithImageList);
-
+        when(dockerfileGitHubUtil.findFilesWithImage(anyString(), anyMap(),  any(), any())).thenReturn(optionalContentsWithImageList);
 
         all.execute(ns, dockerfileGitHubUtil);
         verify(all, times(1)).getGitForkBranch(anyString(), anyString(), any());
