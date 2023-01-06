@@ -223,26 +223,33 @@ set --rate-limit-pr-creations with appropriate value. More example below
 
 ##### Default case:
 
+By default, this feature is disabled. This will be enabled when argument ``--rate-limit-pr-creations`` will be passed
+with
+appropriate value.
+
 ```
 example usage: dockerfile-image-update all image-tag-store-repo-falcon //disabled
-example usage: dockerfile-image-update --rate-limit-pr-creations 500 all image-tag-store-repo-falcon //enabled
 ```
-By default, this feature is disabled. This will be enabled when argument ``--useratelimiting`` will be passed appropriate value 
-Above example will throttle the number of PRs cut based on default values as mentioned above i.e.,
-maximum 500 PRs could be sent within a period of 1 hour . To distribute the load uniformly and avoid sudden spikes,
-at max only 8(500/60) PRs could be sent in every 1 min. The process will go in waiting state until next PR could be sent.
 
 ##### Configuring the rate limit:
 
+Below are some examples that will throttle the number of PRs cut based on values passed to the
+argument ``--rate-limit-pr-creations``
+The argument value should be in format ``<positive_integer>-<ISO-8601_formatted_time>``.
+For example ``--rate-limit-pr-creations 60-PT1H`` would mean the tool will cut 60 PRs every hour and the rate of adding
+a new PR will be (PT1H/60) i.e. one minute.
+This will distribute the load uniformly and avoid sudden spikes, The process will go in waiting state until next PR
+could be sent.
+
+Below are some more examples:
+
 ```
-example usage: 
-    dockerfile-image-update --rate-limit-pr-creations 500 all image-tag-store-repo-falcon //DFIU can send up to 500 PRs per hour
-    dockerfile-image-update --rate-limit-pr-creations 500-per-s all image-tag-store-repo-falcon //DFIU can send up to 500 PRs per second
-    dockerfile-image-update --rate-limit-pr-creations 500-per-60s all image-tag-store-repo-falcon //DFIU can send up to 500 PRs per 60 second
-    dockerfile-image-update --rate-limit-pr-creations 500-per-m all image-tag-store-repo-falcon //DFIU can send up to 500 PRs per minute
-    dockerfile-image-update --rate-limit-pr-creations 500-per-1h all image-tag-store-repo-falcon //DFIU can send up to 500 PRs per hour
-    dockerfile-image-update --rate-limit-pr-creations 500-per-h all image-tag-store-repo-falcon //DFIU can send up to 500 PRs per hour
-    dockerfile-image-update --rate-limit-pr-creations 50perhour all image-tag-store-repo-falcon //DFIU will not impose any rate limiting as argument value is not valid
+Usage: 
+    dockerfile-image-update --rate-limit-pr-creations 60-PT1H all image-tag-store-repo-falcon //DFIU can send up to 60 PRs per hour.
+    dockerfile-image-update --rate-limit-pr-creations 500-PT1H all image-tag-store-repo-falcon //DFIU can send up to 500 PRs per hour.
+    dockerfile-image-update --rate-limit-pr-creations 86400-PT24H all image-tag-store-repo-falcon //DFIU can send up to 1 PRs per second.
+    dockerfile-image-update --rate-limit-pr-creations 1-PT1S all image-tag-store-repo-falcon //Same as above. DFIU can send up to 1 PRs per second.
+    dockerfile-image-update --rate-limit-pr-creations 5000 all image-tag-store-repo-falcon //rate limiting will be disabled because argument is not in correct format.
 ```
 
 ## Developer Guide

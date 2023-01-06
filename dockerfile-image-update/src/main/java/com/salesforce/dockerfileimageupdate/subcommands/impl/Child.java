@@ -37,7 +37,7 @@ public class Child implements ExecutableWithNamespace {
         String forceTag = ns.get(Constants.FORCE_TAG);
         String store = ns.get(Constants.STORE);
         ImageStoreUtil imageStoreUtil = getImageStoreUtil();
-        RateLimiter rateLimiter =  RateLimiter.getRateLimiter(ns);
+        RateLimiter rateLimiter =  RateLimiter.getInstance(ns);
         try {
             ImageTagStore imageTagStore = imageStoreUtil.initializeImageTagStore(dockerfileGitHubUtil, store);
             /* Updates store if a store is specified. */

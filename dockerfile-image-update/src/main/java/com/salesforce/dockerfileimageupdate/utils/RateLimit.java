@@ -14,8 +14,8 @@ import org.slf4j.LoggerFactory;
  * @see RateLimiter
  */
 public class RateLimit {
-    public static final String ERROR_MESSAGE = "Unexpected format or unit encountered, valid input is " +
-            "<integer>-<ISO-8601_formatted_time> Example: 500-PT1S means(500 per second) \n" +
+    private static final String ERROR_MESSAGE = "Unexpected format or unit encountered, valid input is " +
+            "<positive_integer>-<ISO-8601_formatted_time> Example: 500-PT1S means(500 per second) \n" +
             "500-PT1M means(500 per Minute)";
     private static final Logger log = LoggerFactory.getLogger(RateLimit.class);
     private final long rate; //Maximum count of PRs to be sent per rLimitDuration

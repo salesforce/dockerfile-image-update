@@ -79,7 +79,7 @@ public class RateLimiterTest {
         Map<String, Object> nsMap = ImmutableMap.of(
                 Constants.RATE_LIMIT_PR_CREATION, envVariableVal);
         Namespace ns = new Namespace(nsMap);
-        RateLimiter rateLimiter = RateLimiter.getRateLimiter(ns);
+        RateLimiter rateLimiter = RateLimiter.getInstance(ns);
 
         if (isnull) {
             assertNull(rateLimiter);
