@@ -23,14 +23,15 @@ public class RateLimiterTest {
     @DataProvider(name = "dataForTestingRateLimitingEventCreation")
     public static Object[][] getDataForTestingRateLimitingEventCreation() {
         return new Object[][]{
-                {"1234-per-2h", RateLimiter.class, false},
-                {"500", RateLimiter.class, false},
-                {"500-per-s", RateLimiter.class, false},
-                {"500-per-60s", RateLimiter.class, false},
+                {"500-PT1S", RateLimiter.class, false},
+                {"500-PT60S", RateLimiter.class, false},
+                {"500-PT1M", RateLimiter.class, false},
+                {"500-PT1H", RateLimiter.class, false},
                 {"image", null, true},
                 {"500-random", null, true},
                 {"", null, true},
-                {"null", null, true}
+                {"null", null, true},
+                {"500", null, true}
         };
     }
 
