@@ -19,6 +19,7 @@ import com.salesforce.dockerfileimageupdate.utils.DockerfileGitHubUtil;
 import com.salesforce.dockerfileimageupdate.utils.ImageStoreUtil;
 import com.salesforce.dockerfileimageupdate.utils.ProcessingErrors;
 import com.salesforce.dockerfileimageupdate.utils.PullRequests;
+import com.salesforce.dockerfileimageupdate.utils.RateLimiter;
 import net.sourceforge.argparse4j.inf.Namespace;
 import org.kohsuke.github.*;
 import org.slf4j.Logger;
@@ -37,12 +38,13 @@ public class All implements ExecutableWithNamespace {
     @Override
     public void execute(final Namespace ns, final DockerfileGitHubUtil dockerfileGitHubUtil) throws Exception {
         loadDockerfileGithubUtil(dockerfileGitHubUtil);
+        RateLimiter rateLimiter =  RateLimiter.getInstance(ns);
         String store = ns.get(Constants.STORE);
         try {
             ImageTagStore imageTagStore = ImageStoreUtil.initializeImageTagStore(this.dockerfileGitHubUtil, store);
             List<ImageTagStoreContent> imageNamesWithTag = imageTagStore.getStoreContent(dockerfileGitHubUtil, store);
             Integer numberOfImagesToProcess = imageNamesWithTag.size();
-            List<ProcessingErrors> imagesThatCouldNotBeProcessed = processImagesWithTag(ns, imageNamesWithTag);
+            List<ProcessingErrors> imagesThatCouldNotBeProcessed = processImagesWithTag(ns, imageNamesWithTag, rateLimiter);
             printSummary(imagesThatCouldNotBeProcessed, numberOfImagesToProcess);
         } catch (Exception e) {
             log.error("Encountered issues while initializing the image tag store or getting its contents. Cannot continue. Exception: ", e);
@@ -50,7 +52,8 @@ public class All implements ExecutableWithNamespace {
         }
     }
 
-    protected List<ProcessingErrors> processImagesWithTag(Namespace ns, List<ImageTagStoreContent> imageNamesWithTag) {
+    protected List<ProcessingErrors> processImagesWithTag(Namespace ns, List<ImageTagStoreContent> imageNamesWithTag,
+                                                          RateLimiter rateLimiter) {
         Integer gitApiSearchLimit = ns.get(Constants.GIT_API_SEARCH_LIMIT);
         Map<String, Boolean> orgsToIncludeInSearch = new HashMap<>();
         if (ns.get(Constants.GIT_ORG) != null) {
@@ -64,13 +67,15 @@ public class All implements ExecutableWithNamespace {
         for (ImageTagStoreContent content : imageNamesWithTag) {
             String image = content.getImageName();
             String tag = content.getTag();
-            failureMessage = processImageWithTag(image, tag, ns, orgsToIncludeInSearch, gitApiSearchLimit);
+            failureMessage = processImageWithTag(image, tag, ns, orgsToIncludeInSearch, gitApiSearchLimit,
+                    rateLimiter);
             failureMessage.ifPresent(message -> imagesThatCouldNotBeProcessed.add(processErrorMessages(image, tag, Optional.of(message))));
         }
         return imagesThatCouldNotBeProcessed;
     }
 
-    protected Optional<Exception> processImageWithTag(String image, String tag, Namespace ns, Map<String, Boolean> orgsToIncludeInSearch, Integer gitApiSearchLimit) {
+    protected Optional<Exception> processImageWithTag(String image, String tag, Namespace ns, Map<String, Boolean> orgsToIncludeInSearch,
+                                                      Integer gitApiSearchLimit, RateLimiter rateLimiter) {
         Optional<Exception> failureMessage = Optional.empty();
         try {
             PullRequests pullRequests = getPullRequests();
@@ -85,7 +90,7 @@ public class All implements ExecutableWithNamespace {
                 while (it.hasNext()){
                     try {
                         pullRequests.prepareToCreate(ns, pullRequestSender,
-                                it.next(), gitForkBranch, dockerfileGitHubUtil);
+                                it.next(), gitForkBranch, dockerfileGitHubUtil, rateLimiter);
                     } catch (IOException e) {
                         log.error("Could not send pull request for image {}.", image);
                         failureMessage = Optional.of(e);

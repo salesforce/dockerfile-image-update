@@ -18,6 +18,7 @@ import com.salesforce.dockerfileimageupdate.utils.Constants;
 import com.salesforce.dockerfileimageupdate.utils.DockerfileGitHubUtil;
 import com.salesforce.dockerfileimageupdate.utils.ImageStoreUtil;
 import com.salesforce.dockerfileimageupdate.utils.PullRequests;
+import com.salesforce.dockerfileimageupdate.utils.RateLimiter;
 import net.sourceforge.argparse4j.inf.Namespace;
 import org.kohsuke.github.GHContent;
 import org.kohsuke.github.PagedSearchIterable;
@@ -59,6 +60,7 @@ public class Parent implements ExecutableWithNamespace {
         PullRequests pullRequests = getPullRequests();
         GitHubPullRequestSender pullRequestSender = getPullRequestSender(dockerfileGitHubUtil, ns);
         GitForkBranch gitForkBranch = getGitForkBranch(ns);
+        RateLimiter rateLimiter = RateLimiter.getInstance(ns);
         log.info("Finding Dockerfiles with the given image...");
 
         Integer gitApiSearchLimit = ns.get(Constants.GIT_API_SEARCH_LIMIT);
@@ -69,7 +71,8 @@ public class Parent implements ExecutableWithNamespace {
             for (int i = 0; i < contentsFoundWithImage.size(); i++ ) {
                 try {
                     pullRequests.prepareToCreate(ns, pullRequestSender,
-                            contentsFoundWithImage.get(i), gitForkBranch, dockerfileGitHubUtil);
+                            contentsFoundWithImage.get(i), gitForkBranch,
+                            dockerfileGitHubUtil, rateLimiter);
                 } catch (IOException e) {
                     log.error("Could not send pull request.", e);
                 }
