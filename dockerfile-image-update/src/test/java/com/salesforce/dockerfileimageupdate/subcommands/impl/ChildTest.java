@@ -35,14 +35,12 @@ public class ChildTest {
                         GIT_REPO, "test",
                         IMG, "test",
                         FORCE_TAG, "test",
-                        STORE, "test",
-                        RATE_LIMIT_PR_CREATION, "500-per-60s")},
+                        STORE, "test")},
                 {ImmutableMap.of(
                         GIT_REPO, "test",
                         IMG, "test",
                         FORCE_TAG, "test",
-                        STORE, "test",
-                        RATE_LIMIT_PR_CREATION, "500-per-60s")},
+                        STORE, "test")},
         };
     }
 

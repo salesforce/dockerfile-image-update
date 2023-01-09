@@ -363,6 +363,8 @@ public class DockerfileGitHubUtil {
                               RateLimiter rateLimiter) throws InterruptedException, IOException {
         // TODO: This may loop forever in the event of constant -1 pullRequestExitCodes...
         while (true) {
+            // TODO: accept rateLimiter Optional with option to get no-op rateLimiter
+            // where it's not required.
             if(rateLimiter != null) {
                 log.info("Trying to consume a token before creating pull request..");
                 // Consume a token from the token bucket.

@@ -125,7 +125,7 @@ public class ParentTest {
                 "image", Constants.TAG,
                 "tag", Constants.STORE,
                 "s3://store", Constants.SKIP_PR_CREATION,
-                false, RATE_LIMIT_PR_CREATION, "500-per-60s");
+                false);
         Namespace ns = new Namespace(nsMap);
         Parent parent = spy(new Parent());
         DockerfileGitHubUtil dockerfileGitHubUtil = mock(DockerfileGitHubUtil.class);

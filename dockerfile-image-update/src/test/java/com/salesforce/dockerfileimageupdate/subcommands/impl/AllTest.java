@@ -36,7 +36,7 @@ public class AllTest {
         Map<String, Object> nsMap = ImmutableMap.of(Constants.IMG,
                 "image", Constants.TAG,
                 "tag", Constants.STORE,
-                "store", RATE_LIMIT_PR_CREATION, "500-per-60s");
+                "store");
 
         Namespace ns = new Namespace(nsMap);
         RateLimiter rateLimiter = spy(new RateLimiter());
@@ -85,7 +85,7 @@ public class AllTest {
         Map<String, Object> nsMap = ImmutableMap.of(Constants.IMG,
                 "image", Constants.TAG,
                 "tag", Constants.STORE,
-                "store", RATE_LIMIT_PR_CREATION, "500-per-60s");
+                "store");
 
         Namespace ns = new Namespace(nsMap);
         All all = spy(new All());

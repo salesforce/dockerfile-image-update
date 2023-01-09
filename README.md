@@ -142,8 +142,9 @@ named arguments:
                          Only update image tag store. Skip creating PRs
   -x X                   comment snippet mentioned in line just before FROM instruction for ignoring a child image. Defaults to 'no-dfiu'
   -r, --rate-limit-pr-creations 
-                         Enable rateLimiting for throttling the number of PRs DFIU will cut over a period of time.
-                         Defaults is not set, means no ratelimiting is imposed if this is not set to true
+                         Enable rateLimiting for throttling the number of PRs DFIU will cut over a period of time. 
+                         The argument value should be in format "<positive_integer>-<ISO-8601_formatted_time>". For example "--rate-limit-pr-creations 60-PT1H" to create 60 PRs per hour.
+                         Default is not set, this means no ratelimiting is imposed.
                          
 subcommands:
   Specify which feature to perform
