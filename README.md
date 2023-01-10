@@ -309,7 +309,7 @@ Before you run the integration tests (locally):
 1. Run integration tests by running
 
    ```
-   make itest-local-changes
+   make integration-test
    ```
 
 ### Release Process
