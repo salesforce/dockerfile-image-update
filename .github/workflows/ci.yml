@@ -46,7 +46,7 @@ jobs:
         id:   version_tag
         run: |
           make get-new-version-from-tag
-          echo "::set-output name=new_version::$(cat new_patch_version.txt)"
+          echo "new_version=$(cat new_patch_version.txt)" >> $GITHUB_OUTPUT
   integration-test:
     runs-on: ubuntu-latest
     needs: [build-test, get-next-version]

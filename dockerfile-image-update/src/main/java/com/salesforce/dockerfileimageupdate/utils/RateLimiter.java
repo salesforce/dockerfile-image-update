@@ -21,8 +21,7 @@ import org.slf4j.LoggerFactory;
  * time, the number of tokens in the bucket won't exceed the 'rateLimit', limiting the rate at
  * which PRs would be raised. To keep the refill rate uniform, one token will be added to the
  * bucket every 'tokenAddingRate'. If no tokens are left in the bucket, then PR won't be raised
- * and program will halt until next token is available.
- * <pre>
+ * and program will halt until next token is available.</pre>
  */
 public class RateLimiter {
 
@@ -32,11 +31,11 @@ public class RateLimiter {
     /**
      * constructor to initialize RateLimiter with required values.
      * If time meter is not specified, the system default will be chosen.
-     *
-     * @param customTimeMeter Clock to be used for bucketing the tokens.
-     *                        Defaults to TimeMeter.SYSTEM_MILLISECONDS
-     * @param <T>             Implementing class for customTimeMeter must be a class
-     *                        extending TimeMeter
+     * @param rateLimit RateLimit object
+     * @param customTimeMeter custom time metere. should be of type TimeMeter
+     * @param <T> Implementing class for customTimeMeter must be a class
+     *           extending TimeMeter
+     * @see RateLimit
      * @see TimeMeter
      * @see TimeMeter#SYSTEM_MILLISECONDS
      */
@@ -70,7 +69,7 @@ public class RateLimiter {
      * This method will create and return an object of type RateLimiter based on the
      * variable set in the Namespace.
      *
-     * @param ns Namespace {@see net.sourceforge.argparse4j.inf.Namespace}
+     * @param ns Namespace
      * @return RateLimiter object if required variable is set in Namespace
      * null otherwise.
      * @see net.sourceforge.argparse4j.inf.Namespace Namespace

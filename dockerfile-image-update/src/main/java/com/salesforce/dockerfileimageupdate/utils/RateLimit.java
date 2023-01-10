@@ -44,17 +44,17 @@ public class RateLimit {
     }
 
     /**
-     * This method will accept an input string in format <integer>-<ISO-8601_formatted_time> and
+     * This method will accept an input string in format &lt;integer&gt;-&lt;ISO-8601_formatted_time&gt;  and
      * will tokenize it to create a RateLimit object.
      * <pre>
      * Examples of tokenization
-     * input : 500-PT1S -> {rate : 500, duration 1 second (PT1S), token adding rate: every .002 seconds (PT0.002S)}
-     *         60-PT1M -> {rate : 60, duration 1 minute (PT1M), token adding rate: every 1 seconds (PT1S)}
+     * input : 500-PT1S means {rate : 500, duration 1 second (PT1S), token adding rate: every .002 seconds (PT0.002S)}
+     *         60-PT1M means {rate : 60, duration 1 minute (PT1M), token adding rate: every 1 seconds (PT1S)}
      * </pre>
      *
-     * @param input string in format <integer>-<ISO-8601 formatted_time]> example 500-PT1S , 500-PT60S , 500-PT1H
+     * @param input string in format &lt;integer&gt;-&lt;ISO-8601_formatted_time&gt;  example 500-PT1S , 500-PT60S , 500-PT1H
      * @return RateLimit based on the input value
-     * @throws UnknownFormatConversionException if input is not a string with expected format <integer>-<ISO-8601_formatted_time>
+     * @throws UnknownFormatConversionException if input is not a string with expected format &lt;integer&gt;-&lt;ISO-8601_formatted_time&gt;
      */
     public static RateLimit tokenizeAndGetRateLimit(String input) throws UnknownFormatConversionException {
         if (StringUtils.isEmpty(input) || !input.contains("-")) {
