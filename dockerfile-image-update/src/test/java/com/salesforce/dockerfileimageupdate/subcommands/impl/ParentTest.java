@@ -41,6 +41,7 @@ public class ParentTest {
         PagedSearchIterable<GHContent> contentsWithImage = mock(PagedSearchIterable.class);
         PullRequests pullRequests = mock(PullRequests.class);
         GitHubJsonStore imageTagStore = mock(GitHubJsonStore.class);
+        RateLimiter rateLimiter = spy(new RateLimiter());
 
         when(dockerfileGitHubUtil.getGitHubJsonStore("store")).thenReturn(imageTagStore);
 
@@ -51,7 +52,7 @@ public class ParentTest {
         verify(parent, times(0)).getPullRequestSender(dockerfileGitHubUtil, ns);
         verify(parent, times(0)).getPullRequests();
         verify(pullRequests, times(0)).prepareToCreate(ns, pullRequestSender,
-                contentsWithImage, gitForkBranch, dockerfileGitHubUtil);
+                contentsWithImage, gitForkBranch, dockerfileGitHubUtil, rateLimiter);
     }
 
     @Test
@@ -68,6 +69,7 @@ public class ParentTest {
         GitForkBranch gitForkBranch = mock(GitForkBranch.class);
         PagedSearchIterable<GHContent> contentsWithImage = mock(PagedSearchIterable.class);
         PullRequests pullRequests = mock(PullRequests.class);
+        RateLimiter rateLimiter = spy(new RateLimiter());
 
         parent.execute(ns, dockerfileGitHubUtil);
 
@@ -76,7 +78,7 @@ public class ParentTest {
         verify(parent, times(0)).getPullRequestSender(dockerfileGitHubUtil, ns);
         verify(parent, times(0)).getPullRequests();
         verify(pullRequests, times(0)).prepareToCreate(ns, pullRequestSender,
-                contentsWithImage, gitForkBranch, dockerfileGitHubUtil);
+                contentsWithImage, gitForkBranch, dockerfileGitHubUtil, rateLimiter);
     }
 
     @Test
@@ -102,17 +104,17 @@ public class ParentTest {
         when(parent.getGitForkBranch(ns)).thenReturn(gitForkBranch);
         when(parent.getPullRequests()).thenReturn(pullRequests);
         doNothing().when(pullRequests).prepareToCreate(ns, pullRequestSender,
-                contentsWithImage, gitForkBranch, dockerfileGitHubUtil);
+                contentsWithImage, gitForkBranch, dockerfileGitHubUtil, null);
         when(dockerfileGitHubUtil.getGHContents(any(), any(), any(), any())).thenReturn(optionalContentsWithImageList);
         when(dockerfileGitHubUtil.getGitHubJsonStore("store")).thenReturn(imageTagStore);
 
         parent.execute(ns, dockerfileGitHubUtil);
 
-        verify(parent, times(1)).getGitForkBranch(ns);
-        verify(parent, times(1)).getPullRequestSender(dockerfileGitHubUtil, ns);
-        verify(parent, times(1)).getPullRequests();
-        verify(pullRequests, times(1)).prepareToCreate(ns, pullRequestSender,
-                contentsWithImage, gitForkBranch, dockerfileGitHubUtil);
+        verify(parent).getGitForkBranch(ns);
+        verify(parent).getPullRequestSender(dockerfileGitHubUtil, ns);
+        verify(parent).getPullRequests();
+        verify(pullRequests).prepareToCreate(ns, pullRequestSender,
+                contentsWithImage, gitForkBranch, dockerfileGitHubUtil, null);
     }
 
     @Test
@@ -131,23 +133,23 @@ public class ParentTest {
         PagedSearchIterable<GHContent> contentsWithImage = mock(PagedSearchIterable.class);
         List<PagedSearchIterable<GHContent>> contentsWithImageList = Collections.singletonList(contentsWithImage);
         Optional<List<PagedSearchIterable<GHContent>>> optionalContentsWithImageList = Optional.of(contentsWithImageList);
-
+        RateLimiter rateLimiter = spy(new RateLimiter());
 
         when(parent.getPullRequestSender(dockerfileGitHubUtil, ns)).thenReturn(pullRequestSender);
         when(parent.getGitForkBranch(ns)).thenReturn(gitForkBranch);
         when(parent.getPullRequests()).thenReturn(pullRequests);
         doNothing().when(pullRequests).prepareToCreate(ns, pullRequestSender,
-                contentsWithImage, gitForkBranch, dockerfileGitHubUtil);
-        when(dockerfileGitHubUtil.getGHContents(any(), any(),  any(), any())).thenReturn(optionalContentsWithImageList);
-
+                contentsWithImage, gitForkBranch, dockerfileGitHubUtil, rateLimiter);
+        when(dockerfileGitHubUtil.getGHContents(any(), any(),
+                any(), any())).thenReturn(optionalContentsWithImageList);
 
         parent.execute(ns, dockerfileGitHubUtil);
 
-        verify(parent, times(1)).getGitForkBranch(ns);
-        verify(parent, times(1)).getPullRequestSender(dockerfileGitHubUtil, ns);
-        verify(parent, times(1)).getPullRequests();
-        verify(pullRequests, times(1)).prepareToCreate(ns, pullRequestSender,
-                contentsWithImage, gitForkBranch, dockerfileGitHubUtil);
+        verify(parent).getGitForkBranch(ns);
+        verify(parent).getPullRequestSender(dockerfileGitHubUtil, ns);
+        verify(parent).getPullRequests();
+        verify(pullRequests).prepareToCreate(eq(ns), eq(pullRequestSender),
+                eq(contentsWithImage), eq(gitForkBranch), eq(dockerfileGitHubUtil), any(RateLimiter.class));
     }
 
     @Test
@@ -199,6 +201,7 @@ public class ParentTest {
                 "store", Constants.SKIP_PR_CREATION,
                 false);
         Namespace ns = new Namespace(nsMap);
+        RateLimiter rateLimiter = spy(new RateLimiter());
         Parent parent = spy(new Parent());
         DockerfileGitHubUtil dockerfileGitHubUtil = mock(DockerfileGitHubUtil.class);
         GitHubJsonStore gitHubJsonStore = mock(GitHubJsonStore.class);
@@ -213,8 +216,9 @@ public class ParentTest {
         List<PagedSearchIterable<GHContent>> contentsWithImageList = Collections.singletonList(contentsWithImage);
         Optional<List<PagedSearchIterable<GHContent>>> optionalContentsWithImageList = Optional.of(contentsWithImageList);
         doThrow(new InterruptedException("Exception")).when(pullRequests).prepareToCreate(ns, pullRequestSender,
-                contentsWithImage, gitForkBranch, dockerfileGitHubUtil);
-        when(dockerfileGitHubUtil.getGHContents(anyString(), anyString(),  anyInt(), anyString())).thenReturn(optionalContentsWithImageList);
+                contentsWithImage, gitForkBranch, dockerfileGitHubUtil, rateLimiter);
+        when(dockerfileGitHubUtil.getGHContents(anyString(), anyString(),
+                anyInt(), anyString())).thenReturn(optionalContentsWithImageList);
 
         parent.execute(ns, dockerfileGitHubUtil);
 

@@ -139,6 +139,11 @@
             <version>3.24.0</version>
             <scope>compile</scope>
         </dependency>
+        <dependency>
+            <groupId>com.bucket4j</groupId>
+            <artifactId>bucket4j-core</artifactId>
+            <version>8.1.1</version>
+        </dependency>
     </dependencies>
 
     <build>

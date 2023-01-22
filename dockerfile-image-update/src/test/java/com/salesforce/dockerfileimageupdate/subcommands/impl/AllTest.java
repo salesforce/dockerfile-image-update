@@ -20,7 +20,6 @@ import java.util.*;
 import net.sourceforge.argparse4j.inf.Namespace;
 import org.kohsuke.github.*;
 import org.testng.annotations.Test;
-
 import static org.mockito.Mockito.*;
 import static org.testng.Assert.assertEquals;
 
@@ -35,7 +34,9 @@ public class AllTest {
                 "image", Constants.TAG,
                 "tag", Constants.STORE,
                 "store");
+
         Namespace ns = new Namespace(nsMap);
+        RateLimiter rateLimiter = spy(new RateLimiter());
         All all = spy(new All());
         DockerfileGitHubUtil dockerfileGitHubUtil = mock(DockerfileGitHubUtil.class);
         GitHubPullRequestSender pullRequestSender = mock(GitHubPullRequestSender.class);
@@ -61,17 +62,18 @@ public class AllTest {
         when(all.getGitForkBranch("image1", "tag1", ns)).thenReturn(gitForkBranch);
         when(all.getPullRequests()).thenReturn(pullRequests);
         doNothing().when(pullRequests).prepareToCreate(ns, pullRequestSender,
-                contentsWithImage, gitForkBranch, dockerfileGitHubUtil);
-        when(dockerfileGitHubUtil.findFilesWithImage(anyString(), anyMap(),  any(), any())).thenReturn(optionalContentsWithImageList);
+                contentsWithImage, gitForkBranch, dockerfileGitHubUtil, rateLimiter);
+        when(dockerfileGitHubUtil.findFilesWithImage(anyString(), anyMap(),
+                any(), any())).thenReturn(optionalContentsWithImageList);
 
         all.execute(ns, dockerfileGitHubUtil);
-        verify(all, times(1)).getGitForkBranch(anyString(), anyString(), any());
-        verify(all, times(1)).getPullRequestSender(dockerfileGitHubUtil, ns);
-        verify(all, times(1)).getPullRequests();
-        verify(pullRequests, times(1)).prepareToCreate(ns, pullRequestSender,
-                contentsWithImage, gitForkBranch, dockerfileGitHubUtil);
+        verify(all).getGitForkBranch(anyString(), anyString(), any());
+        verify(all).getPullRequestSender(dockerfileGitHubUtil, ns);
+        verify(all).getPullRequests();
+        verify(pullRequests).prepareToCreate(eq(ns), eq(pullRequestSender),
+                eq(contentsWithImage), eq(gitForkBranch), eq(dockerfileGitHubUtil), any(RateLimiter.class));
         verify(all, times(0)).processErrorMessages(anyString(), anyString(), any());
-        verify(all, times(1)).printSummary(anyList(), any());
+        verify(all).printSummary(anyList(), any());
 
     }
 
@@ -81,10 +83,12 @@ public class AllTest {
                 "image", Constants.TAG,
                 "tag", Constants.STORE,
                 "store");
+
         Namespace ns = new Namespace(nsMap);
         All all = spy(new All());
         DockerfileGitHubUtil dockerfileGitHubUtil = mock(DockerfileGitHubUtil.class);
         GitHubPullRequestSender pullRequestSender = mock(GitHubPullRequestSender.class);
+        RateLimiter rateLimiter = spy(new RateLimiter());
         GitForkBranch gitForkBranch = mock(GitForkBranch.class);
         PullRequests pullRequests = mock(PullRequests.class);
         GitHubJsonStore imageTagStore = mock(GitHubJsonStore.class);
@@ -108,18 +112,18 @@ public class AllTest {
         PagedSearchIterable<GHContent> contentsWithImage = mock(PagedSearchIterable.class);
         Optional<List<PagedSearchIterable<GHContent>>> optionalContentsWithImageList = Optional.empty();
         doNothing().when(pullRequests).prepareToCreate(ns, pullRequestSender,
-                contentsWithImage, gitForkBranch, dockerfileGitHubUtil);
-        when(dockerfileGitHubUtil.findFilesWithImage(anyString(), anyMap(),  anyInt(), anyString())).thenReturn(optionalContentsWithImageList);
-
+                contentsWithImage, gitForkBranch, dockerfileGitHubUtil, rateLimiter);
+        when(dockerfileGitHubUtil.findFilesWithImage(anyString(), anyMap(),
+                anyInt(), anyString())).thenReturn(optionalContentsWithImageList);
 
         all.execute(ns, dockerfileGitHubUtil);
-        verify(all, times(1)).getGitForkBranch(anyString(), anyString(), any());
-        verify(all, times(1)).getPullRequestSender(dockerfileGitHubUtil, ns);
-        verify(all, times(1)).getPullRequests();
+        verify(all).getGitForkBranch(anyString(), anyString(), any());
+        verify(all).getPullRequestSender(dockerfileGitHubUtil, ns);
+        verify(all).getPullRequests();
         verify(pullRequests, times(0)).prepareToCreate(ns, pullRequestSender,
-                contentsWithImage, gitForkBranch, dockerfileGitHubUtil);
+                contentsWithImage, gitForkBranch, dockerfileGitHubUtil, rateLimiter);
         verify(all, times(0)).processErrorMessages(anyString(), anyString(), any());
-        verify(all, times(1)).printSummary(anyList(), any());
+        verify(all).printSummary(anyList(), any());
     }
 
     @Test
@@ -132,6 +136,7 @@ public class AllTest {
         All all = spy(new All());
         DockerfileGitHubUtil dockerfileGitHubUtil = mock(DockerfileGitHubUtil.class);
         GitHubPullRequestSender pullRequestSender = mock(GitHubPullRequestSender.class);
+        RateLimiter rateLimiter = spy(new RateLimiter());
         GitForkBranch gitForkBranch = mock(GitForkBranch.class);
         PullRequests pullRequests = mock(PullRequests.class);
         GitHubJsonStore imageTagStore = mock(GitHubJsonStore.class);
@@ -156,18 +161,18 @@ public class AllTest {
         when(all.getPullRequests()).thenReturn(pullRequests);
         PagedSearchIterable<GHContent> contentsWithImage = mock(PagedSearchIterable.class);
         doNothing().when(pullRequests).prepareToCreate(ns, pullRequestSender,
-                contentsWithImage, gitForkBranch, dockerfileGitHubUtil);
-        when(dockerfileGitHubUtil.findFilesWithImage(anyString(), anyMap(),  any(), any())).thenThrow(new GHException("some exception"));
-
+                contentsWithImage, gitForkBranch, dockerfileGitHubUtil, rateLimiter);
+        when(dockerfileGitHubUtil.findFilesWithImage(anyString(), anyMap(),
+                any(), any())).thenThrow(new GHException("some exception"));
 
         all.execute(ns, dockerfileGitHubUtil);
-        verify(all, times(1)).getGitForkBranch(anyString(), anyString(), any());
-        verify(all, times(1)).getPullRequestSender(dockerfileGitHubUtil, ns);
-        verify(all, times(1)).getPullRequests();
+        verify(all).getGitForkBranch(anyString(), anyString(), any());
+        verify(all).getPullRequestSender(dockerfileGitHubUtil, ns);
+        verify(all).getPullRequests();
         verify(pullRequests, times(0)).prepareToCreate(ns, pullRequestSender,
-                contentsWithImage, gitForkBranch, dockerfileGitHubUtil);
-        verify(all, times(1)).processErrorMessages(anyString(), anyString(), any());
-        verify(all, times(1)).printSummary(anyList(), any());
+                contentsWithImage, gitForkBranch, dockerfileGitHubUtil,rateLimiter);
+        verify(all).processErrorMessages(anyString(), anyString(), any());
+        verify(all).printSummary(anyList(), any());
     }
 
     @Test
@@ -203,17 +208,18 @@ public class AllTest {
         List<PagedSearchIterable<GHContent>> contentsWithImageList = Collections.singletonList(contentsWithImage);
         Optional<List<PagedSearchIterable<GHContent>>> optionalContentsWithImageList = Optional.of(contentsWithImageList);
         doThrow(new IOException()).when(pullRequests).prepareToCreate(ns, pullRequestSender,
-                contentsWithImage, gitForkBranch, dockerfileGitHubUtil);
-        when(dockerfileGitHubUtil.findFilesWithImage(anyString(), anyMap(),  any(), any())).thenReturn(optionalContentsWithImageList);
+                contentsWithImage, gitForkBranch, dockerfileGitHubUtil, null);
+        when(dockerfileGitHubUtil.findFilesWithImage(anyString(), anyMap(),
+                any(), any())).thenReturn(optionalContentsWithImageList);
 
         all.execute(ns, dockerfileGitHubUtil);
-        verify(all, times(1)).getGitForkBranch(anyString(), anyString(), any());
-        verify(all, times(1)).getPullRequestSender(dockerfileGitHubUtil, ns);
-        verify(all, times(1)).getPullRequests();
-        verify(pullRequests, times(1)).prepareToCreate(ns, pullRequestSender,
-                contentsWithImage, gitForkBranch, dockerfileGitHubUtil);
-        verify(all, times(1)).processErrorMessages(anyString(), anyString(), any());
-        verify(all, times(1)).printSummary(anyList(), any());
+        verify(all).getGitForkBranch(anyString(), anyString(), any());
+        verify(all).getPullRequestSender(dockerfileGitHubUtil, ns);
+        verify(all).getPullRequests();
+        verify(pullRequests).prepareToCreate(ns, pullRequestSender,
+                contentsWithImage, gitForkBranch, dockerfileGitHubUtil, null);
+        verify(all).processErrorMessages(anyString(), anyString(), any());
+        verify(all).printSummary(anyList(), any());
     }
 
     @Test
@@ -235,8 +241,8 @@ public class AllTest {
 
         all.printSummary(processingErrorsList, numberOfImagesToProcess);
 
-        verify(processingErrors, times(1)).getImageName();
-        verify(processingErrors, times(1)).getTag();
+        verify(processingErrors).getImageName();
+        verify(processingErrors).getTag();
         verify(processingErrors, times(2)).getFailure();
         assertEquals(numberOfImagesToProcess, 2);
     }

@@ -378,10 +378,22 @@ public class DockerfileGitHubUtil {
     }
 
     public void createPullReq(GHRepository origRepo,
-                              String branch, GHRepository forkRepo,
-                              PullRequestInfo pullRequestInfo) throws InterruptedException, IOException {
+                              String branch,
+                              GHRepository forkRepo,
+                              PullRequestInfo pullRequestInfo,
+                              RateLimiter rateLimiter) throws InterruptedException, IOException {
         // TODO: This may loop forever in the event of constant -1 pullRequestExitCodes...
         while (true) {
+            // TODO: accept rateLimiter Optional with option to get no-op rateLimiter
+            // where it's not required.
+            if(rateLimiter != null) {
+                log.info("Trying to consume a token before creating pull request..");
+                // Consume a token from the token bucket.
+                // If a token is not available this method will block until
+                // the refill adds one to the bucket.
+                rateLimiter.consume();
+                log.info("Token consumed, proceeding with PR creation..");
+            }
             int pullRequestExitCode = gitHubUtil.createPullReq(origRepo,
                     branch, forkRepo, pullRequestInfo.getTitle(), pullRequestInfo.getBody());
             if (pullRequestExitCode == 0) {
@@ -506,7 +518,8 @@ public class DockerfileGitHubUtil {
                                      Multimap<String, GitHubContentToProcess> pathToDockerfilesInParentRepo,
                                      GitHubContentToProcess gitHubContentToProcess,
                                      List<String> skippedRepos,
-                                     GitForkBranch gitForkBranch) throws IOException,
+                                     GitForkBranch gitForkBranch,
+                                     RateLimiter rateLimiter) throws IOException,
             InterruptedException {
         // Should we skip doing a getRepository just to fill in the parent value? We already know this to be the parent...
         GHRepository parent = gitHubContentToProcess.getParent();
@@ -549,7 +562,8 @@ public class DockerfileGitHubUtil {
             createPullReq(parent,
                     gitForkBranch.getBranchName(),
                     forkedRepo,
-                    pullRequestInfo);
+                    pullRequestInfo,
+                    rateLimiter);
         }
     }
 }

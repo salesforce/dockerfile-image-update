@@ -26,6 +26,7 @@ import java.util.Comparator;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
+import static com.salesforce.dockerfileimageupdate.utils.Constants.*;
 
 /**
  * Created by minho-park on 6/29/2016.
@@ -84,6 +85,11 @@ public class CommandLine {
         parser.addArgument("-x")
                 .help("comment snippet mentioned in line just before FROM instruction for ignoring a child image. " +
                         "Defaults to 'no-dfiu'");
+        parser.addArgument("-r", "--" + RATE_LIMIT_PR_CREATION)
+                .type(String.class)
+                .setDefault("")
+                .required(false)
+                .help("Use RateLimiting when sending PRs. RateLimiting is enabled only if this value is set it's disabled by default.");
         parser.addArgument("-t", "--" + Constants.FILENAMES_TO_SEARCH)
                 .type(String.class)
                 .setDefault("Dockerfile,docker-compose")
