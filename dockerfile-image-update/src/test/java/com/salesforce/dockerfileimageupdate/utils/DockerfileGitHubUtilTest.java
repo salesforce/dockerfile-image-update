@@ -13,6 +13,7 @@ import com.salesforce.dockerfileimageupdate.model.*;
 import net.sourceforge.argparse4j.inf.*;
 import org.kohsuke.github.*;
 import org.mockito.*;
+import org.slf4j.Logger;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
@@ -29,6 +30,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 
 import static com.salesforce.dockerfileimageupdate.model.PullRequestInfo.DEFAULT_TITLE;
+import static com.salesforce.dockerfileimageupdate.utils.ResultsProcessor.REPOS_SKIPPED_MESSAGE;
 import static org.mockito.Mockito.*;
 import static org.testng.Assert.*;
 
@@ -557,7 +559,7 @@ public class DockerfileGitHubUtilTest {
     }
 
     @DataProvider
-    public Object[][] inputlines() throws Exception {
+    public Object[][] inputLinesForDockerfile() throws Exception {
         return new Object[][]{
                 {"image1", "3", "FROM image1_blahblah", false},
                 {"image1", "3", "  FROM image1_blahblah", false},
@@ -585,9 +587,50 @@ public class DockerfileGitHubUtilTest {
         };
     }
 
-    @Test(dataProvider = "inputlines")
+    @Test(dataProvider = "inputLinesForDockerfile")
     public void testChangeIfDockerfileBaseImageLine(String img, String tag,
                                                     String line, boolean expected) throws Exception {
+        gitHubUtil = mock(GitHubUtil.class);
+        dockerfileGitHubUtil = new DockerfileGitHubUtil(gitHubUtil);
+        assertEquals(dockerfileGitHubUtil.changeIfDockerfileBaseImageLine(img, tag, new StringBuilder(), line),
+                expected);
+    }
+
+    @DataProvider
+    public Object[][] inputLinesForDockerCompose() {
+        return new Object[][]{
+                {"image1", "3", "image: image1_blahblah", false},
+                {"image1", "3", "  image: image1_blahblah", false},
+                {"image1", "3", "image: image1_blahblah  ", false},
+                {"image1", "3", "image: image1_blahblah\t", false},
+                {"image1", "3", "image: image1_blahblah:2", false},
+                {"image2", "4", "image: image2_blahblah:latest", false},
+                {"image4", "9", "image: image4:9", false},
+                {"image5", "246", "image: image5_", false},
+                {"image6", "26", "image: image7", false},
+                {"image8", "245", "image: image8:245", false},
+                {"image8", "245", "image: image8: 245", false},
+                {"imageName", "7", "image: imageName:_asasds", true},
+                {"imageName", "7", "  image: imageName:asAA_aa.as_ss", true},
+                {"imageName", "7", "  image: imageName:Asdf@#ggg", false},
+                {"imageName", "7", "  image: imageName:$ITEST_TAG", false},
+                {"imageName", "7", "  image: imageName:latest", false},
+                {"image3", "7", "image: image3  ",  false},
+                {"image3", "7", "\timage: image3\t", false},
+                {"image7", "98", "image: image7:4", true},
+                {"image7", "98", "image: image7:   4", true},
+                {"image124516418023_1085-1-1248571", "7357",
+                        "image: image124516418023_1085-1-1248571:18026809126359806124890356219518632048125", true},
+                {"image", "1234",
+                        "image: image:1234", false},
+                {"image", "1234",
+                        "image: image:1234", false},
+        };
+    }
+
+    @Test(dataProvider = "inputLinesForDockerCompose")
+    public void testChangeIfDockerfileBaseImageLineForCompose(String img, String tag,
+                                                    String line, boolean expected) {
         gitHubUtil = mock(GitHubUtil.class);
         dockerfileGitHubUtil = new DockerfileGitHubUtil(gitHubUtil);
         assertEquals(dockerfileGitHubUtil.changeIfDockerfileBaseImageLine(img, tag, new StringBuilder(), line),
@@ -887,5 +930,26 @@ public class DockerfileGitHubUtilTest {
         gitHubUtil = mock(GitHubUtil.class);
         dockerfileGitHubUtil = new DockerfileGitHubUtil(gitHubUtil);
         assertEquals(dockerfileGitHubUtil.ignorePRCommentPresent(line, ignoreImageString), expectedResult);
+    }
+
+    @DataProvider
+    public Object[][] tagList() {
+        return new Object[][] {
+                {"12345",               true},
+                {"assdfASFF11",         true},
+                {"_asadsd",             true},
+                {".weww",               false},
+                {"Aswd@#asdas",         false},
+                {"ASDF_SSS-CCC.Ssd",    true},
+                {"-asasd",              false},
+                {" ",                   false}
+        };
+    }
+
+    @Test(dataProvider = "tagList")
+    public void testValidImageTag(String tag, Boolean expectedResult) {
+        gitHubUtil = mock(GitHubUtil.class);
+        dockerfileGitHubUtil = new DockerfileGitHubUtil(gitHubUtil);
+        assertEquals(dockerfileGitHubUtil.isValidImageTag(tag), expectedResult);
     }
 }

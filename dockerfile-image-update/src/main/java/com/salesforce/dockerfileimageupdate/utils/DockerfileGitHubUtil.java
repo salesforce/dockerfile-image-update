@@ -574,10 +574,10 @@ public class DockerfileGitHubUtil {
         String tagVersionRegexStr = "([a-zA-Z0-9_]([-._a-zA-Z0-9])*)";
         Pattern validTag = Pattern.compile(tagVersionRegexStr);
         if (StringUtils.isNotBlank(tag)) {
-            if (!validTag.matcher(tag).matches()) {
+            if (!validTag.matcher(tag.trim()).matches()) {
                 log.warn("{} is not a valid value for image tag. So will be ignored!", tag);
                 return false;
-            } else if (tag.equals("latest")) {
+            } else if (tag.trim().equals("latest")) {
                 log.warn("Tag value is latest. So will be ignored");
                 return false;
             }

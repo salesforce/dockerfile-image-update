@@ -209,6 +209,10 @@ public class ForkableRepoValidatorTest {
                 {"FROM imageName:tag", "imageName", "tag", true},
                 {"FROM imageName:anotherTag", "imageName", "tag", false},
                 {"FROM anotherImage:tag", "imageName", "tag", true},
+                {"image: imageName", "imageName", "tag", true},
+                {"image: imageName:tag", "imageName", "tag", true},
+                {"image: imageName:anotherTag", "imageName", "tag", false},
+                {"image: anotherImage:tag", "imageName", "tag", true},
         };
     }
 
