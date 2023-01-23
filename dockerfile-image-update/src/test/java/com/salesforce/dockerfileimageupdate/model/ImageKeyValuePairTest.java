@@ -11,10 +11,10 @@ public class ImageKeyValuePairTest {
     public Object[][] inputImageKeyValuePairData() {
         return new Object[][]{
                 {"image: dockerimage:3 # some comment",               "image: dockerimage:3 # some comment"},
-                //{"image: dockerimage:3 AS test",                      "image: dockerimage:3 AS test"},
-                //{"image: dockerimage:3 \tAS \ttest # some comment",   "image: dockerimage:3 \tAS \ttest # some comment"},
+                {"    image: dockerimage:3",                          "    image: dockerimage:3"},
+                {"\timage: dockerimage:3",                            "image: dockerimage:3"},
                 {"image:    dockerimage:3#   some   comment",         "image: dockerimage:3 #   some   comment"},
-                {"        image:       dockerimage   ",               "image: dockerimage"},
+                {"        image:       dockerimage   ",               "        image: dockerimage"},
                 {"\t image: \t dockerimage:4 \t #comment",            "image: dockerimage:4 #comment"},
                 {"image: dockerimage:4:4:4 #comment",                 "image: dockerimage:4 #comment"},
                 {"image: dockerimage:4 #comment me # # ",             "image: dockerimage:4 #comment me # # "}
@@ -206,7 +206,7 @@ public class ImageKeyValuePairTest {
     @DataProvider
     public Object[][] isImageKeyValuePairWithThisImageAndOlderTagData() {
         return new Object[][]{
-                {"image: someimage", "someimage", "sometag", true},
+                {"image: someimage", "someimage", "sometag", false},
                 {"image: someimage:sometag", "someimage", "sometag", false},
                 {"not a valid image key-value pair", "someimage", "sometag", false},
                 {"image: someimage:oldtag", "someimage", "sometag", true}

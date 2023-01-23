@@ -44,6 +44,8 @@ public class Parent implements ExecutableWithNamespace {
         String store = ns.get(Constants.STORE);
         String img = ns.get(Constants.IMG);
         String tag = ns.get(Constants.TAG);
+        String filenamesToSearch = ns.getString(Constants.FILE_NAMES_TO_SEARCH);
+
         log.info("Updating store...");
         try {
             ImageTagStore imageTagStore = ImageStoreUtil.initializeImageTagStore(this.dockerfileGitHubUtil, store);
@@ -57,7 +59,6 @@ public class Parent implements ExecutableWithNamespace {
                     + "be skipped.", Constants.SKIP_PR_CREATION);
             return;
         }
-        String filenamesToSearch = ns.get(Constants.FILENAMES_TO_SEARCH);
 
         PullRequests pullRequests = getPullRequests();
         GitHubPullRequestSender pullRequestSender = getPullRequestSender(dockerfileGitHubUtil, ns);

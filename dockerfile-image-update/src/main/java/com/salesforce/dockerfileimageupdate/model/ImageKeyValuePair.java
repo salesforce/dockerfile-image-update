@@ -1,14 +1,16 @@
 package com.salesforce.dockerfileimageupdate.model;
 
+import com.salesforce.dockerfileimageupdate.utils.DockerfileGitHubUtil;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.regex.Pattern;
 
 public class ImageKeyValuePair {
+    private static final Logger log = LoggerFactory.getLogger(ImageKeyValuePair.class);
     private static final String IMAGE = "image";
     private static final String INVALID_IMAGE_VALUE = "It is not a valid value for image key.";
-    private static final String INVALID_TAG_VALUE = "It is not a valid value for image tag.";
-    private static final String TAG_VALUE_LATEST = "Tag value is latest. So ignoring it";
 
     /**
      * The name of the base image
@@ -22,6 +24,10 @@ public class ImageKeyValuePair {
      * Comment starting with #
      */
     private final String comments;
+    /**
+     * Yaml Spacing #
+     */
+    private final String spaces;
 
     /**
      * Accepts an image key value pair line from a docker-compose file
@@ -41,6 +47,13 @@ public class ImageKeyValuePair {
         } else {
             comments = null;
         }
+        // Get Yaml spacing in variable
+        if (lineWithoutComment.startsWith(" ")) {
+            spaces = lineWithoutComment.substring(0, lineWithoutComment.indexOf(IMAGE));
+        } else {
+            spaces = "";
+        }
+
         // Remove "image:" from remaining string
         String lineWithoutImageKey = lineWithoutComment.trim().
                 replaceFirst(IMAGE, "").replaceFirst(":", "").
@@ -51,7 +64,6 @@ public class ImageKeyValuePair {
             baseImageName = imageAndTag[0];
             if (imageAndTag.length > 1) {
                 tag = imageAndTag[1];
-                validateImageTag(tag);
             } else {
                 tag = null;
             }
@@ -67,14 +79,15 @@ public class ImageKeyValuePair {
      * @param tag tag to add
      * @param comments comments to add
      */
-    private ImageKeyValuePair(String baseImageName, String tag, String comments) {
+    private ImageKeyValuePair(String baseImageName, String tag, String comments, String spaces) {
         this.baseImageName = baseImageName;
         this.tag = tag;
         this.comments = comments;
+        this.spaces = spaces;
     }
 
     /**
-     *  Check if this {@code lineInFile} is a FROM instruction,
+     *  Check if this {@code lineInFile} is a image instruction,
      *  it is referencing {@code imageName} as a base image,
      *  and the tag is not the same as {@code imageTag} (or there is no tag)
      * @param lineInFile Line a code file
@@ -84,8 +97,10 @@ public class ImageKeyValuePair {
      */
     public static boolean isImageKeyValuePairWithThisImageAndOlderTag(String lineInFile, String imageName, String imageTag) {
         if (ImageKeyValuePair.isImageKeyValuePair(lineInFile)) {
-            ImageKeyValuePair ImageKeyValuePair = new ImageKeyValuePair(lineInFile);
-            return ImageKeyValuePair.hasBaseImage(imageName) && ImageKeyValuePair.hasADifferentTag(imageTag);
+            ImageKeyValuePair imageKeyValuePair = new ImageKeyValuePair(lineInFile);
+            return imageKeyValuePair.hasBaseImage(imageName)
+                    && imageKeyValuePair.hasADifferentTag(imageTag)
+                    && DockerfileGitHubUtil.isValidImageTag(imageKeyValuePair.getTag());
         }
         return false;
     }
@@ -93,16 +108,16 @@ public class ImageKeyValuePair {
     /**
      * Get a new {@code ComposeImageValuePair} the same as this but with the {@code tag} set as {@code newTag}
      * @param newTag the new image tag
-     * @return a new FROM with the new image tag
+     * @return a new image instruction with the new image tag
      */
     public ImageKeyValuePair getImageKeyValuePairWithNewTag(String newTag) {
-        return new ImageKeyValuePair(baseImageName, newTag, comments);
+        return new ImageKeyValuePair(baseImageName, newTag, comments, spaces);
     }
 
     /**
-     * Determines whether the line is a FROM instruction line in a Dockerfile
-     * @param composeImageKeyValueLine a single line(key:value) from a Docker-compose.yaml
-     * @return the line is a FROM instruction line or not
+     * Determines whether the line is a image instruction line in a docker-compose.yaml
+     * @param composeImageKeyValueLine a single line(key:value) from a docker-compose.yaml
+     * @return the line is a image instruction line or not
      */
     public static boolean isImageKeyValuePair(String composeImageKeyValueLine) {
         if (StringUtils.isNotBlank(composeImageKeyValueLine)) {
@@ -112,11 +127,11 @@ public class ImageKeyValuePair {
     }
 
     /**
-     * @return a String representation of a FROM instruction line in Dockerfile. No new line at the end
+     * @return a String representation of a image instruction line in docker-compose.yaml file. No new line at the end
      */
     @Override
     public String toString() {
-        StringBuilder stringBuilder = new StringBuilder(IMAGE);
+        StringBuilder stringBuilder = new StringBuilder(spaces + IMAGE);
         stringBuilder.append(": ");
         stringBuilder.append(baseImageName);
         if (hasTag()) {
@@ -178,16 +193,5 @@ public class ImageKeyValuePair {
 
     public String getComments() {
         return comments;
-    }
-
-    public static void validateImageTag(String tag) {
-        String tagVersionRegexStr = "([a-zA-Z0-9_]([-._a-zA-Z0-9])*)";
-        Pattern validTag = Pattern.compile(tagVersionRegexStr);
-        if (!validTag.matcher(tag).matches()) {
-            throw new IllegalArgumentException(INVALID_TAG_VALUE);
-        }
-        if (tag.equals("latest")) {
-            throw new IllegalArgumentException(TAG_VALUE_LATEST);
-        }
     }
 }

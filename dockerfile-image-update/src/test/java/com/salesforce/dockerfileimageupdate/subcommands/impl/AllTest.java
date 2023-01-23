@@ -19,7 +19,11 @@ import java.util.*;
 
 import net.sourceforge.argparse4j.inf.Namespace;
 import org.kohsuke.github.*;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 import org.testng.annotations.Test;
+
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 import static org.testng.Assert.assertEquals;
 
@@ -36,7 +40,7 @@ public class AllTest {
                 "store");
 
         Namespace ns = new Namespace(nsMap);
-        RateLimiter rateLimiter = spy(new RateLimiter());
+        RateLimiter rateLimiter = new RateLimiter();
         All all = spy(new All());
         DockerfileGitHubUtil dockerfileGitHubUtil = mock(DockerfileGitHubUtil.class);
         GitHubPullRequestSender pullRequestSender = mock(GitHubPullRequestSender.class);
@@ -61,20 +65,24 @@ public class AllTest {
         when(all.getPullRequestSender(dockerfileGitHubUtil, ns)).thenReturn(pullRequestSender);
         when(all.getGitForkBranch("image1", "tag1", ns)).thenReturn(gitForkBranch);
         when(all.getPullRequests()).thenReturn(pullRequests);
+
         doNothing().when(pullRequests).prepareToCreate(ns, pullRequestSender,
-                contentsWithImage, gitForkBranch, dockerfileGitHubUtil, rateLimiter);
+            contentsWithImage, gitForkBranch, dockerfileGitHubUtil,
+            rateLimiter);
         when(dockerfileGitHubUtil.findFilesWithImage(anyString(), anyMap(),
                 any(), any())).thenReturn(optionalContentsWithImageList);
-
-        all.execute(ns, dockerfileGitHubUtil);
-        verify(all).getGitForkBranch(anyString(), anyString(), any());
-        verify(all).getPullRequestSender(dockerfileGitHubUtil, ns);
-        verify(all).getPullRequests();
-        verify(pullRequests).prepareToCreate(eq(ns), eq(pullRequestSender),
-                eq(contentsWithImage), eq(gitForkBranch), eq(dockerfileGitHubUtil), any(RateLimiter.class));
-        verify(all, times(0)).processErrorMessages(anyString(), anyString(), any());
-        verify(all).printSummary(anyList(), any());
-
+        try (MockedStatic<RateLimiter> mockedRateLimiter = Mockito.mockStatic(RateLimiter.class)) {
+            mockedRateLimiter.when(() -> RateLimiter.getInstance(ns))
+                    .thenReturn(rateLimiter);
+            all.execute(ns, dockerfileGitHubUtil);
+            verify(all).getGitForkBranch(anyString(), anyString(), any());
+            verify(all).getPullRequestSender(dockerfileGitHubUtil, ns);
+            verify(all).getPullRequests();
+            verify(pullRequests).prepareToCreate(eq(ns), eq(pullRequestSender),
+                    eq(contentsWithImage), eq(gitForkBranch), eq(dockerfileGitHubUtil), eq(rateLimiter));
+            verify(all, times(0)).processErrorMessages(anyString(), anyString(), any());
+            verify(all).printSummary(anyList(), any());
+        }
     }
 
     @Test

@@ -16,6 +16,8 @@ import com.salesforce.dockerfileimageupdate.storage.GitHubJsonStore;
 import net.sourceforge.argparse4j.inf.*;
 import org.apache.commons.lang3.StringUtils;
 import org.kohsuke.github.*;
+
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -124,8 +126,8 @@ public class DockerfileGitHubUtil {
         if (image.substring(image.lastIndexOf(' ') + 1).length() <= 1) {
             throw new IOException("Invalid image name.");
         }
-        List<String> terms = GitHubImageSearchTermList.getSearchTerms(image);
-        log.info("Searching for {} with terms: {}", image, terms);
+        List<String> terms = GitHubImageSearchTermList.getSearchTerms(image, filenamesToSearch);
+        log.info("Searching for {}, in files: {}, with terms: {}", image, filenamesToSearch, terms);
         terms.forEach(search::q);
         PagedSearchIterable<GHContent> files = search.list();
         int totalCount = files.getTotalCount();
@@ -292,7 +294,7 @@ public class DockerfileGitHubUtil {
         boolean modified = rewriteDockerfile(img, tag, reader, strB, ignoreImageString);
         if (modified) {
             content.update(strB.toString(),
-                    "Fix Dockerfile base image in /" + content.getPath() + "\n\n" + customMessage, branch);
+                    "Fix Docker base image in /" + content.getPath() + "\n\n" + customMessage, branch);
         }
     }
 
@@ -317,7 +319,7 @@ public class DockerfileGitHubUtil {
     }
 
     /**
-     * This method will read a line and see if the line contains a FROM instruction with the specified
+     * This method will read a line and see if the line contains a FROM instruction(Dockerfile) or imageKeyValuePair instruction(docker-compose) with the specified
      * {@code imageToFind}. If the image does not have the given {@code tag} then {@code stringBuilder}
      * will get a modified version of the line with the new {@code tag}. We return {@code true} in this
      * instance.
@@ -337,7 +339,7 @@ public class DockerfileGitHubUtil {
         boolean modified = false;
         String outputLine = line;
 
-        // Only check/modify lines which contain a FROM instruction
+        // Only check/modify lines which contain a FROM instruction or imageKeyValuePair instruction
         if (FromInstruction.isFromInstruction(line)) {
             FromInstruction fromInstruction = new FromInstruction(line);
 
@@ -350,7 +352,8 @@ public class DockerfileGitHubUtil {
         } else if (ImageKeyValuePair.isImageKeyValuePair(line)) {
             ImageKeyValuePair imageKeyValuePair = new ImageKeyValuePair(line);
             if (imageKeyValuePair.hasBaseImage(imageToFind) &&
-                    imageKeyValuePair.hasADifferentTag(tag)) {
+                    imageKeyValuePair.hasADifferentTag(tag) &&
+                    DockerfileGitHubUtil.isValidImageTag(imageKeyValuePair.getTag())) {
                 imageKeyValuePair = imageKeyValuePair.getImageKeyValuePairWithNewTag(tag);
                 modified = true;
             }
@@ -361,7 +364,7 @@ public class DockerfileGitHubUtil {
     }
 
     /**
-     * Determines whether a comment before FROM line has {@code ignoreImageString} to ignore creating dfiu PR
+     * Determines whether a comment before FROM line or imageKeyValuePair line has {@code ignoreImageString} to ignore creating dfiu PR
      * If {@code ignoreImageString} present in comment, PR should be ignored
      * If {@code ignoreImageString} is empty, then by default 'no-dfiu' comment will be searched
      * @param line line to search for comment
@@ -386,7 +389,7 @@ public class DockerfileGitHubUtil {
         while (true) {
             // TODO: accept rateLimiter Optional with option to get no-op rateLimiter
             // where it's not required.
-            if(rateLimiter != null) {
+            if (rateLimiter != null) {
                 log.info("Trying to consume a token before creating pull request..");
                 // Consume a token from the token bucket.
                 // If a token is not available this method will block until
@@ -565,5 +568,21 @@ public class DockerfileGitHubUtil {
                     pullRequestInfo,
                     rateLimiter);
         }
+    }
+
+    public static boolean isValidImageTag(String tag) {
+        String tagVersionRegexStr = "([a-zA-Z0-9_]([-._a-zA-Z0-9])*)";
+        Pattern validTag = Pattern.compile(tagVersionRegexStr);
+        if (StringUtils.isNotBlank(tag)) {
+            if (!validTag.matcher(tag).matches()) {
+                log.warn("{} is not a valid value for image tag. So will be ignored!", tag);
+                return false;
+            } else if (tag.equals("latest")) {
+                log.warn("Tag value is latest. So will be ignored");
+                return false;
+            }
+            return true;
+        }
+        return false;
     }
 }

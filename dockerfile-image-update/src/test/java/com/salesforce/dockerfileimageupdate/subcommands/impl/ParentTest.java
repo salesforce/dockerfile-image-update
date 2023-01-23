@@ -16,6 +16,8 @@ import com.salesforce.dockerfileimageupdate.storage.GitHubJsonStore;
 import com.salesforce.dockerfileimageupdate.utils.*;
 import net.sourceforge.argparse4j.inf.Namespace;
 import org.kohsuke.github.*;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 import org.testng.annotations.Test;
 
 import java.util.*;
@@ -142,14 +144,17 @@ public class ParentTest {
                 contentsWithImage, gitForkBranch, dockerfileGitHubUtil, rateLimiter);
         when(dockerfileGitHubUtil.getGHContents(any(), any(),
                 any(), any())).thenReturn(optionalContentsWithImageList);
+        try (MockedStatic<RateLimiter> mockedRateLimiter = Mockito.mockStatic(RateLimiter.class)) {
+            mockedRateLimiter.when(() -> RateLimiter.getInstance(ns))
+                    .thenReturn(rateLimiter);
+            parent.execute(ns, dockerfileGitHubUtil);
 
-        parent.execute(ns, dockerfileGitHubUtil);
-
-        verify(parent).getGitForkBranch(ns);
-        verify(parent).getPullRequestSender(dockerfileGitHubUtil, ns);
-        verify(parent).getPullRequests();
-        verify(pullRequests).prepareToCreate(eq(ns), eq(pullRequestSender),
-                eq(contentsWithImage), eq(gitForkBranch), eq(dockerfileGitHubUtil), any(RateLimiter.class));
+            verify(parent).getGitForkBranch(ns);
+            verify(parent).getPullRequestSender(dockerfileGitHubUtil, ns);
+            verify(parent).getPullRequests();
+            verify(pullRequests).prepareToCreate(eq(ns), eq(pullRequestSender),
+                    eq(contentsWithImage), eq(gitForkBranch), eq(dockerfileGitHubUtil), any(RateLimiter.class));
+        }
     }
 
     @Test

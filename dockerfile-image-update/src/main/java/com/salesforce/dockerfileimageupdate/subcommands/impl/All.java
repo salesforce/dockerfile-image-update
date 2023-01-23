@@ -81,7 +81,7 @@ public class All implements ExecutableWithNamespace {
             PullRequests pullRequests = getPullRequests();
             GitHubPullRequestSender pullRequestSender = getPullRequestSender(dockerfileGitHubUtil, ns);
             GitForkBranch gitForkBranch = getGitForkBranch(image, tag, ns);
-            String filenamesToSearch = ns.get(Constants.FILENAMES_TO_SEARCH);
+            String filenamesToSearch = ns.get(Constants.FILE_NAMES_TO_SEARCH);
 
             log.info("Finding Dockerfiles with the image name {}...", image);
             Optional<List<PagedSearchIterable<GHContent>>> contentsWithImage =

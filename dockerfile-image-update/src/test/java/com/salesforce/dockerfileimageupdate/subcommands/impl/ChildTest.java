@@ -13,6 +13,8 @@ import com.salesforce.dockerfileimageupdate.storage.GitHubJsonStore;
 import com.salesforce.dockerfileimageupdate.utils.DockerfileGitHubUtil;
 import net.sourceforge.argparse4j.inf.Namespace;
 import org.kohsuke.github.GHRepository;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 import com.salesforce.dockerfileimageupdate.utils.RateLimiter;
@@ -48,7 +50,7 @@ public class ChildTest {
         Child child = spy(new Child());
         Namespace ns = new Namespace(inputMap);
         DockerfileGitHubUtil dockerfileGitHubUtil = mock(DockerfileGitHubUtil.class);
-        RateLimiter rateLimiter = spy(new RateLimiter());
+        RateLimiter rateLimiter = new RateLimiter();
         GitHubJsonStore imageTagStore = mock(GitHubJsonStore.class);
         when(dockerfileGitHubUtil.getRepo(any())).thenReturn(new GHRepository());
         when(dockerfileGitHubUtil.getOrCreateFork(any())).thenReturn(new GHRepository());
@@ -57,11 +59,14 @@ public class ChildTest {
         when(dockerfileGitHubUtil.getGitHubJsonStore("test")).thenReturn(imageTagStore);
 
         doNothing().when(dockerfileGitHubUtil).createPullReq(any(), anyString(), any(), any(), eq(rateLimiter));
+        try (MockedStatic<RateLimiter> mockedRateLimiter = Mockito.mockStatic(RateLimiter.class)) {
+            mockedRateLimiter.when(() -> RateLimiter.getInstance(ns))
+                    .thenReturn(rateLimiter);
+            child.execute(ns, dockerfileGitHubUtil);
 
-        child.execute(ns, dockerfileGitHubUtil);
-
-        verify(dockerfileGitHubUtil, times(1))
-                .createPullReq(any(), anyString(), any(), any(), any(RateLimiter.class));
+            verify(dockerfileGitHubUtil, times(1))
+                    .createPullReq(any(), anyString(), any(), any(), any(RateLimiter.class));
+        }
     }
 
     @Test

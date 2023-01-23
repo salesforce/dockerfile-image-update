@@ -83,18 +83,19 @@ public class CommandLine {
                 .setDefault(false)
                 .help("Only update image tag store. Skip creating PRs");
         parser.addArgument("-x")
-                .help("comment snippet mentioned in line just before FROM instruction for ignoring a child image. " +
+                .help("comment snippet mentioned in line just before 'FROM' instruction(Dockerfile)" +
+                        "or 'image' instruction(docker-compose) for ignoring a child image. " +
                         "Defaults to 'no-dfiu'");
+        parser.addArgument("-t", "--" + FILE_NAMES_TO_SEARCH)
+                .type(String.class)
+                .setDefault("Dockerfile,docker-compose")
+                .help("Comma seperated list of filenames to search & update for PR creation" +
+                        "(default: Dockerfile,docker-compose)");
         parser.addArgument("-r", "--" + RATE_LIMIT_PR_CREATION)
                 .type(String.class)
                 .setDefault("")
                 .required(false)
                 .help("Use RateLimiting when sending PRs. RateLimiting is enabled only if this value is set it's disabled by default.");
-        parser.addArgument("-t", "--" + Constants.FILENAMES_TO_SEARCH)
-                .type(String.class)
-                .setDefault("Dockerfile,docker-compose")
-                .help("Comma seperated list of filenames to search & update for PR creation" +
-                        "(default: Dockerfile,docker-compose)");
         return parser;
     }
 
