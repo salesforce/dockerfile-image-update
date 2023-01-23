@@ -146,7 +146,7 @@ public class ForkableRepoValidatorTest {
         ForkableRepoValidator validator = new ForkableRepoValidator(dockerfileGitHubUtil);
         GHContent content = mock(GHContent.class);
         when(content.getPath()).thenReturn("/Dockerfile");
-        GitForkBranch gitForkBranch = new GitForkBranch("someImage", "someTag", null);
+        GitForkBranch gitForkBranch = new GitForkBranch("someImage", "someTag", null, "Dockerfile");
         when(dockerfileGitHubUtil.tryRetrievingContent(eq(repo), any(), any())).thenReturn(content);
         InputStream inputStream = new ByteArrayInputStream("FROM someImage".getBytes());
         when(content.read()).thenReturn(inputStream);
@@ -161,7 +161,7 @@ public class ForkableRepoValidatorTest {
         ForkableRepoValidator validator = new ForkableRepoValidator(dockerfileGitHubUtil);
         GHContent content = mock(GHContent.class);
         when(content.getPath()).thenReturn("/Dockerfile");
-        GitForkBranch gitForkBranch = new GitForkBranch("someImage", "someTag", null);
+        GitForkBranch gitForkBranch = new GitForkBranch("someImage", "someTag", null, "Dockerfile");
         when(dockerfileGitHubUtil.tryRetrievingContent(eq(repo), any(), any())).thenThrow(new InterruptedException("some exception"));
 
         assertEquals(validator.contentHasChangesInDefaultBranch(repo, content, gitForkBranch), shouldForkResult());
@@ -176,7 +176,7 @@ public class ForkableRepoValidatorTest {
         String searchContentPath = "/Dockerfile";
         when(content.getPath()).thenReturn(searchContentPath);
         String imageName = "someImage";
-        GitForkBranch gitForkBranch = new GitForkBranch(imageName, "someTag", null);
+        GitForkBranch gitForkBranch = new GitForkBranch(imageName, "someTag", null, "Dockerfile");
         when(dockerfileGitHubUtil.tryRetrievingContent(eq(repo), any(), any())).thenReturn(content);
         InputStream inputStream = new ByteArrayInputStream("nochanges".getBytes());
         when(content.read()).thenReturn(inputStream);
@@ -193,7 +193,7 @@ public class ForkableRepoValidatorTest {
         GHContent content = mock(GHContent.class);
         String searchContentPath = "/Dockerfile";
         when(content.getPath()).thenReturn(searchContentPath);
-        GitForkBranch gitForkBranch = new GitForkBranch("someImage", "someTag", null);
+        GitForkBranch gitForkBranch = new GitForkBranch("someImage", "someTag", null, "Dockerfile,docker-compose");
         when(dockerfileGitHubUtil.tryRetrievingContent(eq(repo), any(), any())).thenReturn(null);
         InputStream inputStream = new ByteArrayInputStream("FROM someImage".getBytes());
 
@@ -223,7 +223,7 @@ public class ForkableRepoValidatorTest {
         ForkableRepoValidator validator = new ForkableRepoValidator(dockerfileGitHubUtil);
         GHContent content = mock(GHContent.class);
         InputStream inputStream = new ByteArrayInputStream(contentText.getBytes());
-        GitForkBranch gitForkBranch = new GitForkBranch(imageName, imageTag, null);
+        GitForkBranch gitForkBranch = new GitForkBranch(imageName, imageTag, null,"docker-compose");
 
         when(content.read()).thenReturn(inputStream);
 
@@ -237,7 +237,7 @@ public class ForkableRepoValidatorTest {
         GHRepository repo = mock(GHRepository.class);
         ForkableRepoValidator validator = new ForkableRepoValidator(dockerfileGitHubUtil);
         GHContent content = mock(GHContent.class);
-        GitForkBranch gitForkBranch = new GitForkBranch("name", "tag", null);
+        GitForkBranch gitForkBranch = new GitForkBranch("name", "tag", null, "");
 
         when(content.read()).thenThrow(new IOException("failed on IO"));
 

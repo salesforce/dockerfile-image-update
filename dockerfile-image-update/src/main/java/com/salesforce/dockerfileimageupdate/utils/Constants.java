@@ -48,4 +48,6 @@ public class Constants {
     public static final Duration DEFAULT_RATE_LIMIT_DURATION = Duration.ofMinutes(DEFAULT_RATE_LIMIT);
     //token adding rate(here:a token added every 2 minutes in the bucket)
     public static final Duration DEFAULT_TOKEN_ADDING_RATE = Duration.ofMinutes(DEFAULT_CONSUMING_TOKEN_RATE);
+    public static final String FILENAME_DOCKERFILE = "dockerfile";
+    public static final String FILENAME_DOCKER_COMPOSE = "docker-compose";
 }

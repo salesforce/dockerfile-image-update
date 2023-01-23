@@ -118,8 +118,7 @@ public class DockerfileGitHubUtilTest {
         GHPullRequestQueryBuilder queryBuilder = getGHPullRequestQueryBuilder(imageName, Optional.of(ghPullRequest));
         GHRepository parent = mock(GHRepository.class);
         when(parent.queryPullRequests()).thenReturn(queryBuilder);
-        GitForkBranch gitForkBranch = new GitForkBranch(imageName, "", null);
-
+        GitForkBranch gitForkBranch = new GitForkBranch(imageName, "", null, "Dockerfile,docker-compose");
 
         gitHubUtil = mock(GitHubUtil.class);
         dockerfileGitHubUtil = new DockerfileGitHubUtil(gitHubUtil);
@@ -133,7 +132,7 @@ public class DockerfileGitHubUtilTest {
         GHPullRequestQueryBuilder queryBuilder = getGHPullRequestQueryBuilder(imageName, Optional.empty());
         GHRepository parent = mock(GHRepository.class);
         when(parent.queryPullRequests()).thenReturn(queryBuilder);
-        GitForkBranch gitForkBranch = new GitForkBranch(imageName, "", null);
+        GitForkBranch gitForkBranch = new GitForkBranch(imageName, "", null, "Dockerfile,docker-compose");
 
 
         gitHubUtil = mock(GitHubUtil.class);
@@ -782,7 +781,7 @@ public class DockerfileGitHubUtilTest {
         when(parentBranch.getSHA1()).thenReturn(sha);
         when(parent.getBranch(defaultBranch)).thenReturn(parentBranch);
         GHRepository fork = mock(GHRepository.class);
-        GitForkBranch gitForkBranch = new GitForkBranch("imageName", "imageTag", null);
+        GitForkBranch gitForkBranch = new GitForkBranch("imageName", "imageTag", null, "Dockerfile");
         when(gitHubUtil.repoHasBranch(fork, gitForkBranch.getBranchName())).thenReturn(true);
         GHRef returnedRef = mock(GHRef.class);
         when(fork.getRef(anyString())).thenReturn(returnedRef);
@@ -804,7 +803,7 @@ public class DockerfileGitHubUtilTest {
         when(parentBranch.getSHA1()).thenReturn(sha);
         when(parent.getBranch(defaultBranch)).thenReturn(parentBranch);
         GHRepository fork = mock(GHRepository.class);
-        GitForkBranch gitForkBranch = new GitForkBranch("imageName", "imageTag", null);
+        GitForkBranch gitForkBranch = new GitForkBranch("imageName", "imageTag", null, "Dockerfile");
         when(gitHubUtil.repoHasBranch(fork, gitForkBranch.getBranchName())).thenReturn(false);
 
         dockerfileGitHubUtil.createOrUpdateForkBranchToParentDefault(parent, fork, gitForkBranch);
@@ -819,7 +818,7 @@ public class DockerfileGitHubUtilTest {
                 "tag", Constants.STORE,
                 "store");
         Namespace ns = new Namespace(nsMap);
-        GitForkBranch gitForkBranch = new GitForkBranch("image", "tag", null);
+        GitForkBranch gitForkBranch = new GitForkBranch("image", "tag", null, "");
         Multimap<String, GitHubContentToProcess> pathToDockerfilesInParentRepo = HashMultimap.create();
         pathToDockerfilesInParentRepo.put("repo1", new GitHubContentToProcess(null, null, "df11"));
         pathToDockerfilesInParentRepo.put("repo1", new GitHubContentToProcess(null, null, "df12"));

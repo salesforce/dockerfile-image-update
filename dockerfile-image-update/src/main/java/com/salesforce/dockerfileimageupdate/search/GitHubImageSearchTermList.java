@@ -1,6 +1,7 @@
 package com.salesforce.dockerfileimageupdate.search;
 
 import com.google.common.collect.ImmutableList;
+import com.salesforce.dockerfileimageupdate.utils.Constants;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -95,7 +96,7 @@ public class GitHubImageSearchTermList {
         if (domain == null || domain.trim().isEmpty()) {
             return state;
         } else {
-            if (filenames.equalsIgnoreCase("Dockerfile")) {
+            if (filenames.equalsIgnoreCase(Constants.FILENAME_DOCKERFILE)) {
                 state.addToCurrentTerm("FROM ");
             }
             if (domain.contains("-")) {

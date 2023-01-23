@@ -56,7 +56,7 @@ public class Child implements ExecutableWithNamespace {
             return;
         }
 
-        GitForkBranch gitForkBranch = new GitForkBranch(img, forceTag, branch);
+        GitForkBranch gitForkBranch = new GitForkBranch(img, forceTag, branch, ns.get(Constants.FILE_NAMES_TO_SEARCH));
         PullRequestInfo pullRequestInfo =
                 new PullRequestInfo(ns.get(Constants.GIT_PR_TITLE),
                         gitForkBranch.getImageName(),

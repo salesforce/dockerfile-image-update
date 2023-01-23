@@ -1,5 +1,8 @@
 package com.salesforce.dockerfileimageupdate.model;
 
+import com.salesforce.dockerfileimageupdate.utils.Constants;
+import org.apache.commons.lang3.StringUtils;
+
 /**
  * Converts an imageName to a branchName. Primary conversion necessary is : to -
  * Also support backward compatible method of specifying a branch
@@ -9,11 +12,12 @@ package com.salesforce.dockerfileimageupdate.model;
  */
 public class GitForkBranch {
     private final String branchPrefix;
+    private final String branchSuffix;
     private final String imageName;
     private final String imageTag;
     private final boolean specifiedBranchOverride;
 
-    public GitForkBranch(String imageName, String imageTag, String specifiedBranch) {
+    public GitForkBranch(String imageName, String imageTag, String specifiedBranch, String filenamesSearchedFor) {
         this.imageTag = (imageTag == null || imageTag.trim().isEmpty()) ? "" : imageTag.trim();
         this.imageName = (imageName == null || imageName.trim().isEmpty()) ? "" : imageName.trim();
         if (specifiedBranch == null || specifiedBranch.trim().isEmpty()) {
@@ -22,9 +26,11 @@ public class GitForkBranch {
             }
             this.branchPrefix = this.imageName.replace(":", "-").toLowerCase();
             this.specifiedBranchOverride = false;
+            this.branchSuffix = getBranchSuffix(StringUtils.isNotBlank(filenamesSearchedFor) ? filenamesSearchedFor.toLowerCase():filenamesSearchedFor);
         } else {
             this.branchPrefix = specifiedBranch;
             this.specifiedBranchOverride = true;
+            this.branchSuffix = "";
         }
     }
 
@@ -71,9 +77,9 @@ public class GitForkBranch {
      */
     public String getBranchName() {
         if (this.imageTag == null || this.imageTag.trim().isEmpty()) {
-            return this.branchPrefix;
+            return this.branchPrefix + this.branchSuffix;
         } else {
-            return this.branchPrefix + "-" + this.imageTag;
+            return this.branchPrefix + "-" + this.imageTag + this.branchSuffix;
         }
     }
 
@@ -83,5 +89,19 @@ public class GitForkBranch {
 
     public String getImageTag() {
         return imageTag;
+    }
+
+    private String getBranchSuffix(String filenamesSearchedFor) {
+        // To avoid branch with same imageName-tag getting overwritten in case multiple runs(with different file types)
+        // on same image tag store, adding suffix to branch name
+        if (StringUtils.isBlank(filenamesSearchedFor)) {
+            return "";
+        } else if (filenamesSearchedFor.contains(Constants.FILENAME_DOCKERFILE) && !filenamesSearchedFor.contains(Constants.FILENAME_DOCKER_COMPOSE)) {
+            return "_dockerfile";
+        } else if (filenamesSearchedFor.contains(Constants.FILENAME_DOCKER_COMPOSE) && !filenamesSearchedFor.contains(Constants.FILENAME_DOCKERFILE)) {
+            return "_dockercompose";
+        } else {
+            return "";
+        }
     }
 }

@@ -89,7 +89,7 @@ public class Parent implements ExecutableWithNamespace {
     }
 
     protected GitForkBranch getGitForkBranch(Namespace ns){
-        return new GitForkBranch(ns.get(Constants.IMG), ns.get(Constants.TAG), ns.get(Constants.GIT_BRANCH));
+        return new GitForkBranch(ns.get(Constants.IMG), ns.get(Constants.TAG), ns.get(Constants.GIT_BRANCH), ns.get(Constants.FILE_NAMES_TO_SEARCH));
     }
 
     protected GitHubPullRequestSender getPullRequestSender(DockerfileGitHubUtil dockerfileGitHubUtil, Namespace ns){
