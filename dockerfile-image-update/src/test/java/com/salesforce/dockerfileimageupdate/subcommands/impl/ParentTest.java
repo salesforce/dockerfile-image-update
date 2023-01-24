@@ -16,11 +16,11 @@ import com.salesforce.dockerfileimageupdate.storage.GitHubJsonStore;
 import com.salesforce.dockerfileimageupdate.utils.*;
 import net.sourceforge.argparse4j.inf.Namespace;
 import org.kohsuke.github.*;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 import org.testng.annotations.Test;
 
 import java.util.*;
-import static com.salesforce.dockerfileimageupdate.utils.Constants.RATE_LIMIT_PR_CREATION;
-import static org.mockito.Matchers.*;
 import static org.mockito.Mockito.*;
 import static org.testng.Assert.*;
 
@@ -107,7 +107,7 @@ public class ParentTest {
         when(parent.getPullRequests()).thenReturn(pullRequests);
         doNothing().when(pullRequests).prepareToCreate(ns, pullRequestSender,
                 contentsWithImage, gitForkBranch, dockerfileGitHubUtil, null);
-        when(dockerfileGitHubUtil.getGHContents(anyString(), anyString(),  anyInt())).thenReturn(optionalContentsWithImageList);
+        when(dockerfileGitHubUtil.getGHContents(any(), any(), any(), any())).thenReturn(optionalContentsWithImageList);
         when(dockerfileGitHubUtil.getGitHubJsonStore("store")).thenReturn(imageTagStore);
 
         parent.execute(ns, dockerfileGitHubUtil);
@@ -142,16 +142,19 @@ public class ParentTest {
         when(parent.getPullRequests()).thenReturn(pullRequests);
         doNothing().when(pullRequests).prepareToCreate(ns, pullRequestSender,
                 contentsWithImage, gitForkBranch, dockerfileGitHubUtil, rateLimiter);
-        when(dockerfileGitHubUtil.getGHContents(anyString(), anyString(),  anyInt())).thenReturn(optionalContentsWithImageList);
+        when(dockerfileGitHubUtil.getGHContents(any(), any(),
+                any(), any())).thenReturn(optionalContentsWithImageList);
+        try (MockedStatic<RateLimiter> mockedRateLimiter = Mockito.mockStatic(RateLimiter.class)) {
+            mockedRateLimiter.when(() -> RateLimiter.getInstance(ns))
+                    .thenReturn(rateLimiter);
+            parent.execute(ns, dockerfileGitHubUtil);
 
-
-        parent.execute(ns, dockerfileGitHubUtil);
-
-        verify(parent).getGitForkBranch(ns);
-        verify(parent).getPullRequestSender(dockerfileGitHubUtil, ns);
-        verify(parent).getPullRequests();
-        verify(pullRequests).prepareToCreate(eq(ns), eq(pullRequestSender),
-                eq(contentsWithImage), eq(gitForkBranch), eq(dockerfileGitHubUtil), any(RateLimiter.class));
+            verify(parent).getGitForkBranch(ns);
+            verify(parent).getPullRequestSender(dockerfileGitHubUtil, ns);
+            verify(parent).getPullRequests();
+            verify(pullRequests).prepareToCreate(eq(ns), eq(pullRequestSender),
+                    eq(contentsWithImage), eq(gitForkBranch), eq(dockerfileGitHubUtil), any(RateLimiter.class));
+        }
     }
 
     @Test
@@ -219,7 +222,8 @@ public class ParentTest {
         Optional<List<PagedSearchIterable<GHContent>>> optionalContentsWithImageList = Optional.of(contentsWithImageList);
         doThrow(new InterruptedException("Exception")).when(pullRequests).prepareToCreate(ns, pullRequestSender,
                 contentsWithImage, gitForkBranch, dockerfileGitHubUtil, rateLimiter);
-        when(dockerfileGitHubUtil.getGHContents(anyString(), anyString(),  anyInt())).thenReturn(optionalContentsWithImageList);
+        when(dockerfileGitHubUtil.getGHContents(anyString(), anyString(),
+                anyInt(), anyString())).thenReturn(optionalContentsWithImageList);
 
         parent.execute(ns, dockerfileGitHubUtil);
 

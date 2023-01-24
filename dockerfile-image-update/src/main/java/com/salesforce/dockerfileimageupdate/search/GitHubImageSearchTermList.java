@@ -1,6 +1,7 @@
 package com.salesforce.dockerfileimageupdate.search;
 
 import com.google.common.collect.ImmutableList;
+import com.salesforce.dockerfileimageupdate.utils.Constants;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,12 +21,12 @@ public class GitHubImageSearchTermList {
      * @param image the name of the image including registry
      * @return list of GitHub code search terms
      */
-    public static List<String> getSearchTerms(String image) {
+    public static List<String> getSearchTerms(String image, String filenames) {
         if (image == null || image.trim().isEmpty()) {
             return ImmutableList.of();
         }
         String[] imageParts = image.split("/");
-        ProcessingState state = processDomainPartOfImage(imageParts[0]);
+        ProcessingState state = processDomainPartOfImage(imageParts[0], filenames);
         if (imageParts.length > 1) {
             for (int i = 1; i < imageParts.length - 1; i++) {
                 String imagePart = imageParts[i];
@@ -90,12 +91,14 @@ public class GitHubImageSearchTermList {
      * @param domain the domain part of the image (which may or may not be the full registry name)
      * @return processing state for the search terms
      */
-    static ProcessingState processDomainPartOfImage(String domain) {
+    static ProcessingState processDomainPartOfImage(String domain, String filenames) {
         ProcessingState state = new ProcessingState();
         if (domain == null || domain.trim().isEmpty()) {
             return state;
         } else {
-            state.addToCurrentTerm("FROM ");
+            if (filenames.equalsIgnoreCase(Constants.FILENAME_DOCKERFILE)) {
+                state.addToCurrentTerm("FROM ");
+            }
             if (domain.contains("-")) {
                 processDashedDomainParts(state, domain);
             } else {

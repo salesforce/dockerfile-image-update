@@ -34,7 +34,7 @@ public class GitHubImageSearchTermListTest {
 
     @Test(dataProvider = "imageAndParts")
     public void testGetSearchTermsContent(String image, List<String> expectedResult) {
-        List<String> searchTerms = GitHubImageSearchTermList.getSearchTerms(image);
+        List<String> searchTerms = GitHubImageSearchTermList.getSearchTerms(image, "Dockerfile");
         assertEquals(joinListByComma(searchTerms), joinListByComma(expectedResult));
     }
 
@@ -44,7 +44,7 @@ public class GitHubImageSearchTermListTest {
 
     @Test(dataProvider = "imageAndParts")
     public void testGetSearchTermsSize(String image, List<String> expectedResult) {
-        List<String> searchTerms = GitHubImageSearchTermList.getSearchTerms(image);
+        List<String> searchTerms = GitHubImageSearchTermList.getSearchTerms(image, "Dockerfile");
         assertEquals(searchTerms, expectedResult);
     }
 
@@ -63,7 +63,7 @@ public class GitHubImageSearchTermListTest {
 
     @Test(dataProvider = "domainCurrentTermAndProcessedTerms")
     public void testProcessDomainPartOfImage(String domain, String expectedCurrentTerm, List<String> expectedProcessedTerms) {
-        GitHubImageSearchTermList.ProcessingState state = GitHubImageSearchTermList.processDomainPartOfImage(domain);
+        GitHubImageSearchTermList.ProcessingState state = GitHubImageSearchTermList.processDomainPartOfImage(domain, "Dockerfile");
         assertEquals(joinListByComma(state.terms), joinListByComma(expectedProcessedTerms));
         assertEquals(state.getCurrentTerm(), expectedCurrentTerm);
     }

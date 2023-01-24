@@ -19,7 +19,8 @@ import org.kohsuke.github.GHTree;
 import org.kohsuke.github.GHTreeEntry;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
-import static org.mockito.Matchers.anyString;
+
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
@@ -178,6 +179,7 @@ public class GitHubJsonStoreTest {
         GHTree ghTree = mock(GHTree.class);
         GHTreeEntry ghTreeEntry = mock(GHTreeEntry.class);
 
+        when(repo.getDefaultBranch()).thenReturn("defaultBranch");
         when(repo.getFileContent(anyString())).thenThrow(new IOException("file sized is too large. Error:  too_large"));
         when(repo.getCommit(anyString())).thenReturn(ghCommit);
         when(ghCommit.getTree()).thenReturn(ghTree);
@@ -201,6 +203,7 @@ public class GitHubJsonStoreTest {
         GHTree ghTree = mock(GHTree.class);
         GHTreeEntry ghTreeEntry = mock(GHTreeEntry.class);
 
+        when(repo.getDefaultBranch()).thenReturn("defaultBranch");
         when(repo.getFileContent(anyString())).thenThrow(new IOException("file sized is too large. Error:  too_large"));
         when(repo.getCommit(anyString())).thenReturn(ghCommit);
         when(ghCommit.getTree()).thenReturn(ghTree);

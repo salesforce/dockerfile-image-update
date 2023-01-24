@@ -79,7 +79,7 @@ public class GitHubPullRequestSender {
 
         log.info("Out of {} content search results processed, {} were deemed eligible for forking to yield {} repositories to fork.",
                 totalContentsFound, contentsShouldFork, pathToDockerfilesInParentRepo.keys().size());
-        log.info("Path to Dockerfiles in repos: {}", pathToDockerfilesInParentRepo);
+        log.info("Path to files in repos: {}", pathToDockerfilesInParentRepo);
 
         return pathToDockerfilesInParentRepo;
     }

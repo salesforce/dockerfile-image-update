@@ -16,6 +16,8 @@ import com.salesforce.dockerfileimageupdate.storage.GitHubJsonStore;
 import net.sourceforge.argparse4j.inf.*;
 import org.apache.commons.lang3.StringUtils;
 import org.kohsuke.github.*;
+
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -88,12 +90,24 @@ public class DockerfileGitHubUtil {
     public Optional<List<PagedSearchIterable<GHContent>>> findFilesWithImage(
             String image,
             Map<String, Boolean> orgsToIncludeOrExclude,
-            Integer gitApiSearchLimit) throws IOException {
+            Integer gitApiSearchLimit,
+            String filenamesToSearch) throws IOException {
+
         GHContentSearchBuilder search = gitHubUtil.startSearch();
         // Filename search appears to yield better / more results than language:Dockerfile
         // Root cause: linguist doesn't currently deal with prefixes of files:
         // https://github.com/github/linguist/issues/4566
-        search.filename("Dockerfile");
+        // This will work in OR mode i.e, either filename is Dockerfile or docker-compose
+        if (StringUtils.isNotBlank(filenamesToSearch)) {
+            String[] filenames = filenamesToSearch.split(",");
+            for (String filename : filenames) {
+                search.filename(filename);
+            }
+        } else {
+            log.error("No filenames provided to search for, exiting!!!");
+            System.exit(-1);
+        }
+
         if (!orgsToIncludeOrExclude.isEmpty()) {
             StringBuilder includeOrExcludeOrgsQuery = new StringBuilder();
             for (Map.Entry<String, Boolean> org : orgsToIncludeOrExclude.entrySet()){
@@ -112,8 +126,8 @@ public class DockerfileGitHubUtil {
         if (image.substring(image.lastIndexOf(' ') + 1).length() <= 1) {
             throw new IOException("Invalid image name.");
         }
-        List<String> terms = GitHubImageSearchTermList.getSearchTerms(image);
-        log.info("Searching for {} with terms: {}", image, terms);
+        List<String> terms = GitHubImageSearchTermList.getSearchTerms(image, filenamesToSearch);
+        log.info("Searching for {}, in files: {}, with terms: {}", image, filenamesToSearch, terms);
         terms.forEach(search::q);
         PagedSearchIterable<GHContent> files = search.list();
         int totalCount = files.getTotalCount();
@@ -146,7 +160,7 @@ public class DockerfileGitHubUtil {
                     + " of {}. The orgs with the maximum number of hits will be recursively removed"
                     + " to reduce the search space. For every org that is excluded, a separate "
                     + "search will be performed specific to that org.", gitApiSearchLimit);
-            return getSearchResultsExcludingOrgWithMostHits(image, files, orgsToIncludeOrExclude, gitApiSearchLimit);
+            return getSearchResultsExcludingOrgWithMostHits(image, files, orgsToIncludeOrExclude, gitApiSearchLimit, filenamesToSearch);
         }
         List<PagedSearchIterable<GHContent>> filesList = new ArrayList<>();
         filesList.add(files);
@@ -168,7 +182,8 @@ public class DockerfileGitHubUtil {
             String image,
             PagedSearchIterable<GHContent> files,
             Map<String, Boolean> orgsToExclude,
-            Integer gitApiSearchLimit) throws IOException {
+            Integer gitApiSearchLimit,
+            String filenamesToSearch) throws IOException {
         List<PagedSearchIterable<GHContent>> allContentsWithImage = new ArrayList<>();
         String orgWithMaximumHits = getOrgNameWithMaximumHits(files);
         log.info("The org with the maximum number of hits is {}", orgWithMaximumHits);
@@ -177,13 +192,13 @@ public class DockerfileGitHubUtil {
         orgsToInclude.put(orgWithMaximumHits, true);
         log.info("Running search only for the org with maximum hits.");
         Optional<List<PagedSearchIterable<GHContent>>> contentsForOrgWithMaximumHits;
-        contentsForOrgWithMaximumHits = findFilesWithImage(image, orgsToInclude, gitApiSearchLimit);
+        contentsForOrgWithMaximumHits = findFilesWithImage(image, orgsToInclude, gitApiSearchLimit, filenamesToSearch);
 
         final Map<String, Boolean> orgsToExcludeFromSearch = new HashMap<>(orgsToExclude);
         orgsToExcludeFromSearch.put(orgWithMaximumHits, false);
         log.info("Running search by excluding the orgs {}.", orgsToExcludeFromSearch.keySet());
         Optional<List<PagedSearchIterable<GHContent>>> contentsExcludingOrgWithMaximumHits;
-        contentsExcludingOrgWithMaximumHits = findFilesWithImage(image, orgsToExcludeFromSearch, gitApiSearchLimit);
+        contentsExcludingOrgWithMaximumHits = findFilesWithImage(image, orgsToExcludeFromSearch, gitApiSearchLimit, filenamesToSearch);
         if (contentsForOrgWithMaximumHits.isPresent()) {
             allContentsWithImage.addAll(contentsForOrgWithMaximumHits.get());
         }
@@ -279,7 +294,7 @@ public class DockerfileGitHubUtil {
         boolean modified = rewriteDockerfile(img, tag, reader, strB, ignoreImageString);
         if (modified) {
             content.update(strB.toString(),
-                    "Fix Dockerfile base image in /" + content.getPath() + "\n\n" + customMessage, branch);
+                    "Fix Docker base image in /" + content.getPath() + "\n\n" + customMessage, branch);
         }
     }
 
@@ -304,7 +319,7 @@ public class DockerfileGitHubUtil {
     }
 
     /**
-     * This method will read a line and see if the line contains a FROM instruction with the specified
+     * This method will read a line and see if the line contains a FROM instruction(Dockerfile) or imageKeyValuePair instruction(docker-compose) with the specified
      * {@code imageToFind}. If the image does not have the given {@code tag} then {@code stringBuilder}
      * will get a modified version of the line with the new {@code tag}. We return {@code true} in this
      * instance.
@@ -324,7 +339,7 @@ public class DockerfileGitHubUtil {
         boolean modified = false;
         String outputLine = line;
 
-        // Only check/modify lines which contain a FROM instruction
+        // Only check/modify lines which contain a FROM instruction or imageKeyValuePair instruction
         if (FromInstruction.isFromInstruction(line)) {
             FromInstruction fromInstruction = new FromInstruction(line);
 
@@ -334,13 +349,22 @@ public class DockerfileGitHubUtil {
                 modified = true;
             }
             outputLine = fromInstruction.toString();
+        } else if (ImageKeyValuePair.isImageKeyValuePair(line)) {
+            ImageKeyValuePair imageKeyValuePair = new ImageKeyValuePair(line);
+            if (imageKeyValuePair.hasBaseImage(imageToFind) &&
+                    imageKeyValuePair.hasADifferentTag(tag) &&
+                    DockerfileGitHubUtil.isValidImageTag(imageKeyValuePair.getTag())) {
+                imageKeyValuePair = imageKeyValuePair.getImageKeyValuePairWithNewTag(tag);
+                modified = true;
+            }
+            outputLine = imageKeyValuePair.toString();
         }
         stringBuilder.append(outputLine).append("\n");
         return modified;
     }
 
     /**
-     * Determines whether a comment before FROM line has {@code ignoreImageString} to ignore creating dfiu PR
+     * Determines whether a comment before FROM line or imageKeyValuePair line has {@code ignoreImageString} to ignore creating dfiu PR
      * If {@code ignoreImageString} present in comment, PR should be ignored
      * If {@code ignoreImageString} is empty, then by default 'no-dfiu' comment will be searched
      * @param line line to search for comment
@@ -365,7 +389,7 @@ public class DockerfileGitHubUtil {
         while (true) {
             // TODO: accept rateLimiter Optional with option to get no-op rateLimiter
             // where it's not required.
-            if(rateLimiter != null) {
+            if (rateLimiter != null) {
                 log.info("Trying to consume a token before creating pull request..");
                 // Consume a token from the token bucket.
                 // If a token is not available this method will block until
@@ -453,11 +477,12 @@ public class DockerfileGitHubUtil {
      * @param org GitHub organization
      * @param img image to find
      * @param gitApiSearchLimit git api search limit
+     * @param filenamesToSearch filenames to search for PR creation
      * @throws IOException if there is any failure while I/O from git.
      * @throws InterruptedException if interrupted while fetching git content
      * @return {@code Optional} of {@code PagedSearchIterable}
      */
-    public Optional<List<PagedSearchIterable<GHContent>>> getGHContents(String org, String img, Integer gitApiSearchLimit)
+    public Optional<List<PagedSearchIterable<GHContent>>> getGHContents(String org, String img, Integer gitApiSearchLimit, String filenamesToSearch)
             throws IOException, InterruptedException {
         Optional<List<PagedSearchIterable<GHContent>>> contentsWithImage = Optional.empty();
         Map<String, Boolean> orgsToIncludeInSearch = new HashMap<>();
@@ -468,7 +493,7 @@ public class DockerfileGitHubUtil {
             orgsToIncludeInSearch.put(org, true);
         }
         for (int i = 0; i < 5; i++) {
-            contentsWithImage = findFilesWithImage(img, orgsToIncludeInSearch, gitApiSearchLimit);
+            contentsWithImage = findFilesWithImage(img, orgsToIncludeInSearch, gitApiSearchLimit, filenamesToSearch);
             if (contentsWithImage
                     .orElseThrow(IOException::new)
                     .stream()
@@ -543,5 +568,21 @@ public class DockerfileGitHubUtil {
                     pullRequestInfo,
                     rateLimiter);
         }
+    }
+
+    public static boolean isValidImageTag(String tag) {
+        String tagVersionRegexStr = "([a-zA-Z0-9_]([-._a-zA-Z0-9])*)";
+        Pattern validTag = Pattern.compile(tagVersionRegexStr);
+        if (StringUtils.isNotBlank(tag)) {
+            if (!validTag.matcher(tag.trim()).matches()) {
+                log.warn("{} is not a valid value for image tag. So will be ignored!", tag);
+                return false;
+            } else if (tag.trim().equals("latest")) {
+                log.warn("Tag value is latest. So will be ignored");
+                return false;
+            }
+            return true;
+        }
+        return false;
     }
 }

@@ -13,11 +13,13 @@ import com.salesforce.dockerfileimageupdate.model.*;
 import net.sourceforge.argparse4j.inf.*;
 import org.kohsuke.github.*;
 import org.mockito.*;
+import org.slf4j.Logger;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import java.io.*;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Iterator;
@@ -28,7 +30,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 
 import static com.salesforce.dockerfileimageupdate.model.PullRequestInfo.DEFAULT_TITLE;
-import static org.mockito.Matchers.*;
+import static com.salesforce.dockerfileimageupdate.utils.ResultsProcessor.REPOS_SKIPPED_MESSAGE;
 import static org.mockito.Mockito.*;
 import static org.testng.Assert.*;
 
@@ -54,6 +56,7 @@ public class DockerfileGitHubUtilTest {
 
         GHRepository parent = mock(GHRepository.class);
         GHBranch branch = mock(GHBranch.class);
+        when(parent.getDefaultBranch()).thenReturn("main");
         when(parent.getBranch(anyString())).thenReturn(branch);
         GHRepository fork = mock(GHRepository.class);
         when(fork.getOwnerName()).thenReturn("me");
@@ -115,8 +118,7 @@ public class DockerfileGitHubUtilTest {
         GHPullRequestQueryBuilder queryBuilder = getGHPullRequestQueryBuilder(imageName, Optional.of(ghPullRequest));
         GHRepository parent = mock(GHRepository.class);
         when(parent.queryPullRequests()).thenReturn(queryBuilder);
-        GitForkBranch gitForkBranch = new GitForkBranch(imageName, "", null);
-
+        GitForkBranch gitForkBranch = new GitForkBranch(imageName, "", null, "Dockerfile,docker-compose");
 
         gitHubUtil = mock(GitHubUtil.class);
         dockerfileGitHubUtil = new DockerfileGitHubUtil(gitHubUtil);
@@ -130,7 +132,7 @@ public class DockerfileGitHubUtilTest {
         GHPullRequestQueryBuilder queryBuilder = getGHPullRequestQueryBuilder(imageName, Optional.empty());
         GHRepository parent = mock(GHRepository.class);
         when(parent.queryPullRequests()).thenReturn(queryBuilder);
-        GitForkBranch gitForkBranch = new GitForkBranch(imageName, "", null);
+        GitForkBranch gitForkBranch = new GitForkBranch(imageName, "", null, "Dockerfile,docker-compose");
 
 
         gitHubUtil = mock(GitHubUtil.class);
@@ -232,7 +234,7 @@ public class DockerfileGitHubUtilTest {
 
         dockerfileGitHubUtil = new DockerfileGitHubUtil(gitHubUtil);
         Map<String, Boolean> orgs = Collections.unmodifiableMap(Collections.singletonMap(org, true));
-        dockerfileGitHubUtil.findFilesWithImage(query, orgs, 1000);
+        dockerfileGitHubUtil.findFilesWithImage(query, orgs, 1000, "Dockerfile,docker-compose");
     }
 
     @Test
@@ -251,7 +253,7 @@ public class DockerfileGitHubUtilTest {
 
         dockerfileGitHubUtil = new DockerfileGitHubUtil(gitHubUtil);
         Map<String, Boolean> orgs = Collections.unmodifiableMap(Collections.singletonMap("test", true));
-        assertEquals(dockerfileGitHubUtil.findFilesWithImage("test", orgs, 1000), optionalContentsWithImageList);
+        assertEquals(dockerfileGitHubUtil.findFilesWithImage("test", orgs, 1000, "Dockerfile,docker-compose"), optionalContentsWithImageList);
     }
 
     @Test
@@ -293,7 +295,7 @@ public class DockerfileGitHubUtilTest {
 
         dockerfileGitHubUtil = new DockerfileGitHubUtil(gitHubUtil);
         when(dockerfileGitHubUtil.getOrgNameWithMaximumHits(contentsWithImage)).thenReturn("org-1", "org-2", "org-3");
-        assertEquals(dockerfileGitHubUtil.findFilesWithImage("test", orgsToIncludeOrExclude, 1000), optionalContentsWithImageList);
+        assertEquals(dockerfileGitHubUtil.findFilesWithImage("test", orgsToIncludeOrExclude, 1000, "Dockerfile,docker-compose"), optionalContentsWithImageList);
     }
 
     @Test
@@ -328,7 +330,7 @@ public class DockerfileGitHubUtilTest {
         dockerfileGitHubUtil = new DockerfileGitHubUtil(gitHubUtil);
         Map<String, Boolean> orgsToIncludeOrExclude = new HashMap<>();
 
-        assertEquals((dockerfileGitHubUtil.getSearchResultsExcludingOrgWithMostHits("image", contentsWithImage, orgsToIncludeOrExclude, 1000)).get().size(), 2);
+        assertEquals((dockerfileGitHubUtil.getSearchResultsExcludingOrgWithMostHits("image", contentsWithImage, orgsToIncludeOrExclude, 1000, "Dockerfile,docker-compose")).get().size(), 2);
         //This check ensures that the parameter passed to the method is not modified. Instead, the method creates a local copy of the map and modifies that.
         assertEquals(orgsToIncludeOrExclude.size(), 0);
     }
@@ -556,7 +558,7 @@ public class DockerfileGitHubUtilTest {
     }
 
     @DataProvider
-    public Object[][] inputlines() throws Exception {
+    public Object[][] inputLinesForDockerfile() throws Exception {
         return new Object[][]{
                 {"image1", "3", "FROM image1_blahblah", false},
                 {"image1", "3", "  FROM image1_blahblah", false},
@@ -584,9 +586,50 @@ public class DockerfileGitHubUtilTest {
         };
     }
 
-    @Test(dataProvider = "inputlines")
+    @Test(dataProvider = "inputLinesForDockerfile")
     public void testChangeIfDockerfileBaseImageLine(String img, String tag,
                                                     String line, boolean expected) throws Exception {
+        gitHubUtil = mock(GitHubUtil.class);
+        dockerfileGitHubUtil = new DockerfileGitHubUtil(gitHubUtil);
+        assertEquals(dockerfileGitHubUtil.changeIfDockerfileBaseImageLine(img, tag, new StringBuilder(), line),
+                expected);
+    }
+
+    @DataProvider
+    public Object[][] inputLinesForDockerCompose() {
+        return new Object[][]{
+                {"image1", "3", "image: image1_blahblah", false},
+                {"image1", "3", "  image: image1_blahblah", false},
+                {"image1", "3", "image: image1_blahblah  ", false},
+                {"image1", "3", "image: image1_blahblah\t", false},
+                {"image1", "3", "image: image1_blahblah:2", false},
+                {"image2", "4", "image: image2_blahblah:latest", false},
+                {"image4", "9", "image: image4:9", false},
+                {"image5", "246", "image: image5_", false},
+                {"image6", "26", "image: image7", false},
+                {"image8", "245", "image: image8:245", false},
+                {"image8", "245", "image: image8: 245", false},
+                {"imageName", "7", "image: imageName:_asasds", true},
+                {"imageName", "7", "  image: imageName:asAA_aa.as_ss", true},
+                {"imageName", "7", "  image: imageName:Asdf@#ggg", false},
+                {"imageName", "7", "  image: imageName:$ITEST_TAG", false},
+                {"imageName", "7", "  image: imageName:latest", false},
+                {"image3", "7", "image: image3  ",  false},
+                {"image3", "7", "\timage: image3\t", false},
+                {"image7", "98", "image: image7:4", true},
+                {"image7", "98", "image: image7:   4", true},
+                {"image124516418023_1085-1-1248571", "7357",
+                        "image: image124516418023_1085-1-1248571:18026809126359806124890356219518632048125", true},
+                {"image", "1234",
+                        "image: image:1234", false},
+                {"image", "1234",
+                        "image: image:1234", false},
+        };
+    }
+
+    @Test(dataProvider = "inputLinesForDockerCompose")
+    public void testChangeIfDockerfileBaseImageLineForCompose(String img, String tag,
+                                                    String line, boolean expected) {
         gitHubUtil = mock(GitHubUtil.class);
         dockerfileGitHubUtil = new DockerfileGitHubUtil(gitHubUtil);
         assertEquals(dockerfileGitHubUtil.changeIfDockerfileBaseImageLine(img, tag, new StringBuilder(), line),
@@ -674,10 +717,10 @@ public class DockerfileGitHubUtilTest {
         when(contentsWithImageIterator.next()).thenReturn(content1, content2, content3, null);
         when(contentsWithImage.iterator()).thenReturn(contentsWithImageIterator);
         Map<String, Boolean> orgs = Collections.unmodifiableMap(Collections.singletonMap("org", true));
-        when(dockerfileGitHubUtil.findFilesWithImage(anyString(), eq(orgs), anyInt())).thenReturn(optionalContentsWithImageList);
-        when(dockerfileGitHubUtil.getGHContents("org", "image", 1000)).thenCallRealMethod();
+        when(dockerfileGitHubUtil.findFilesWithImage(anyString(), eq(orgs), anyInt(), anyString())).thenReturn(optionalContentsWithImageList);
+        when(dockerfileGitHubUtil.getGHContents("org", "image", 1000, "Dockerfile,docker-compose")).thenCallRealMethod();
 
-        assertEquals(dockerfileGitHubUtil.getGHContents("org", "image", 1000), Optional.of(contentsWithImageList));
+        assertEquals(dockerfileGitHubUtil.getGHContents("org", "image", 1000, "Dockerfile,docker-compose"), Optional.of(contentsWithImageList));
     }
 
     @Test
@@ -692,10 +735,10 @@ public class DockerfileGitHubUtilTest {
         DockerfileGitHubUtil dockerfileGitHubUtil = mock(DockerfileGitHubUtil.class);
         when(dockerfileGitHubUtil.getGitHubUtil()).thenReturn(gitHubUtil);
         Map<String, Boolean> orgs = Collections.unmodifiableMap(Collections.singletonMap("org", true));
-        when(dockerfileGitHubUtil.findFilesWithImage(anyString(), eq(orgs), anyInt())).thenReturn(optionalContentsWithImageList);
-        when(dockerfileGitHubUtil.getGHContents("org", "image", 1000)).thenCallRealMethod();
+        when(dockerfileGitHubUtil.findFilesWithImage(anyString(), eq(orgs), anyInt(), anyString())).thenReturn(optionalContentsWithImageList);
+        when(dockerfileGitHubUtil.getGHContents("org", "image", 1000, "Dockerfile,docker-compose")).thenCallRealMethod();
 
-        assertEquals(dockerfileGitHubUtil.getGHContents("org", "image", 1000), Optional.empty());
+        assertEquals(dockerfileGitHubUtil.getGHContents("org", "image", 1000, "Dockerfile,docker-compose"), Optional.empty());
     }
 
     @Test
@@ -738,7 +781,7 @@ public class DockerfileGitHubUtilTest {
         when(parentBranch.getSHA1()).thenReturn(sha);
         when(parent.getBranch(defaultBranch)).thenReturn(parentBranch);
         GHRepository fork = mock(GHRepository.class);
-        GitForkBranch gitForkBranch = new GitForkBranch("imageName", "imageTag", null);
+        GitForkBranch gitForkBranch = new GitForkBranch("imageName", "imageTag", null, "Dockerfile");
         when(gitHubUtil.repoHasBranch(fork, gitForkBranch.getBranchName())).thenReturn(true);
         GHRef returnedRef = mock(GHRef.class);
         when(fork.getRef(anyString())).thenReturn(returnedRef);
@@ -760,7 +803,7 @@ public class DockerfileGitHubUtilTest {
         when(parentBranch.getSHA1()).thenReturn(sha);
         when(parent.getBranch(defaultBranch)).thenReturn(parentBranch);
         GHRepository fork = mock(GHRepository.class);
-        GitForkBranch gitForkBranch = new GitForkBranch("imageName", "imageTag", null);
+        GitForkBranch gitForkBranch = new GitForkBranch("imageName", "imageTag", null, "Dockerfile");
         when(gitHubUtil.repoHasBranch(fork, gitForkBranch.getBranchName())).thenReturn(false);
 
         dockerfileGitHubUtil.createOrUpdateForkBranchToParentDefault(parent, fork, gitForkBranch);
@@ -775,7 +818,7 @@ public class DockerfileGitHubUtilTest {
                 "tag", Constants.STORE,
                 "store");
         Namespace ns = new Namespace(nsMap);
-        GitForkBranch gitForkBranch = new GitForkBranch("image", "tag", null);
+        GitForkBranch gitForkBranch = new GitForkBranch("image", "tag", null, "");
         Multimap<String, GitHubContentToProcess> pathToDockerfilesInParentRepo = HashMultimap.create();
         pathToDockerfilesInParentRepo.put("repo1", new GitHubContentToProcess(null, null, "df11"));
         pathToDockerfilesInParentRepo.put("repo1", new GitHubContentToProcess(null, null, "df12"));
@@ -803,11 +846,15 @@ public class DockerfileGitHubUtilTest {
         //when(dockerfileGitHubUtil.getPullRequestForImageBranch(any(), any())).thenReturn
         // (Optional.empty());
         //when(dockerfileGitHubUtil.getRepo(forkedRepo.getFullName())).thenReturn(forkedRepo);
+        InputStream stream = new ByteArrayInputStream("someContent".getBytes(StandardCharsets.UTF_8));
         GHContent forkedRepoContent1 = mock(GHContent.class);
+        when(forkedRepoContent1.read()).thenReturn(stream);
+
         RateLimiter rateLimiter = mock(RateLimiter.class);
         when(gitHubUtil.tryRetrievingContent(eq(forkedRepo),
                 eq("df11"), eq("image-tag"))).thenReturn(forkedRepoContent1);
         GHContent forkedRepoContent2 = mock(GHContent.class);
+        when(forkedRepoContent2.read()).thenReturn(stream);
         when(gitHubUtil.tryRetrievingContent(eq(forkedRepo),
                 eq("df12"), eq("image-tag"))).thenReturn(forkedRepoContent2);
         doNothing().when(dockerfileGitHubUtil).modifyOnGithub(any(), eq("image-tag"), eq("image")
@@ -826,7 +873,7 @@ public class DockerfileGitHubUtilTest {
 
         // Both Dockerfiles modified
         verify(dockerfileGitHubUtil, times(2))
-                .modifyOnGithub(any(), eq("image-tag"), eq("image"), eq("tag"), anyString(), anyString());
+                .modifyOnGithub(any(), eq("image-tag"), eq("image"), eq("tag"), any(), any());
 
         // Only one PR created on the repo with changes to both Dockerfiles.
         verify(dockerfileGitHubUtil).createPullReq(eq(parentRepo),
@@ -882,5 +929,26 @@ public class DockerfileGitHubUtilTest {
         gitHubUtil = mock(GitHubUtil.class);
         dockerfileGitHubUtil = new DockerfileGitHubUtil(gitHubUtil);
         assertEquals(dockerfileGitHubUtil.ignorePRCommentPresent(line, ignoreImageString), expectedResult);
+    }
+
+    @DataProvider
+    public Object[][] tagList() {
+        return new Object[][] {
+                {"12345",               true},
+                {"assdfASFF11",         true},
+                {"_asadsd",             true},
+                {".weww",               false},
+                {"Aswd@#asdas",         false},
+                {"ASDF_SSS-CCC.Ssd",    true},
+                {"-asasd",              false},
+                {" ",                   false}
+        };
+    }
+
+    @Test(dataProvider = "tagList")
+    public void testValidImageTag(String tag, Boolean expectedResult) {
+        gitHubUtil = mock(GitHubUtil.class);
+        dockerfileGitHubUtil = new DockerfileGitHubUtil(gitHubUtil);
+        assertEquals(dockerfileGitHubUtil.isValidImageTag(tag), expectedResult);
     }
 }

@@ -44,6 +44,8 @@ public class Parent implements ExecutableWithNamespace {
         String store = ns.get(Constants.STORE);
         String img = ns.get(Constants.IMG);
         String tag = ns.get(Constants.TAG);
+        String filenamesToSearch = ns.getString(Constants.FILE_NAMES_TO_SEARCH);
+
         log.info("Updating store...");
         try {
             ImageTagStore imageTagStore = ImageStoreUtil.initializeImageTagStore(this.dockerfileGitHubUtil, store);
@@ -57,6 +59,7 @@ public class Parent implements ExecutableWithNamespace {
                     + "be skipped.", Constants.SKIP_PR_CREATION);
             return;
         }
+
         PullRequests pullRequests = getPullRequests();
         GitHubPullRequestSender pullRequestSender = getPullRequestSender(dockerfileGitHubUtil, ns);
         GitForkBranch gitForkBranch = getGitForkBranch(ns);
@@ -64,7 +67,7 @@ public class Parent implements ExecutableWithNamespace {
         log.info("Finding Dockerfiles with the given image...");
 
         Integer gitApiSearchLimit = ns.get(Constants.GIT_API_SEARCH_LIMIT);
-        Optional<List<PagedSearchIterable<GHContent>>> contentsWithImage = dockerfileGitHubUtil.getGHContents(ns.get(Constants.GIT_ORG), img, gitApiSearchLimit);
+        Optional<List<PagedSearchIterable<GHContent>>> contentsWithImage = dockerfileGitHubUtil.getGHContents(ns.get(Constants.GIT_ORG), img, gitApiSearchLimit, filenamesToSearch);
 
         if (contentsWithImage.isPresent()) {
             List<PagedSearchIterable<GHContent>> contentsFoundWithImage = contentsWithImage.get();
@@ -86,7 +89,7 @@ public class Parent implements ExecutableWithNamespace {
     }
 
     protected GitForkBranch getGitForkBranch(Namespace ns){
-        return new GitForkBranch(ns.get(Constants.IMG), ns.get(Constants.TAG), ns.get(Constants.GIT_BRANCH));
+        return new GitForkBranch(ns.get(Constants.IMG), ns.get(Constants.TAG), ns.get(Constants.GIT_BRANCH), ns.get(Constants.FILE_NAMES_TO_SEARCH));
     }
 
     protected GitHubPullRequestSender getPullRequestSender(DockerfileGitHubUtil dockerfileGitHubUtil, Namespace ns){
