@@ -72,13 +72,13 @@ public class GitForkBranchTest {
     @DataProvider
     public Object[][] imageNameSpecifiedBranchAndFilenameSearched() {
         return new Object[][]{
-                /*{"docker.io/some/container",     "",     "blah", "dockerfile", "blah"},
+                {"docker.io/some/container",     "",     "blah", "dockerfile", "blah"},
                 {"127.0.0.1:443/some/container", "",     "test", "dockerfile,docker-compose", "test"},
                 {"docker.io/some/container",     "123",  "",     "dockerfile", "docker.io/some/container-123_dockerfile"},
                 {"docker.io/some/container",     "123",  "",     "dockerfile,docker-compose", "docker.io/some/container-123"},
                 {"docker.io/some/container",     "123",  "",     "docker-compose", "docker.io/some/container-123_dockercompose"},
-                {"docker.io/some/container",     "   ",  null,   "abcdef", "docker.io/some/container"},*/
-                {"docker.io/some/container",     null,   "",     "docker-compose", "docker.io/some/container_dockercompose"},
+                {"docker.io/some/container",     "   ",  null,   "abcdef", "docker.io/some/container"},
+                {"docker.io/some/container",     null,   "",     "docker-compose", "docker.io/some/container_dockercompose"}
         };
     }
 
