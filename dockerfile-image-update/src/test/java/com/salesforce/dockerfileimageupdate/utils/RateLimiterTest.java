@@ -77,7 +77,7 @@ public class RateLimiterTest {
     @Test(dataProvider = "dataForTestingRateLimitingEventCreation")
     public void testGetRateLimiter(String envVariableVal, Class expectedReturnType, boolean isnull) {
         Map<String, Object> nsMap = ImmutableMap.of(
-                Constants.RATE_LIMIT_PR_CREATION, envVariableVal);
+                Constants.RATE_LIMIT_PR_CREATION.replace("-","_"), envVariableVal);
         Namespace ns = new Namespace(nsMap);
         RateLimiter rateLimiter = RateLimiter.getInstance(ns);
 

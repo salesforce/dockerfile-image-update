@@ -75,7 +75,7 @@ public class RateLimiter {
      * @see net.sourceforge.argparse4j.inf.Namespace Namespace
      */
     public static RateLimiter getInstance(Namespace ns) {
-        String rateLimitPRCreation = ns.get(Constants.RATE_LIMIT_PR_CREATION);
+        String rateLimitPRCreation = ns.get((Constants.RATE_LIMIT_PR_CREATION).replace("-","_"));
         RateLimiter rateLimiter = null;
 
         if (rateLimitPRCreation != null) {
