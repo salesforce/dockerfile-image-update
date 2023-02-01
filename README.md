@@ -141,9 +141,9 @@ named arguments:
   -s {true,false}, --skipprcreation {true,false}
                          Only update image tag store. Skip creating PRs
   -x X                   comment snippet mentioned in line just before FROM instruction for ignoring a child image. Defaults to 'no-dfiu'
-  -r, --rate-limit-pr-creations 
+  -r, --rate_limit_pr_creations 
                          Enable rateLimiting for throttling the number of PRs DFIU will cut over a period of time. 
-                         The argument value should be in format "<positive_integer>-<ISO-8601_formatted_time>". For example "--rate-limit-pr-creations 60-PT1H" to create 60 PRs per hour.
+                         The argument value should be in format "<positive_integer>-<ISO-8601_formatted_time>". For example "--rate_limit_pr_creations 60-PT1H" to create 60 PRs per hour.
                          Default is not set, this means no ratelimiting is imposed.
                          
 subcommands:
@@ -220,11 +220,11 @@ FROM imagename:imagetag # no-dfiu
 ### PR throttling
 
 In case you want to throttle the number of PRs cut by DFIU over a period of time,
-set --rate-limit-pr-creations with appropriate value. 
+set --rate_limit_pr_creations with appropriate value. 
 
 ##### Default case:
 
-By default, this feature is disabled. This will be enabled when argument ``--rate-limit-pr-creations`` will be passed
+By default, this feature is disabled. This will be enabled when argument ``--rate_limit_pr_creations`` will be passed
 with appropriate value.
 
 ```
@@ -234,9 +234,9 @@ example: dockerfile-image-update all image-tag-store-repo-falcon //throttling wi
 ##### Configuring the rate limit:
 
 Below are some examples that will throttle the number of PRs cut based on values passed to the
-argument ``--rate-limit-pr-creations``
+argument ``--rate_limit_pr_creations``
 The argument value should be in format ``<positive_integer>-<ISO-8601_formatted_time>``.
-For example ``--rate-limit-pr-creations 60-PT1H`` would mean the tool will cut 60 PRs every hour and the rate of adding
+For example ``--rate_limit_pr_creations 60-PT1H`` would mean the tool will cut 60 PRs every hour and the rate of adding
 a new PR will be (PT1H/60) i.e. one minute.
 This will distribute the load uniformly and avoid sudden spikes, The process will go in waiting state until next PR
 could be sent.
@@ -245,11 +245,11 @@ Below are some more examples:
 
 ```
 Usage: 
-    dockerfile-image-update --rate-limit-pr-creations 60-PT1H all image-tag-store-repo-falcon //DFIU can send up to 60 PRs per hour.
-    dockerfile-image-update --rate-limit-pr-creations 500-PT1H all image-tag-store-repo-falcon //DFIU can send up to 500 PRs per hour.
-    dockerfile-image-update --rate-limit-pr-creations 86400-PT24H all image-tag-store-repo-falcon //DFIU can send up to 1 PRs per second.
-    dockerfile-image-update --rate-limit-pr-creations 1-PT1S all image-tag-store-repo-falcon //Same as above. DFIU can send up to 1 PRs per second.
-    dockerfile-image-update --rate-limit-pr-creations 5000 all image-tag-store-repo-falcon //rate limiting will be disabled because argument is not in correct format.
+    dockerfile-image-update --rate_limit_pr_creations 60-PT1H all image-tag-store-repo-falcon //DFIU can send up to 60 PRs per hour.
+    dockerfile-image-update --rate_limit_pr_creations 500-PT1H all image-tag-store-repo-falcon //DFIU can send up to 500 PRs per hour.
+    dockerfile-image-update --rate_limit_pr_creations 86400-PT24H all image-tag-store-repo-falcon //DFIU can send up to 1 PRs per second.
+    dockerfile-image-update --rate_limit_pr_creations 1-PT1S all image-tag-store-repo-falcon //Same as above. DFIU can send up to 1 PRs per second.
+    dockerfile-image-update --rate_limit_pr_creations 5000 all image-tag-store-repo-falcon //rate limiting will be disabled because argument is not in correct format.
 ```
 
 ## Developer Guide
