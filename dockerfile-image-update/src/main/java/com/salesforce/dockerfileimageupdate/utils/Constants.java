@@ -40,13 +40,13 @@ public class Constants {
     public static final String SKIP_PR_CREATION = "skipprcreation";
     public static final String IGNORE_IMAGE_STRING = "x";
     public static final String FILE_NAMES_TO_SEARCH = "filenamestosearch";
-    public static final String RATE_LIMIT_PR_CREATION = "rate-limit-pr-creations";
+    public static final String RATE_LIMIT_PR_CREATION = "rate_limit_pr_creations";
     //max number of PRs to be sent (or tokens to be added)  per DEFAULT_RATE_LIMIT_DURATION(per hour in this case)
     public static final long DEFAULT_RATE_LIMIT = 60;
 
     public static final long DEFAULT_CONSUMING_TOKEN_RATE = 1;
     public static final Duration DEFAULT_RATE_LIMIT_DURATION = Duration.ofMinutes(DEFAULT_RATE_LIMIT);
-    //token adding rate(here:a token added every 2 minutes in the bucket)
+    //token adding rate(here:a token added every 1 minutes in the bucket)
     public static final Duration DEFAULT_TOKEN_ADDING_RATE = Duration.ofMinutes(DEFAULT_CONSUMING_TOKEN_RATE);
     public static final String FILENAME_DOCKERFILE = "dockerfile";
     public static final String FILENAME_DOCKER_COMPOSE = "docker-compose";
