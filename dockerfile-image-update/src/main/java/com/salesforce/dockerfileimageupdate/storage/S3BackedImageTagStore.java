@@ -2,6 +2,7 @@ package com.salesforce.dockerfileimageupdate.storage;
 
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.ListObjectsV2Result;
+import com.amazonaws.services.s3.model.ListObjectsV2Request;
 import com.amazonaws.services.s3.model.S3Object;
 import com.amazonaws.services.s3.model.S3ObjectInputStream;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
@@ -58,8 +59,7 @@ public class S3BackedImageTagStore implements ImageTagStore {
     public List<ImageTagStoreContent> getStoreContent(DockerfileGitHubUtil dockerfileGitHubUtil, String storeName) throws InterruptedException {
         List<ImageTagStoreContent> imageNamesWithTag;
         Map<String, Date> imageNameWithAccessTime = new HashMap<>();
-        ListObjectsV2Result result = getS3Objects();
-        List<S3ObjectSummary> objects = result.getObjectSummaries();
+        List<S3ObjectSummary> objects = getS3Objects();
         for (S3ObjectSummary os : objects) {
             Date lastModified = os.getLastModified();
             String key = os.getKey();
@@ -108,8 +108,19 @@ public class S3BackedImageTagStore implements ImageTagStore {
         return key.replace(S3_FILE_KEY_PATH_DELIMITER, '/');
     }
 
-    private ListObjectsV2Result getS3Objects() {
-        return s3.listObjectsV2(store);
+    private List<S3ObjectSummary> getS3Objects() {
+        ListObjectsV2Request request = new ListObjectsV2Request();
+        request.setBucketName(store);
+        ListObjectsV2Result listObjectsV2Result = s3.listObjectsV2(request);
+        List<S3ObjectSummary> objectSummaries = listObjectsV2Result.getObjectSummaries();
+        
+        while(listObjectsV2Result.isTruncated() == true){
+            request.setContinuationToken(listObjectsV2Result.getNextContinuationToken());
+            listObjectsV2Result = s3.listObjectsV2(request);
+            objectSummaries.addAll(listObjectsV2Result.getObjectSummaries());
+        }
+        
+        return objectSummaries;
     }
 
     private S3Object getS3Object(String store, String key) {
