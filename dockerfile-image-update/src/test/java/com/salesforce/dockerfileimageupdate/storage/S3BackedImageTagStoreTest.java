@@ -69,20 +69,20 @@ public class S3BackedImageTagStoreTest {
         when(listObjectsV2Result2.getObjectSummaries()).thenReturn(s3ObjectSummaryList);
         when(listObjectsV2Result2.isTruncated()).thenReturn(false);
         when(s3ObjectSummary.getLastModified()).thenReturn(date , date);
-        when(s3ObjectSummary.getKey()).thenReturn("domain!namespace!image", "domainn!namespacee!imagee");
+        when(s3ObjectSummary.getKey()).thenReturn("domain!namespace!image", "domain!namespace!image2");
         when(amazonS3.getObject("store", "domain!namespace!image")).thenReturn(s3Object);
-        when(amazonS3.getObject("store", "domainn!namespacee!imagee")).thenReturn(s3Object2);
+        when(amazonS3.getObject("store", "domain!namespace!image2")).thenReturn(s3Object2);
         when(s3Object.getObjectContent()).thenReturn(objectContent);
         when(s3Object2.getObjectContent()).thenReturn(objectContent2);
 
         List<ImageTagStoreContent> actualResult = s3BackedImageTagStore.getStoreContent(dockerfileGitHubUtil, "store");
 
         verify(amazonS3).getObject("store", "domain!namespace!image");
-        verify(amazonS3).getObject("store", "domainn!namespacee!imagee");
+        verify(amazonS3).getObject("store", "domain!namespace!image2");
         assertEquals(actualResult.size(), 2);
         assertEquals(actualResult.get(0).getImageName(), "domain/namespace/image");
         assertEquals(actualResult.get(0).getTag(), "tag");
-        assertEquals(actualResult.get(1).getImageName(), "domainn/namespacee/imagee");
+        assertEquals(actualResult.get(1).getImageName(), "domain/namespace/image2");
         assertEquals(actualResult.get(1).getTag(), "tag2");
     }
 
