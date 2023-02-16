@@ -27,6 +27,7 @@ public class S3BackedImageTagStore implements ImageTagStore {
     private final AmazonS3 s3;
     private final String store;
 
+
     public S3BackedImageTagStore(AmazonS3 s3, @NonNull String store) {
         this.s3 = s3;
         this.store = store;
@@ -109,17 +110,19 @@ public class S3BackedImageTagStore implements ImageTagStore {
     }
 
     private List<S3ObjectSummary> getS3Objects() {
-        ListObjectsV2Request request = new ListObjectsV2Request();
-        request.setBucketName(store);
-        ListObjectsV2Result listObjectsV2Result = s3.listObjectsV2(request);
-        List<S3ObjectSummary> objectSummaries = listObjectsV2Result.getObjectSummaries();
-        
-        while(listObjectsV2Result.isTruncated() == true){
-            request.setContinuationToken(listObjectsV2Result.getNextContinuationToken());
+        ListObjectsV2Request request = new ListObjectsV2Request().withBucketName(store);
+        ListObjectsV2Result listObjectsV2Result;
+        List<S3ObjectSummary> objectSummaries = null;
+
+        do {
             listObjectsV2Result = s3.listObjectsV2(request);
-            objectSummaries.addAll(listObjectsV2Result.getObjectSummaries());
-        }
-        
+            if (objectSummaries == null)
+                objectSummaries = listObjectsV2Result.getObjectSummaries();
+            else
+                objectSummaries.addAll(listObjectsV2Result.getObjectSummaries());
+            request.setContinuationToken(listObjectsV2Result.getNextContinuationToken());
+        } while(listObjectsV2Result.isTruncated() == true);
+
         return objectSummaries;
     }
 

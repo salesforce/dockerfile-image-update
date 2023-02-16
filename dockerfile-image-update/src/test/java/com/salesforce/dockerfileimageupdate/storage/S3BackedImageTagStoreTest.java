@@ -1,12 +1,15 @@
 package com.salesforce.dockerfileimageupdate.storage;
 
+
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.ListObjectsV2Result;
+import com.amazonaws.services.s3.model.ListObjectsV2Request;
 import com.amazonaws.services.s3.model.S3Object;
 import com.amazonaws.services.s3.model.S3ObjectInputStream;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
 import com.salesforce.dockerfileimageupdate.utils.DockerfileGitHubUtil;
 import org.testng.annotations.Test;
+import static org.mockito.ArgumentMatchers.any;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -42,6 +45,7 @@ public class S3BackedImageTagStoreTest {
         S3BackedImageTagStore s3BackedImageTagStore = spy(new S3BackedImageTagStore(amazonS3, "store"));
         DockerfileGitHubUtil dockerfileGitHubUtil = mock(DockerfileGitHubUtil.class);
         ListObjectsV2Result listObjectsV2Result = mock(ListObjectsV2Result.class);
+
         S3ObjectSummary s3ObjectSummary = mock(S3ObjectSummary.class);
         List<S3ObjectSummary> s3ObjectSummaryListList = Collections.singletonList(s3ObjectSummary);
         Date date = mock(Date.class);
@@ -51,8 +55,9 @@ public class S3BackedImageTagStoreTest {
         S3ObjectInputStream objectContent = new S3ObjectInputStream(new ByteArrayInputStream(tagBytes), null);
         s3Object.setObjectContent(objectContent);
 
-        when(amazonS3.listObjectsV2("store")).thenReturn(listObjectsV2Result);
+        when(amazonS3.listObjectsV2((ListObjectsV2Request) any())).thenReturn(listObjectsV2Result);
         when(listObjectsV2Result.getObjectSummaries()).thenReturn(s3ObjectSummaryListList);
+        when(listObjectsV2Result.isTruncated()).thenReturn(false);
         when(s3ObjectSummary.getLastModified()).thenReturn(date);
         when(s3ObjectSummary.getKey()).thenReturn("domain!namespace!image");
         when(amazonS3.getObject("store", "domain!namespace!image")).thenReturn(s3Object);
@@ -65,7 +70,6 @@ public class S3BackedImageTagStoreTest {
         assertEquals(actualResult.get(0).getImageName(), "domain/namespace/image");
         assertEquals(actualResult.get(0).getTag(), "tag");
     }
-
     @Test
     public void testGetStoreContentReturnsStoreContentSorted() throws InterruptedException {
         AmazonS3 amazonS3 = mock(AmazonS3.class);
@@ -97,8 +101,9 @@ public class S3BackedImageTagStoreTest {
         when(s3ObjectSummaryIterator.next()).thenReturn(s3ObjectSummary, s3ObjectSummary);
         when(s3ObjectSummaryIterator.hasNext()).thenReturn(true, true, false);
         when(s3ObjectSummaryList.iterator()).thenReturn(s3ObjectSummaryIterator);
-        when(amazonS3.listObjectsV2("store")).thenReturn(listObjectsV2Result);
+        when(amazonS3.listObjectsV2((ListObjectsV2Request) any())).thenReturn(listObjectsV2Result);
         when(listObjectsV2Result.getObjectSummaries()).thenReturn(s3ObjectSummaryList);
+        when(listObjectsV2Result.isTruncated()).thenReturn(false);
         when(s3ObjectSummary.getLastModified()).thenReturn(date1, date2);
         when(s3ObjectSummary.getKey()).thenReturn(key1, key2);
         when(amazonS3.getObject("store", key1)).thenReturn(s3Object1);
