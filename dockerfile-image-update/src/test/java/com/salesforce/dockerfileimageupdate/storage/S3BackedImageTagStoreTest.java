@@ -63,7 +63,7 @@ public class S3BackedImageTagStoreTest {
         s3Object.setObjectContent(objectContent);
         s3Object2.setObjectContent(objectContent2);
 
-        when(amazonS3.listObjectsV2((ListObjectsV2Request) any())).thenReturn(listObjectsV2Result1, listObjectsV2Result2);
+        when(amazonS3.listObjectsV2(any(ListObjectsV2Request.class))).thenReturn(listObjectsV2Result1, listObjectsV2Result2);
         when(listObjectsV2Result1.getObjectSummaries()).thenReturn(s3ObjectSummaryList);
         when(listObjectsV2Result1.isTruncated()).thenReturn(true);
         when(listObjectsV2Result2.getObjectSummaries()).thenReturn(s3ObjectSummaryList);
@@ -102,7 +102,7 @@ public class S3BackedImageTagStoreTest {
         S3ObjectInputStream objectContent = new S3ObjectInputStream(new ByteArrayInputStream(tagBytes), null);
         s3Object.setObjectContent(objectContent);
 
-        when(amazonS3.listObjectsV2((ListObjectsV2Request) any())).thenReturn(listObjectsV2Result);
+        when(amazonS3.listObjectsV2(any(ListObjectsV2Request.class))).thenReturn(listObjectsV2Result);
         when(listObjectsV2Result.getObjectSummaries()).thenReturn(s3ObjectSummaryListList);
         when(listObjectsV2Result.isTruncated()).thenReturn(false);
         when(s3ObjectSummary.getLastModified()).thenReturn(date);
@@ -149,7 +149,7 @@ public class S3BackedImageTagStoreTest {
         when(s3ObjectSummaryIterator.next()).thenReturn(s3ObjectSummary, s3ObjectSummary);
         when(s3ObjectSummaryIterator.hasNext()).thenReturn(true, true, false);
         when(s3ObjectSummaryList.iterator()).thenReturn(s3ObjectSummaryIterator);
-        when(amazonS3.listObjectsV2((ListObjectsV2Request) any())).thenReturn(listObjectsV2Result);
+        when(amazonS3.listObjectsV2(any(ListObjectsV2Request.class))).thenReturn(listObjectsV2Result);
         when(listObjectsV2Result.getObjectSummaries()).thenReturn(s3ObjectSummaryList);
         when(listObjectsV2Result.isTruncated()).thenReturn(false);
         when(s3ObjectSummary.getLastModified()).thenReturn(date1, date2);

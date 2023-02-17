@@ -121,7 +121,7 @@ public class S3BackedImageTagStore implements ImageTagStore {
             else
                 objectSummaries.addAll(listObjectsV2Result.getObjectSummaries());
             request.setContinuationToken(listObjectsV2Result.getNextContinuationToken());
-        } while(listObjectsV2Result.isTruncated() == true);
+        } while(listObjectsV2Result.isTruncated());
 
         return objectSummaries;
     }
