@@ -277,17 +277,20 @@ public class DockerfileGitHubUtil {
         return gitHubUtil.tryRetrievingBlob(repo, path, branch);
     }
 
-    public void modifyOnGithub(GHContent content,
+    public Boolean modifyOnGithub(GHContent content,
                                String branch, String img, String tag,
                                String customMessage, String ignoreImageString) throws IOException {
+        Boolean modified = false;
         try (InputStream stream = content.read();
              InputStreamReader streamR = new InputStreamReader(stream);
              BufferedReader reader = new BufferedReader(streamR)) {
-            findImagesAndFix(content, branch, img, tag, customMessage, reader, ignoreImageString);
+             modified = findImagesAndFix(content, branch, img, tag, customMessage, reader,
+                    ignoreImageString);
         }
+        return modified;
     }
 
-    protected void findImagesAndFix(GHContent content, String branch, String img,
+    protected Boolean findImagesAndFix(GHContent content, String branch, String img,
                                     String tag, String customMessage, BufferedReader reader,
                                     String ignoreImageString) throws IOException {
         StringBuilder strB = new StringBuilder();
@@ -296,6 +299,7 @@ public class DockerfileGitHubUtil {
             content.update(strB.toString(),
                     "Fix Docker base image in /" + content.getPath() + "\n\n" + customMessage, branch);
         }
+        return modified;
     }
 
     protected boolean rewriteDockerfile(String img, String tag,
@@ -542,9 +546,9 @@ public class DockerfileGitHubUtil {
             if (content == null) {
                 log.info("No Dockerfile found at path: '{}'", pathToDockerfile);
             } else {
-                modifyOnGithub(content, gitForkBranch.getBranchName(), gitForkBranch.getImageName(), gitForkBranch.getImageTag(),
+                isContentModified = modifyOnGithub(content, gitForkBranch.getBranchName(),
+                        gitForkBranch.getImageName(), gitForkBranch.getImageTag(),
                         ns.get(Constants.GIT_ADDITIONAL_COMMIT_MESSAGE), ns.get(Constants.IGNORE_IMAGE_STRING));
-                isContentModified = true;
                 isRepoSkipped = false;
             }
         }
