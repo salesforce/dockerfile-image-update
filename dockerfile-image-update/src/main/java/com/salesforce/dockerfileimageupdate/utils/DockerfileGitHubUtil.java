@@ -277,10 +277,10 @@ public class DockerfileGitHubUtil {
         return gitHubUtil.tryRetrievingBlob(repo, path, branch);
     }
 
-    public Boolean modifyOnGithub(GHContent content,
+    public boolean modifyOnGithub(GHContent content,
                                String branch, String img, String tag,
                                String customMessage, String ignoreImageString) throws IOException {
-        Boolean modified = false;
+        boolean modified;
         try (InputStream stream = content.read();
              InputStreamReader streamR = new InputStreamReader(stream);
              BufferedReader reader = new BufferedReader(streamR)) {
@@ -290,7 +290,7 @@ public class DockerfileGitHubUtil {
         return modified;
     }
 
-    protected Boolean findImagesAndFix(GHContent content, String branch, String img,
+    protected boolean findImagesAndFix(GHContent content, String branch, String img,
                                     String tag, String customMessage, BufferedReader reader,
                                     String ignoreImageString) throws IOException {
         StringBuilder strB = new StringBuilder();
@@ -546,9 +546,12 @@ public class DockerfileGitHubUtil {
             if (content == null) {
                 log.info("No Dockerfile found at path: '{}'", pathToDockerfile);
             } else {
-                isContentModified = modifyOnGithub(content, gitForkBranch.getBranchName(),
+                if(modifyOnGithub(content, gitForkBranch.getBranchName(),
                         gitForkBranch.getImageName(), gitForkBranch.getImageTag(),
-                        ns.get(Constants.GIT_ADDITIONAL_COMMIT_MESSAGE), ns.get(Constants.IGNORE_IMAGE_STRING));
+                        ns.get(Constants.GIT_ADDITIONAL_COMMIT_MESSAGE),
+                        ns.get(Constants.IGNORE_IMAGE_STRING))) {
+                    isContentModified = true;
+                }
                 isRepoSkipped = false;
             }
         }
