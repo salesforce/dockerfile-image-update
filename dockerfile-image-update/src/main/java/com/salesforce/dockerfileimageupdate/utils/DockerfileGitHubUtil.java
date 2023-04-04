@@ -277,17 +277,21 @@ public class DockerfileGitHubUtil {
         return gitHubUtil.tryRetrievingBlob(repo, path, branch);
     }
 
-    public boolean modifyOnGithub(GHContent content,
+    public void modifyOnGithub(GHContent content,
                                String branch, String img, String tag,
                                String customMessage, String ignoreImageString) throws IOException {
-        boolean modified;
+        modifyContentOnGithub(content, branch, img, tag, customMessage, ignoreImageString);
+    }
+
+    protected boolean modifyContentOnGithub(GHContent content,
+                                  String branch, String img, String tag,
+                                  String customMessage, String ignoreImageString) throws IOException {
         try (InputStream stream = content.read();
              InputStreamReader streamR = new InputStreamReader(stream);
              BufferedReader reader = new BufferedReader(streamR)) {
-             modified = findImagesAndFix(content, branch, img, tag, customMessage, reader,
+            return findImagesAndFix(content, branch, img, tag, customMessage, reader,
                     ignoreImageString);
         }
-        return modified;
     }
 
     protected boolean findImagesAndFix(GHContent content, String branch, String img,
@@ -546,12 +550,10 @@ public class DockerfileGitHubUtil {
             if (content == null) {
                 log.info("No Dockerfile found at path: '{}'", pathToDockerfile);
             } else {
-                if (modifyOnGithub(content, gitForkBranch.getBranchName(),
+                isContentModified |= modifyContentOnGithub(content, gitForkBranch.getBranchName(),
                         gitForkBranch.getImageName(), gitForkBranch.getImageTag(),
                         ns.get(Constants.GIT_ADDITIONAL_COMMIT_MESSAGE),
-                        ns.get(Constants.IGNORE_IMAGE_STRING))) {
-                    isContentModified = true;
-                }
+                        ns.get(Constants.IGNORE_IMAGE_STRING));
                 isRepoSkipped = false;
             }
         }

@@ -831,7 +831,6 @@ public class DockerfileGitHubUtilTest {
         when(parentRepo.getFullName()).thenReturn("repo1");
         when(forkedRepo.getParent()).thenReturn(parentRepo);
 
-        //GHRepository parent = mock(GHRepository.class);
         String defaultBranch = "default";
         when(parentRepo.getDefaultBranch()).thenReturn(defaultBranch);
         GHBranch parentBranch = mock(GHBranch.class);
@@ -854,13 +853,13 @@ public class DockerfileGitHubUtilTest {
                 eq("df12"), eq("image-tag"))).thenReturn(forkedRepoContent2);
 
         //Both Dockerfiles modified
-        doReturn(true).when(dockerfileGitHubUtil).modifyOnGithub(eq(forkedRepoContent1),
+        doReturn(true).when(dockerfileGitHubUtil).modifyContentOnGithub(eq(forkedRepoContent1),
                 eq("image-tag"),
                 eq("image"),
                 eq("tag"),
                 eq(null),
                 eq(null));
-        doReturn(true).when(dockerfileGitHubUtil).modifyOnGithub(eq(forkedRepoContent2),
+        doReturn(true).when(dockerfileGitHubUtil).modifyContentOnGithub(eq(forkedRepoContent2),
                 eq("image-tag"),
                 eq("image"),
                 eq("tag"),
@@ -881,7 +880,7 @@ public class DockerfileGitHubUtilTest {
 
         // Both Dockerfiles modified
         verify(dockerfileGitHubUtil, times(2))
-                .modifyOnGithub(any(), eq("image-tag"), eq("image"), eq("tag"), any(), any());
+                .modifyContentOnGithub(any(), eq("image-tag"), eq("image"), eq("tag"), any(), any());
 
         // Only one PR created on the repo with changes to both Dockerfiles.
         verify(dockerfileGitHubUtil).createPullReq(eq(parentRepo),
@@ -907,7 +906,6 @@ public class DockerfileGitHubUtilTest {
         when(parentRepo.getFullName()).thenReturn("repo");
         when(forkedRepo.getParent()).thenReturn(parentRepo);
 
-        //GHRepository parent = mock(GHRepository.class);
         String defaultBranch = "default";
         when(parentRepo.getDefaultBranch()).thenReturn(defaultBranch);
         GHBranch parentBranch = mock(GHBranch.class);
@@ -926,7 +924,7 @@ public class DockerfileGitHubUtilTest {
                 eq("df11"), eq("image-tag"))).thenReturn(forkedRepoContent);
 
         //Dockerfile not modified
-        doReturn(false).when(dockerfileGitHubUtil).modifyOnGithub(eq(forkedRepoContent),
+        doReturn(false).when(dockerfileGitHubUtil).modifyContentOnGithub(eq(forkedRepoContent),
                 eq("image-tag"),
                 eq("image"),
                 eq("tag"),
@@ -944,10 +942,10 @@ public class DockerfileGitHubUtilTest {
                 eq("df11"), eq("image-tag"));
 
         // Trying to modify Dockerfile
-        verify(dockerfileGitHubUtil).modifyOnGithub(any(), eq("image-tag"), eq("image"), eq("tag"), any(), any());
+        verify(dockerfileGitHubUtil).modifyContentOnGithub(any(), eq("image-tag"), eq("image"), eq("tag"), any(), any());
 
         // PR creation block not executed
-        verify(dockerfileGitHubUtil, times(0)).createPullReq(eq(parentRepo),
+        verify(dockerfileGitHubUtil, never()).createPullReq(eq(parentRepo),
                 eq("image-tag"), eq(forkedRepo), any(), eq(rateLimiter));
     }
 
@@ -971,7 +969,6 @@ public class DockerfileGitHubUtilTest {
         when(parentRepo.getFullName()).thenReturn("repo");
         when(forkedRepo.getParent()).thenReturn(parentRepo);
 
-        //GHRepository parent = mock(GHRepository.class);
         String defaultBranch = "default";
         when(parentRepo.getDefaultBranch()).thenReturn(defaultBranch);
         GHBranch parentBranch = mock(GHBranch.class);
@@ -994,7 +991,7 @@ public class DockerfileGitHubUtilTest {
                 eq("df12"), eq("image-tag"))).thenReturn(forkedRepoContent2);
 
         //First dockerfile not modified
-        doReturn(false).when(dockerfileGitHubUtil).modifyOnGithub(eq(forkedRepoContent),
+        doReturn(false).when(dockerfileGitHubUtil).modifyContentOnGithub(eq(forkedRepoContent),
                 eq("image-tag"),
                 eq("image"),
                 eq("tag"),
@@ -1002,7 +999,7 @@ public class DockerfileGitHubUtilTest {
                 eq(null));
 
         //Second dockerfile modified
-        doReturn(true).when(dockerfileGitHubUtil).modifyOnGithub(eq(forkedRepoContent2),
+        doReturn(true).when(dockerfileGitHubUtil).modifyContentOnGithub(eq(forkedRepoContent2),
                 eq("image-tag"),
                 eq("image"),
                 eq("tag"),
@@ -1022,7 +1019,7 @@ public class DockerfileGitHubUtilTest {
                 eq("df12"), eq("image-tag"));
 
         // Trying to modify both Dockerfiles
-        verify(dockerfileGitHubUtil, times(2)).modifyOnGithub(any(), eq("image-tag"), eq("image")
+        verify(dockerfileGitHubUtil, times(2)).modifyContentOnGithub(any(), eq("image-tag"), eq("image")
                 , eq("tag"), any(), any());
 
         // PR created
