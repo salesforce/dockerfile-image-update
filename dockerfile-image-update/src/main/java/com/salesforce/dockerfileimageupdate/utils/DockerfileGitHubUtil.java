@@ -546,7 +546,7 @@ public class DockerfileGitHubUtil {
             if (content == null) {
                 log.info("No Dockerfile found at path: '{}'", pathToDockerfile);
             } else {
-                if(modifyOnGithub(content, gitForkBranch.getBranchName(),
+                if (modifyOnGithub(content, gitForkBranch.getBranchName(),
                         gitForkBranch.getImageName(), gitForkBranch.getImageTag(),
                         ns.get(Constants.GIT_ADDITIONAL_COMMIT_MESSAGE),
                         ns.get(Constants.IGNORE_IMAGE_STRING))) {
@@ -574,6 +574,8 @@ public class DockerfileGitHubUtil {
                     forkedRepo,
                     pullRequestInfo,
                     rateLimiter);
+        } else {
+            log.info("No files changed in repo {}. Skipping PR creation attempt.", parentName);
         }
     }
 
