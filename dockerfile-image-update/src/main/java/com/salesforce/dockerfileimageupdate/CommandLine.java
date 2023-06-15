@@ -93,7 +93,6 @@ public class CommandLine {
                         "(default: Dockerfile,docker-compose)");
         parser.addArgument("-r", "--" + RATE_LIMIT_PR_CREATION)
                 .type(String.class)
-                .setDefault("")
                 .required(false)
                 .help("Use RateLimiting when sending PRs. RateLimiting is enabled only if this value is set it's disabled by default.");
         return parser;
