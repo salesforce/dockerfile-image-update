@@ -323,7 +323,7 @@ to manually trigger the release process. For now, that looks like the following:
 * Decide what version you desire to have. If you want to bump the major or minor
   version then you need to bump the `MVN_SNAPSHOT_VERSION` in the [Makefile](https://github.com/salesforce/dockerfile-image-update/blob/main/Makefile#L5)
   and in the
-  [Dockerfile](https://github.com/salesforce/dockerfile-image-update/blob/afalko-maj-minor/Dockerfile#L4)
+  [Dockerfile](https://github.com/salesforce/dockerfile-image-update/blob/main/Dockerfile#L4)
   before proceeding to the next steps. For example
   `MVN_SNAPSHOT_VERSION=1.0-SNAPSHOT` to
   `MVN_SNAPSHOT_VERSION=2.0-SNAPSHOT`.
