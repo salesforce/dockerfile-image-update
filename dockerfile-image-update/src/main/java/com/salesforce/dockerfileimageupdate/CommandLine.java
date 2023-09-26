@@ -16,8 +16,12 @@ import com.salesforce.dockerfileimageupdate.utils.GitHubUtil;
 import net.sourceforge.argparse4j.ArgumentParsers;
 import net.sourceforge.argparse4j.impl.Arguments;
 import net.sourceforge.argparse4j.inf.*;
+import okhttp3.OkHttpClient;
+import okhttp3.logging.HttpLoggingInterceptor;
+
 import org.kohsuke.github.GitHub;
 import org.kohsuke.github.GitHubBuilder;
+import org.kohsuke.github.extras.okhttp3.OkHttpGitHubConnector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -195,8 +199,14 @@ public class CommandLine {
             System.exit(3);
         }
 
+        HttpLoggingInterceptor logger = new HttpLoggingInterceptor();
+        logger.setLevel(HttpLoggingInterceptor.Level.HEADERS);
+
         GitHub github = new GitHubBuilder().withEndpoint(gitApiUrl)
                 .withOAuthToken(token)
+                .withConnector(new OkHttpGitHubConnector(new OkHttpClient.Builder() 
+                    .addInterceptor(logger)
+                    .build()))
                 .build();
         github.checkApiUrlValidity();
 
