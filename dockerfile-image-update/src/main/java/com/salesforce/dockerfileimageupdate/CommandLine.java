@@ -201,8 +201,9 @@ public class CommandLine {
 
         HttpLoggingInterceptor logger = new HttpLoggingInterceptor();
         logger.setLevel(HttpLoggingInterceptor.Level.HEADERS);
+        logger.redactHeader("Authorization");
 
-        GitHub github = new GitHubBuilder().withEndpoint(gitApiUrl)
+        GitHub github = shouldAddWireLogger(new GitHubBuilder()).withEndpoint(gitApiUrl)
                 .withOAuthToken(token)
                 .withConnector(new OkHttpGitHubConnector(new OkHttpClient.Builder() 
                     .addInterceptor(logger)
@@ -213,5 +214,17 @@ public class CommandLine {
         GitHubUtil gitHubUtil = new GitHubUtil(github);
 
         return new DockerfileGitHubUtil(gitHubUtil);
+    }
+
+    public static GitHubBuilder shouldAddWireLogger(final GitHubBuilder builder)
+    {
+      HttpLoggingInterceptor logger = new HttpLoggingInterceptor();
+      logger.setLevel(HttpLoggingInterceptor.Level.HEADERS);
+      logger.redactHeader("Authorization");
+      
+      builder.withConnector(new OkHttpGitHubConnector(new OkHttpClient.Builder() 
+          .addInterceptor(logger)
+          .build()));
+      return builder;
     }
 }
