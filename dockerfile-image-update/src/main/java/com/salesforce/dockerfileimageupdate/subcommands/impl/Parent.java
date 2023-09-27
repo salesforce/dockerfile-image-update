@@ -54,7 +54,7 @@ public class Parent implements ExecutableWithNamespace {
             log.error("Could not initialize the Image tage store. Exception: ", e);
         }
 
-        if (ns.get(Constants.SKIP_PR_CREATION)) {
+        if (ns.getBoolean(Constants.SKIP_PR_CREATION)) {
             log.info("Since the flag {} is set to True, the PR creation steps will "
                     + "be skipped.", Constants.SKIP_PR_CREATION);
             return;

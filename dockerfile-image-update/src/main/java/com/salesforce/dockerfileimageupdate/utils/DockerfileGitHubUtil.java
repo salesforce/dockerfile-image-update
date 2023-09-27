@@ -39,7 +39,7 @@ public class DockerfileGitHubUtil {
         this.gitHubUtil = gitHubUtil;
     }
 
-    protected GitHubUtil getGitHubUtil() { return gitHubUtil; }
+    public GitHubUtil getGitHubUtil() { return gitHubUtil; }
 
     /**
      * Return an existing fork in the current user's org or create one if it does not exist
