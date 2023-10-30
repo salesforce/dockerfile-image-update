@@ -232,7 +232,7 @@ public class ForkableRepoValidatorTest {
     }
 
     @Test
-    public void testHasNoChangesIfExceptionThrownDuringRead() throws IOException {
+    public void testHasNoChangesIfIOExceptionThrownDuringRead() throws IOException {
         DockerfileGitHubUtil dockerfileGitHubUtil = mock(DockerfileGitHubUtil.class);
         GHRepository repo = mock(GHRepository.class);
         ForkableRepoValidator validator = new ForkableRepoValidator(dockerfileGitHubUtil);
@@ -240,6 +240,19 @@ public class ForkableRepoValidatorTest {
         GitForkBranch gitForkBranch = new GitForkBranch("name", "tag", null, "");
 
         when(content.read()).thenThrow(new IOException("failed on IO"));
+
+        assertTrue(validator.hasNoChanges(content, gitForkBranch));
+    }
+    
+    @Test
+    public void testHasNoChangesIfUnsupportedOperationExceptionThrownDuringRead() throws IOException {
+        DockerfileGitHubUtil dockerfileGitHubUtil = mock(DockerfileGitHubUtil.class);
+        GHRepository repo = mock(GHRepository.class);
+        ForkableRepoValidator validator = new ForkableRepoValidator(dockerfileGitHubUtil);
+        GHContent content = mock(GHContent.class);
+        GitForkBranch gitForkBranch = new GitForkBranch("name", "tag", null, "");
+
+        when(content.read()).thenThrow(new UnsupportedOperationException("Unrecognized encoding: none"));
 
         assertTrue(validator.hasNoChanges(content, gitForkBranch));
     }

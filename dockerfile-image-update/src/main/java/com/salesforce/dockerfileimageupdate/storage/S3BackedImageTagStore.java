@@ -2,6 +2,7 @@ package com.salesforce.dockerfileimageupdate.storage;
 
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.ListObjectsV2Result;
+import com.amazonaws.services.s3.model.ListObjectsV2Request;
 import com.amazonaws.services.s3.model.S3Object;
 import com.amazonaws.services.s3.model.S3ObjectInputStream;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
@@ -25,6 +26,7 @@ public class S3BackedImageTagStore implements ImageTagStore {
     public static final String s3Prefix = "s3";
     private final AmazonS3 s3;
     private final String store;
+
 
     public S3BackedImageTagStore(AmazonS3 s3, @NonNull String store) {
         this.s3 = s3;
@@ -58,8 +60,7 @@ public class S3BackedImageTagStore implements ImageTagStore {
     public List<ImageTagStoreContent> getStoreContent(DockerfileGitHubUtil dockerfileGitHubUtil, String storeName) throws InterruptedException {
         List<ImageTagStoreContent> imageNamesWithTag;
         Map<String, Date> imageNameWithAccessTime = new HashMap<>();
-        ListObjectsV2Result result = getS3Objects();
-        List<S3ObjectSummary> objects = result.getObjectSummaries();
+        List<S3ObjectSummary> objects = getS3Objects();
         for (S3ObjectSummary os : objects) {
             Date lastModified = os.getLastModified();
             String key = os.getKey();
@@ -108,8 +109,21 @@ public class S3BackedImageTagStore implements ImageTagStore {
         return key.replace(S3_FILE_KEY_PATH_DELIMITER, '/');
     }
 
-    private ListObjectsV2Result getS3Objects() {
-        return s3.listObjectsV2(store);
+    private List<S3ObjectSummary> getS3Objects() {
+        ListObjectsV2Request request = new ListObjectsV2Request().withBucketName(store);
+        ListObjectsV2Result listObjectsV2Result;
+        List<S3ObjectSummary> objectSummaries = null;
+
+        do {
+            listObjectsV2Result = s3.listObjectsV2(request);
+            if (objectSummaries == null)
+                objectSummaries = listObjectsV2Result.getObjectSummaries();
+            else
+                objectSummaries.addAll(listObjectsV2Result.getObjectSummaries());
+            request.setContinuationToken(listObjectsV2Result.getNextContinuationToken());
+        } while(listObjectsV2Result.isTruncated());
+
+        return objectSummaries;
     }
 
     private S3Object getS3Object(String store, String key) {

@@ -822,8 +822,6 @@ public class DockerfileGitHubUtilTest {
         Multimap<String, GitHubContentToProcess> pathToDockerfilesInParentRepo = HashMultimap.create();
         pathToDockerfilesInParentRepo.put("repo1", new GitHubContentToProcess(null, null, "df11"));
         pathToDockerfilesInParentRepo.put("repo1", new GitHubContentToProcess(null, null, "df12"));
-        pathToDockerfilesInParentRepo.put("repo3", new GitHubContentToProcess(null, null, "df3"));
-        pathToDockerfilesInParentRepo.put("repo4", new GitHubContentToProcess(null, null, "df4"));
 
         GHRepository forkedRepo = mock(GHRepository.class);
         when(forkedRepo.isFork()).thenReturn(true);
@@ -833,7 +831,6 @@ public class DockerfileGitHubUtilTest {
         when(parentRepo.getFullName()).thenReturn("repo1");
         when(forkedRepo.getParent()).thenReturn(parentRepo);
 
-        //GHRepository parent = mock(GHRepository.class);
         String defaultBranch = "default";
         when(parentRepo.getDefaultBranch()).thenReturn(defaultBranch);
         GHBranch parentBranch = mock(GHBranch.class);
@@ -843,9 +840,6 @@ public class DockerfileGitHubUtilTest {
 
         gitHubUtil = mock(GitHubUtil.class);
         dockerfileGitHubUtil = Mockito.spy(new DockerfileGitHubUtil(gitHubUtil));
-        //when(dockerfileGitHubUtil.getPullRequestForImageBranch(any(), any())).thenReturn
-        // (Optional.empty());
-        //when(dockerfileGitHubUtil.getRepo(forkedRepo.getFullName())).thenReturn(forkedRepo);
         InputStream stream = new ByteArrayInputStream("someContent".getBytes(StandardCharsets.UTF_8));
         GHContent forkedRepoContent1 = mock(GHContent.class);
         when(forkedRepoContent1.read()).thenReturn(stream);
@@ -857,8 +851,21 @@ public class DockerfileGitHubUtilTest {
         when(forkedRepoContent2.read()).thenReturn(stream);
         when(gitHubUtil.tryRetrievingContent(eq(forkedRepo),
                 eq("df12"), eq("image-tag"))).thenReturn(forkedRepoContent2);
-        doNothing().when(dockerfileGitHubUtil).modifyOnGithub(any(), eq("image-tag"), eq("image")
-                , eq("tag"), anyString(), anyString());
+
+        //Both Dockerfiles modified
+        doReturn(true).when(dockerfileGitHubUtil).modifyContentOnGithub(eq(forkedRepoContent1),
+                eq("image-tag"),
+                eq("image"),
+                eq("tag"),
+                eq(null),
+                eq(null));
+        doReturn(true).when(dockerfileGitHubUtil).modifyContentOnGithub(eq(forkedRepoContent2),
+                eq("image-tag"),
+                eq("image"),
+                eq("tag"),
+                eq(null),
+                eq(null));
+
         doNothing().when(rateLimiter).consume();
 
         dockerfileGitHubUtil.changeDockerfiles(ns, pathToDockerfilesInParentRepo,
@@ -873,9 +880,149 @@ public class DockerfileGitHubUtilTest {
 
         // Both Dockerfiles modified
         verify(dockerfileGitHubUtil, times(2))
-                .modifyOnGithub(any(), eq("image-tag"), eq("image"), eq("tag"), any(), any());
+                .modifyContentOnGithub(any(), eq("image-tag"), eq("image"), eq("tag"), any(), any());
 
         // Only one PR created on the repo with changes to both Dockerfiles.
+        verify(dockerfileGitHubUtil).createPullReq(eq(parentRepo),
+                eq("image-tag"), eq(forkedRepo), any(), eq(rateLimiter));
+    }
+
+    @Test
+    public void testPullRequestBlockNotExecutedWhenDockerfileIsNotModified() throws Exception {
+        Map<String, Object> nsMap = ImmutableMap.of(Constants.IMG,
+                "image", Constants.TAG,
+                "tag", Constants.STORE,
+                "store");
+        Namespace ns = new Namespace(nsMap);
+        GitForkBranch gitForkBranch = new GitForkBranch("image", "tag", null, "");
+        Multimap<String, GitHubContentToProcess> pathToDockerfilesInParentRepo = HashMultimap.create();
+        pathToDockerfilesInParentRepo.put("repo", new GitHubContentToProcess(null, null, "df11"));
+
+        GHRepository forkedRepo = mock(GHRepository.class);
+        when(forkedRepo.isFork()).thenReturn(true);
+        when(forkedRepo.getFullName()).thenReturn("forkedrepo");
+
+        GHRepository parentRepo = mock(GHRepository.class);
+        when(parentRepo.getFullName()).thenReturn("repo");
+        when(forkedRepo.getParent()).thenReturn(parentRepo);
+
+        String defaultBranch = "default";
+        when(parentRepo.getDefaultBranch()).thenReturn(defaultBranch);
+        GHBranch parentBranch = mock(GHBranch.class);
+        String sha = "abcdef";
+        when(parentBranch.getSHA1()).thenReturn(sha);
+        when(parentRepo.getBranch(defaultBranch)).thenReturn(parentBranch);
+
+        gitHubUtil = mock(GitHubUtil.class);
+        dockerfileGitHubUtil = Mockito.spy(new DockerfileGitHubUtil(gitHubUtil));
+        InputStream stream = new ByteArrayInputStream("someContent".getBytes(StandardCharsets.UTF_8));
+        GHContent forkedRepoContent = mock(GHContent.class);
+        when(forkedRepoContent.read()).thenReturn(stream);
+
+        RateLimiter rateLimiter = mock(RateLimiter.class);
+        when(gitHubUtil.tryRetrievingContent(eq(forkedRepo),
+                eq("df11"), eq("image-tag"))).thenReturn(forkedRepoContent);
+
+        //Dockerfile not modified
+        doReturn(false).when(dockerfileGitHubUtil).modifyContentOnGithub(eq(forkedRepoContent),
+                eq("image-tag"),
+                eq("image"),
+                eq("tag"),
+                eq(null),
+                eq(null));
+
+        doNothing().when(rateLimiter).consume();
+
+        dockerfileGitHubUtil.changeDockerfiles(ns, pathToDockerfilesInParentRepo,
+                new GitHubContentToProcess(forkedRepo, parentRepo, ""), new ArrayList<>(),
+                gitForkBranch, rateLimiter);
+
+        // Dockerfile retrieved from the repo
+        verify(dockerfileGitHubUtil).tryRetrievingContent(eq(forkedRepo),
+                eq("df11"), eq("image-tag"));
+
+        // Trying to modify Dockerfile
+        verify(dockerfileGitHubUtil).modifyContentOnGithub(any(), eq("image-tag"), eq("image"), eq("tag"), any(), any());
+
+        // PR creation block not executed
+        verify(dockerfileGitHubUtil, never()).createPullReq(eq(parentRepo),
+                eq("image-tag"), eq(forkedRepo), any(), eq(rateLimiter));
+    }
+
+    @Test
+    public void testPullRequestCreatedWhenAnyDockerfileIsModified() throws Exception {
+        Map<String, Object> nsMap = ImmutableMap.of(Constants.IMG,
+                "image", Constants.TAG,
+                "tag", Constants.STORE,
+                "store");
+        Namespace ns = new Namespace(nsMap);
+        GitForkBranch gitForkBranch = new GitForkBranch("image", "tag", null, "");
+        Multimap<String, GitHubContentToProcess> pathToDockerfilesInParentRepo = HashMultimap.create();
+        pathToDockerfilesInParentRepo.put("repo", new GitHubContentToProcess(null, null, "df11"));
+        pathToDockerfilesInParentRepo.put("repo", new GitHubContentToProcess(null, null, "df12"));
+
+        GHRepository forkedRepo = mock(GHRepository.class);
+        when(forkedRepo.isFork()).thenReturn(true);
+        when(forkedRepo.getFullName()).thenReturn("forkedrepo");
+
+        GHRepository parentRepo = mock(GHRepository.class);
+        when(parentRepo.getFullName()).thenReturn("repo");
+        when(forkedRepo.getParent()).thenReturn(parentRepo);
+
+        String defaultBranch = "default";
+        when(parentRepo.getDefaultBranch()).thenReturn(defaultBranch);
+        GHBranch parentBranch = mock(GHBranch.class);
+        String sha = "abcdef";
+        when(parentBranch.getSHA1()).thenReturn(sha);
+        when(parentRepo.getBranch(defaultBranch)).thenReturn(parentBranch);
+
+        gitHubUtil = mock(GitHubUtil.class);
+        dockerfileGitHubUtil = Mockito.spy(new DockerfileGitHubUtil(gitHubUtil));
+        InputStream stream = new ByteArrayInputStream("someContent".getBytes(StandardCharsets.UTF_8));
+        GHContent forkedRepoContent = mock(GHContent.class);
+        when(forkedRepoContent.read()).thenReturn(stream);
+
+        RateLimiter rateLimiter = mock(RateLimiter.class);
+        when(gitHubUtil.tryRetrievingContent(eq(forkedRepo),
+                eq("df11"), eq("image-tag"))).thenReturn(forkedRepoContent);
+        GHContent forkedRepoContent2 = mock(GHContent.class);
+        when(forkedRepoContent2.read()).thenReturn(stream);
+        when(gitHubUtil.tryRetrievingContent(eq(forkedRepo),
+                eq("df12"), eq("image-tag"))).thenReturn(forkedRepoContent2);
+
+        //First dockerfile not modified
+        doReturn(false).when(dockerfileGitHubUtil).modifyContentOnGithub(eq(forkedRepoContent),
+                eq("image-tag"),
+                eq("image"),
+                eq("tag"),
+                eq(null),
+                eq(null));
+
+        //Second dockerfile modified
+        doReturn(true).when(dockerfileGitHubUtil).modifyContentOnGithub(eq(forkedRepoContent2),
+                eq("image-tag"),
+                eq("image"),
+                eq("tag"),
+                eq(null),
+                eq(null));
+
+        doNothing().when(rateLimiter).consume();
+
+        dockerfileGitHubUtil.changeDockerfiles(ns, pathToDockerfilesInParentRepo,
+                new GitHubContentToProcess(forkedRepo, parentRepo, ""), new ArrayList<>(),
+                gitForkBranch, rateLimiter);
+
+        // Both Dockerfiles retrieved from the same repo
+        verify(dockerfileGitHubUtil).tryRetrievingContent(eq(forkedRepo),
+                eq("df11"), eq("image-tag"));
+        verify(dockerfileGitHubUtil).tryRetrievingContent(eq(forkedRepo),
+                eq("df12"), eq("image-tag"));
+
+        // Trying to modify both Dockerfiles
+        verify(dockerfileGitHubUtil, times(2)).modifyContentOnGithub(any(), eq("image-tag"), eq("image")
+                , eq("tag"), any(), any());
+
+        // PR created
         verify(dockerfileGitHubUtil).createPullReq(eq(parentRepo),
                 eq("image-tag"), eq(forkedRepo), any(), eq(rateLimiter));
     }
