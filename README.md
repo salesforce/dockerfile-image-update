@@ -1,7 +1,7 @@
-![Multi-Module Maven Build / Deploy](https://github.com/salesforce/dockerfile-image-update/workflows/Multi-Module%20Maven%20Build%20/%20Deploy/badge.svg)
 [![codecov](https://codecov.io/gh/salesforce/dockerfile-image-update/branch/main/graph/badge.svg)](https://codecov.io/gh/salesforce/dockerfile-image-update)
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.salesforce.dockerfile-image-update/dockerfile-image-update/badge.svg?maxAge=3600)](https://maven-badges.herokuapp.com/maven-central/com.salesforce.dockerfile-image-update/dockerfile-image-update)
 [![Docker Image Version (latest semver)](https://img.shields.io/docker/v/salesforce/dockerfile-image-update?label=Docker%20version&sort=semver)](https://hub.docker.com/r/salesforce/dockerfile-image-update/tags)
+[![Project Map](https://sourcespy.com/shield.svg)](https://sourcespy.com/github/salesforcedockerfileimageupdate/)
 
 # Dockerfile Image Updater
 
@@ -323,7 +323,7 @@ to manually trigger the release process. For now, that looks like the following:
 * Decide what version you desire to have. If you want to bump the major or minor
   version then you need to bump the `MVN_SNAPSHOT_VERSION` in the [Makefile](https://github.com/salesforce/dockerfile-image-update/blob/main/Makefile#L5)
   and in the
-  [Dockerfile](https://github.com/salesforce/dockerfile-image-update/blob/afalko-maj-minor/Dockerfile#L4)
+  [Dockerfile](https://github.com/salesforce/dockerfile-image-update/blob/main/Dockerfile#L4)
   before proceeding to the next steps. For example
   `MVN_SNAPSHOT_VERSION=1.0-SNAPSHOT` to
   `MVN_SNAPSHOT_VERSION=2.0-SNAPSHOT`.
