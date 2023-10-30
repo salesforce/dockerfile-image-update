@@ -105,6 +105,7 @@ public class GitHubUtil {
         try {
             GHPullRequest pullRequest = origRepo.createPullRequest(title, forkRepo.getOwnerName() + ":" + branch,
                     origRepo.getDefaultBranch(), body);
+            pullRequest.setLabels("dependencies");
 //            origRepo.createPullRequest("Update base image in Dockerfile", forkRepo.getOwnerName() + ":" + branch,
 //                    origRepo.getDefaultBranch(), "Automatic Dockerfile Image Updater. Please merge.");
             log.info("A pull request has been created at {}", pullRequest.getHtmlUrl());
