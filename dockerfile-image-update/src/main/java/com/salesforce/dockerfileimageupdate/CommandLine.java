@@ -10,21 +10,29 @@ package com.salesforce.dockerfileimageupdate;
 
 import com.google.common.reflect.ClassPath;
 import com.salesforce.dockerfileimageupdate.subcommands.ExecutableWithNamespace;
-import com.salesforce.dockerfileimageupdate.utils.Constants;
 import com.salesforce.dockerfileimageupdate.utils.DockerfileGitHubUtil;
 import com.salesforce.dockerfileimageupdate.utils.GitHubUtil;
 import net.sourceforge.argparse4j.ArgumentParsers;
 import net.sourceforge.argparse4j.impl.Arguments;
 import net.sourceforge.argparse4j.inf.*;
+import okhttp3.OkHttpClient;
+import okhttp3.logging.HttpLoggingInterceptor;
+
 import org.kohsuke.github.GitHub;
 import org.kohsuke.github.GitHubBuilder;
+import org.kohsuke.github.extras.okhttp3.OkHttpGitHubConnector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Comparator;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import static com.salesforce.dockerfileimageupdate.utils.Constants.*;
 
@@ -45,8 +53,8 @@ public class CommandLine {
         Namespace ns = handleArguments(parser, args);
         if (ns == null)
             System.exit(1);
-        Class<?> runClass = loadCommand(allClasses, ns.get(Constants.COMMAND));
-        DockerfileGitHubUtil dockerfileGitHubUtil = initializeDockerfileGithubUtil(ns.get(Constants.GIT_API));
+        Class<?> runClass = loadCommand(allClasses, ns.get(COMMAND));
+        DockerfileGitHubUtil dockerfileGitHubUtil = initializeDockerfileGithubUtil(gitApiUrl(ns), gitApiToken(), ns.getBoolean(DEBUG));
 
         /* Execute given command. */
         ((ExecutableWithNamespace)runClass.getDeclaredConstructor().newInstance()).execute(ns, dockerfileGitHubUtil);
@@ -57,16 +65,16 @@ public class CommandLine {
                 ArgumentParsers.newFor("dockerfile-image-update").addHelp(true).build()
                 .description("Image Updates through Pull Request Automator");
 
-        parser.addArgument("-l", "--" + Constants.GIT_API_SEARCH_LIMIT)
+        parser.addArgument("-l", "--" + GIT_API_SEARCH_LIMIT)
                 .type(Integer.class)
                 .setDefault(1000)
                 .help("limit the search results for github api (default: 1000)");
-        parser.addArgument("-o", "--" + Constants.GIT_ORG)
+        parser.addArgument("-o", "--" + GIT_ORG)
                 .help("search within specific organization (default: all of github)");
         /* Currently, because of argument passing reasons, you can only specify one branch. */
-        parser.addArgument("-b", "--" + Constants.GIT_BRANCH)
+        parser.addArgument("-b", "--" + GIT_BRANCH)
                 .help("make pull requests for given branch name (default: main)");
-        parser.addArgument("-g", "--" + Constants.GIT_API)
+        parser.addArgument("-g", "--" + GIT_API)
                 .help("link to github api; overrides environment variable");
         parser.addArgument("-f", "--auto-merge").action(Arguments.storeTrue())
                 .help("NOT IMPLEMENTED / set to automatically merge pull requests if available");
@@ -74,13 +82,13 @@ public class CommandLine {
                 .help("message to provide for pull requests");
         parser.addArgument("-c")
                 .help("additional commit message for the commits in pull requests");
-        parser.addArgument("-e", "--" + Constants.GIT_REPO_EXCLUDES)
+        parser.addArgument("-e", "--" + GIT_REPO_EXCLUDES)
                 .help("regex of repository names to exclude from pull request generation");
         parser.addArgument("-B")
                 .help("additional body text to include in pull requests");
-        parser.addArgument("-s", "--" + Constants.SKIP_PR_CREATION)
+        parser.addArgument("-s", "--" + SKIP_PR_CREATION)
                 .type(Boolean.class)
-                .setDefault(false)
+                .setDefault(false) //To prevent null from being returned by the argument
                 .help("Only update image tag store. Skip creating PRs");
         parser.addArgument("-x")
                 .help("comment snippet mentioned in line just before 'FROM' instruction(Dockerfile)" +
@@ -95,6 +103,11 @@ public class CommandLine {
                 .type(String.class)
                 .required(false)
                 .help("Use RateLimiting when sending PRs. RateLimiting is enabled only if this value is set it's disabled by default.");
+        parser.addArgument("-d", "--" + DEBUG)
+                .type(Boolean.class)
+                .setDefault(false) //To prevent null from being returned by the argument
+                .required(false)
+                .help("Enable debug logging, including git wire logs.");
         return parser;
     }
 
@@ -102,7 +115,7 @@ public class CommandLine {
             argparse4j allows commands to be truncated, so users can type the first letter (a,c,p) for commands */
     public static Set<ClassPath.ClassInfo> findSubcommands(ArgumentParser parser) throws IOException {
         Subparsers subparsers = parser.addSubparsers()
-                .dest(Constants.COMMAND)
+                .dest(COMMAND)
                 .help("FEATURE")
                 .title("subcommands")
                 .description("Specify which feature to perform")
@@ -181,27 +194,65 @@ public class CommandLine {
         return runClass;
     }
 
-    /* Validate API URL and connect to the API using credentials. */
-    public static DockerfileGitHubUtil initializeDockerfileGithubUtil(String gitApiUrl) throws IOException {
-        if (gitApiUrl == null) {
-            gitApiUrl = System.getenv("git_api_url");
-            if (gitApiUrl == null) {
-                throw new IOException("No Git API URL in environment variables.");
-            }
-        }
-        String token = System.getenv("git_api_token");
-        if (token == null) {
-            log.error("Please provide GitHub token in environment variables.");
-            System.exit(3);
-        }
+    public static String gitApiToken() {
+      return gitApiToken(System::getenv, System::exit);
+    }
 
-        GitHub github = new GitHubBuilder().withEndpoint(gitApiUrl)
+    public static String gitApiToken(final Function<String, String> envFunc, final Consumer<Integer> exitFunc) {
+      final String token = envFunc.apply("git_api_token");
+      if (Objects.isNull(token)) {
+          log.error("Please provide GitHub token in environment variables.");
+          exitFunc.accept(3);
+      }
+      return token;
+    }
+
+    public static String gitApiUrl(final Namespace ns) throws IOException {
+      return gitApiUrl(ns, System::getenv);
+    }
+
+    public static String gitApiUrl(final Namespace ns, final Function<String, String> envFunc) throws IOException {
+      return Optional.ofNullable(
+                 Optional.ofNullable(ns.getString(GIT_API))
+                   .orElse(envFunc.apply("git_api_url"))
+             )
+             .orElseThrow(() -> new IOException("No Git API URL in environment variables nor on the commmand line."));
+    }
+
+    public static DockerfileGitHubUtil initializeDockerfileGithubUtil(
+        final String gitApiUrl,
+        final String token,
+        final boolean debug) throws IOException
+    {
+      return initializeDockerfileGithubUtil(gitApiUrl, token, () -> new GitHubBuilder(), debug);
+    }
+
+    /* Validate API URL and connect to the API using credentials. */
+    public static DockerfileGitHubUtil initializeDockerfileGithubUtil(
+        final String gitApiUrl,
+        final String token,
+        final Supplier<GitHubBuilder> builderFunc,
+        final boolean debug) throws IOException {
+
+        GitHub github = shouldAddWireLogger(builderFunc.get(), debug)
+                .withEndpoint(gitApiUrl)
                 .withOAuthToken(token)
                 .build();
         github.checkApiUrlValidity();
 
-        GitHubUtil gitHubUtil = new GitHubUtil(github);
+        return new DockerfileGitHubUtil(new GitHubUtil(github));
+    }
 
-        return new DockerfileGitHubUtil(gitHubUtil);
+    public static GitHubBuilder shouldAddWireLogger(final GitHubBuilder builder, final boolean debug) {
+      if (debug) {
+        HttpLoggingInterceptor logger = new HttpLoggingInterceptor();
+        logger.setLevel(HttpLoggingInterceptor.Level.HEADERS);
+        logger.redactHeader("Authorization");
+
+        builder.withConnector(new OkHttpGitHubConnector(new OkHttpClient.Builder() 
+            .addInterceptor(logger)
+            .build()));
+      }
+      return builder;
     }
 }

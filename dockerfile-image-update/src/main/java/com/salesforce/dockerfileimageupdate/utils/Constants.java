@@ -41,6 +41,7 @@ public class Constants {
     public static final String IGNORE_IMAGE_STRING = "x";
     public static final String FILE_NAMES_TO_SEARCH = "filenamestosearch";
     public static final String RATE_LIMIT_PR_CREATION = "rate_limit_pr_creations";
+    public static final String DEBUG = "debug";
     //max number of PRs to be sent (or tokens to be added)  per DEFAULT_RATE_LIMIT_DURATION(per hour in this case)
     public static final long DEFAULT_RATE_LIMIT = 60;
 
