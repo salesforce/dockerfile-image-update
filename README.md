@@ -1,7 +1,7 @@
-![Multi-Module Maven Build / Deploy](https://github.com/salesforce/dockerfile-image-update/workflows/Multi-Module%20Maven%20Build%20/%20Deploy/badge.svg)
 [![codecov](https://codecov.io/gh/salesforce/dockerfile-image-update/branch/main/graph/badge.svg)](https://codecov.io/gh/salesforce/dockerfile-image-update)
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.salesforce.dockerfile-image-update/dockerfile-image-update/badge.svg?maxAge=3600)](https://maven-badges.herokuapp.com/maven-central/com.salesforce.dockerfile-image-update/dockerfile-image-update)
 [![Docker Image Version (latest semver)](https://img.shields.io/docker/v/salesforce/dockerfile-image-update?label=Docker%20version&sort=semver)](https://hub.docker.com/r/salesforce/dockerfile-image-update/tags)
+[![Project Map](https://sourcespy.com/shield.svg)](https://sourcespy.com/github/salesforcedockerfileimageupdate/)
 
 # Dockerfile Image Updater
 
