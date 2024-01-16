@@ -108,9 +108,9 @@ public class ForkableRepoValidator {
                     return false;
                 }
             }
-        } catch (IOException exception) {
+        } catch (IOException | UnsupportedOperationException exception) {
             log.warn("Failed while checking if there are changes in {}. Skipping... exception: {}",
-                    content.getPath(), exception.getMessage());
+                    content.getPath(), exception.getMessage(), exception);
         }
         return true;
     }
