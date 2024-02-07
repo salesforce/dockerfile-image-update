@@ -28,17 +28,16 @@ public class PullRequests {
                     pathToDockerfilesInParentRepo.get(currUserRepo).stream().findFirst();
             if (forkWithContentPaths.isPresent()) {
                 try {
+                    //If the repository has been onboarded to renovate enterprise, skip sending the DFIU PR
                     if(ns.getBoolean(Constants.CHECK_FOR_RENOVATE)
-                            && (isRenovateEnabled(Constants.RENOVATE_CONFIG_FILENAME, forkWithContentPaths.get()))) {
-                        log.info("Found file with name %s in the repo %s. Skip sending DFIU PRs.", Constants.RENOVATE_CONFIG_FILENAME, forkWithContentPaths.get().getParent().getFullName());
+                            && (isRenovateEnabled(Constants.RENOVATE_CONFIG_FILEPATH, forkWithContentPaths.get()))) {
+                        log.info("Found file with name %s in the repo %s. Skip sending DFIU PRs to this repository.", Constants.RENOVATE_CONFIG_FILEPATH, forkWithContentPaths.get().getParent().getFullName());
                     } else {
                         dockerfileGitHubUtil.changeDockerfiles(ns,
                                 pathToDockerfilesInParentRepo,
                                 forkWithContentPaths.get(), skippedRepos,
                                 gitForkBranch, rateLimiter);
                     }
-
-
                 } catch (IOException | InterruptedException e) {
                     log.error(String.format("Error changing Dockerfile for %s", forkWithContentPaths.get().getParent().getFullName()), e);
                     exceptions.add((IOException) e);
@@ -50,22 +49,27 @@ public class PullRequests {
         ResultsProcessor.processResults(skippedRepos, exceptions, log);
     }
 
-    private boolean isRenovateEnabled(String fileName, GitHubContentToProcess fork) throws IOException {
+    /**
+     * Check if the repository is onboarded to Renovate. The signal we are looking for are
+     * (1) The presence of a file named renovate.json in the root of the repository
+     * (2) Ensuring that the file does not have the key "enabled" set to "false"
+     * @param filePath the name of the file that we are searching for in the repo
+     * @param fork A GitHubContentToProcess object that contains the fork repository that is under process
+     * @return true if the file is found in the path specified and is not disabled, false otherwise
+     */
+    private boolean isRenovateEnabled(String filePath, GitHubContentToProcess fork) throws IOException {
         try {
-            GHContent fileContent = fork.getParent().getFileContent(fileName);
+            GHContent fileContent = fork.getParent().getFileContent(filePath);
             InputStream is = fileContent.read();
             BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(is));
-            StringBuilder sb = new StringBuilder();
-            String line;
-            while ((line = bufferedReader.readLine()) != null) {
-                sb.append(line);
-            }
-            JSONObject json = new JSONObject(sb.toString());
-            if (json.has("enabled") && json.get("enabled") == "false") {
+            JSONTokener tokener = new JSONTokener(bufferedReader);
+            JSONObject json = new JSONObject(tokener);
+            //If the renovate.json file has the key 'enabled' set to false, it indicates that while the repo has been onboarded to renovate, it has been disabled for some reason
+            if (json.has("enabled") && json.get("enabled").toString() == "false") {
                 return false;
             }
         } catch (FileNotFoundException e) {
-            log.debug("The file with name %s not found in the repository.");
+            log.debug("The file with name %s not found in the repository.", filePath);
             return false;
         }
         return true;

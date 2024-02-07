@@ -54,5 +54,5 @@ public class Constants {
 
     public static final String CHECK_FOR_RENOVATE = "checkforrenovate";
 
-    public static final String RENOVATE_CONFIG_FILENAME = "renovate.json";
+    public static final String RENOVATE_CONFIG_FILEPATH = "renovate.json";
 }
