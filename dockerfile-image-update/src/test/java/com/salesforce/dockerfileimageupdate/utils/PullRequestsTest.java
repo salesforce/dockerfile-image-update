@@ -21,7 +21,7 @@ public class PullRequestsTest {
                 "image", Constants.TAG,
                 "tag", Constants.STORE,
                 "store", Constants.SKIP_PR_CREATION,
-                false);
+                false, Constants.CHECK_FOR_RENOVATE, false);
         Namespace ns = new Namespace(nsMap);
         PullRequests pullRequests = new PullRequests();
         GitHubPullRequestSender pullRequestSender = mock(GitHubPullRequestSender.class);
@@ -51,7 +51,7 @@ public class PullRequestsTest {
                 "image", Constants.TAG,
                 "tag", Constants.STORE,
                 "store", Constants.SKIP_PR_CREATION,
-                false);
+                false, Constants.CHECK_FOR_RENOVATE, false);
         Namespace ns = new Namespace(nsMap);
         PullRequests pullRequests = new PullRequests();
         GitHubPullRequestSender pullRequestSender = mock(GitHubPullRequestSender.class);
@@ -89,7 +89,7 @@ public class PullRequestsTest {
                 "image", Constants.TAG,
                 "tag", Constants.STORE,
                 "store", Constants.SKIP_PR_CREATION,
-                false);
+                false, Constants.CHECK_FOR_RENOVATE, false);
         Namespace ns = new Namespace(nsMap);
         PullRequests pullRequests = new PullRequests();
         GitHubPullRequestSender pullRequestSender = mock(GitHubPullRequestSender.class);

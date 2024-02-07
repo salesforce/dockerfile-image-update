@@ -51,4 +51,8 @@ public class Constants {
     public static final Duration DEFAULT_TOKEN_ADDING_RATE = Duration.ofMinutes(DEFAULT_CONSUMING_TOKEN_RATE);
     public static final String FILENAME_DOCKERFILE = "dockerfile";
     public static final String FILENAME_DOCKER_COMPOSE = "docker-compose";
+
+    public static final String CHECK_FOR_RENOVATE = "checkforrenovate";
+
+    public static final String RENOVATE_CONFIG_FILENAME = "renovate.json";
 }
