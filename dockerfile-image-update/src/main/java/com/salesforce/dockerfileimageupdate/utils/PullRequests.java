@@ -4,7 +4,8 @@ import com.google.common.collect.*;
 import com.salesforce.dockerfileimageupdate.model.*;
 import com.salesforce.dockerfileimageupdate.process.*;
 import net.sourceforge.argparse4j.inf.*;
-import org.json.*;
+import org.json.JSONObject;
+import org.json.JSONTokener;
 import org.kohsuke.github.*;
 import org.slf4j.*;
 
