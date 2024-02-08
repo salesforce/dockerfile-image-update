@@ -58,7 +58,7 @@ public class PullRequests {
      * @param fork A GitHubContentToProcess object that contains the fork repository that is under process
      * @return true if the file is found in the path specified and is not disabled, false otherwise
      */
-    private boolean isRenovateEnabled(List<String> filePaths, GitHubContentToProcess fork) throws IOException {
+    public boolean isRenovateEnabled(List<String> filePaths, GitHubContentToProcess fork) throws IOException {
         for (String filePath : filePaths) {
             try {
                 GHContent fileContent = fork.getParent().getFileContent(filePath);

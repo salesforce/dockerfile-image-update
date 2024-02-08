@@ -6,6 +6,7 @@ import com.salesforce.dockerfileimageupdate.process.*;
 import net.sourceforge.argparse4j.inf.*;
 import org.kohsuke.github.*;
 import org.mockito.*;
+import org.testng.*;
 import org.testng.annotations.*;
 
 import java.io.*;
@@ -156,5 +157,71 @@ public class PullRequestsTest {
                 eq(pathToDockerfilesInParentRepo),
                 eq(gitHubContentToProcess), anyList(), eq(gitForkBranch),
                 eq(rateLimiter));
+    }
+
+    @Test
+    public void testisRenovateEnabledReturnsFalseIfRenovateConfigFileNotFound() throws IOException {
+        PullRequests pullRequests = new PullRequests();
+        List<String> filePaths = Collections.singletonList("renovate.json");
+        GitHubContentToProcess gitHubContentToProcess = mock(GitHubContentToProcess.class);
+        GHRepository ghRepository = mock(GHRepository.class);
+        when(gitHubContentToProcess.getParent()).thenReturn(ghRepository);
+        when(ghRepository.getFileContent(anyString())).thenThrow(new FileNotFoundException());
+        Assert.assertFalse(pullRequests.isRenovateEnabled(filePaths, gitHubContentToProcess));
+    }
+
+    @Test
+    public void testisRenovateEnabledReturnsFalseIfRenovateConfigFileFoundButIsDisabled() throws IOException {
+        PullRequests pullRequests = new PullRequests();
+        List<String> filePaths = Collections.singletonList("renovate.json");
+        GitHubContentToProcess gitHubContentToProcess = mock(GitHubContentToProcess.class);
+        GHRepository ghRepository = mock(GHRepository.class);
+        GHContent content = mock(GHContent.class);
+        InputStream inputStream = new ByteArrayInputStream("{enabled:false}".getBytes());
+        when(gitHubContentToProcess.getParent()).thenReturn(ghRepository);
+        when(ghRepository.getFileContent(anyString())).thenReturn(content);
+        when(content.read()).thenReturn(inputStream);
+        Assert.assertFalse(pullRequests.isRenovateEnabled(filePaths, gitHubContentToProcess));
+    }
+
+    @Test
+    public void testisRenovateEnabledReturnsTrueIfRenovateConfigFileFoundButEnabledKeyNotFound() throws IOException {
+        PullRequests pullRequests = new PullRequests();
+        List<String> filePaths = Collections.singletonList("renovate.json");
+        GitHubContentToProcess gitHubContentToProcess = mock(GitHubContentToProcess.class);
+        GHRepository ghRepository = mock(GHRepository.class);
+        GHContent content = mock(GHContent.class);
+        InputStream inputStream = new ByteArrayInputStream("{someKey:someValue}".getBytes());
+        when(gitHubContentToProcess.getParent()).thenReturn(ghRepository);
+        when(ghRepository.getFileContent(anyString())).thenReturn(content);
+        when(content.read()).thenReturn(inputStream);
+        Assert.assertTrue(pullRequests.isRenovateEnabled(filePaths, gitHubContentToProcess));
+    }
+
+    @Test
+    public void testisRenovateEnabledReturnsTrueIfRenovateConfigFileFoundAndResourcesThrowAnException() throws IOException {
+        PullRequests pullRequests = new PullRequests();
+        List<String> filePaths = Collections.singletonList("renovate.json");
+        GitHubContentToProcess gitHubContentToProcess = mock(GitHubContentToProcess.class);
+        GHRepository ghRepository = mock(GHRepository.class);
+        GHContent content = mock(GHContent.class);
+        when(gitHubContentToProcess.getParent()).thenReturn(ghRepository);
+        when(ghRepository.getFileContent(anyString())).thenReturn(content);
+        when(content.read()).thenThrow(new IOException());
+        Assert.assertFalse(pullRequests.isRenovateEnabled(filePaths, gitHubContentToProcess));
+    }
+
+    @Test
+    public void testisRenovateEnabledReturnsTrueIfRenovateConfigFileFoundAndEnabledKeySetToTrue() throws IOException {
+        PullRequests pullRequests = new PullRequests();
+        List<String> filePaths = Collections.singletonList("renovate.json");
+        GitHubContentToProcess gitHubContentToProcess = mock(GitHubContentToProcess.class);
+        GHRepository ghRepository = mock(GHRepository.class);
+        GHContent content = mock(GHContent.class);
+        InputStream inputStream = new ByteArrayInputStream("{enabled:true}".getBytes());
+        when(gitHubContentToProcess.getParent()).thenReturn(ghRepository);
+        when(ghRepository.getFileContent(anyString())).thenReturn(content);
+        when(content.read()).thenReturn(inputStream);
+        Assert.assertTrue(pullRequests.isRenovateEnabled(filePaths, gitHubContentToProcess));
     }
 }
