@@ -62,16 +62,18 @@ public class PullRequests {
         for (String filePath : filePaths) {
             try {
                 GHContent fileContent = fork.getParent().getFileContent(filePath);
-                InputStream is = fileContent.read();
-                BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(is));
-                JSONTokener tokener = new JSONTokener(bufferedReader);
-                JSONObject json = new JSONObject(tokener);
-                is.close();
-                bufferedReader.close();
-                //If the file has the key 'enabled' set to false, it indicates that while the repo has been onboarded to renovate, it has been disabled for some reason
-                return json.optBoolean("enabled", true);
+                JSONObject json;
+                try (InputStream is = fileContent.read();
+                     BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(is))) {
+                    JSONTokener tokener = new JSONTokener(bufferedReader);
+                    json = new JSONObject(tokener);
+                    //If the file has the key 'enabled' set to false, it indicates that while the repo has been onboarded to renovate, it has been disabled for some reason
+                    return json.optBoolean("enabled", true);
+                } catch (IOException e) {
+                    log.debug("Exception while trying to close a resource. Exception: %s", e.getMessage());
+                }
             } catch (FileNotFoundException e) {
-                log.debug("The file with name %s not found in the repository.", filePath);
+                log.debug("The file with name %s not found in the repository. Exception: %s", filePath, e.getMessage());
             }
         }
         return false;
