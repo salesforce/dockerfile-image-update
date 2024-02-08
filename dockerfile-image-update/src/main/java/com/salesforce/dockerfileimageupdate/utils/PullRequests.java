@@ -61,21 +61,22 @@ public class PullRequests {
     protected boolean isRenovateEnabled(List<String> filePaths, GitHubContentToProcess fork) throws IOException {
         for (String filePath : filePaths) {
             try {
-                GHContent fileContent = fork.getParent().getFileContent(filePath);
-                JSONObject json;
-                try (BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(fileContent.read()))) {
-                    JSONTokener tokener = new JSONTokener(bufferedReader);
-                    json = new JSONObject(tokener);
-                    //If the file has the key 'enabled' set to false, it indicates that while the repo has been onboarded to renovate, it has been disabled for some reason
-                    return json.optBoolean("enabled", true);
-                } catch (IOException e) {
-                    log.debug("Exception while trying to close a resource. Exception: %s", e.getMessage());
-                }
+                //If the file has the key 'enabled' set to false, it indicates that while the repo has been onboarded to renovate, it has been disabled for some reason
+                return readJsonFromContent(fork.getParent().getFileContent(filePath)).optBoolean("enabled", true);
             } catch (FileNotFoundException e) {
                 log.debug("The file with name %s not found in the repository. Exception: %s", filePath, e.getMessage());
+            } catch (IOException e) {
+                log.debug("Exception while trying to close a resource. Exception: %s", e.getMessage());
             }
         }
         return false;
+    }
+
+    private JSONObject readJsonFromContent(GHContent content) throws IOException {
+        try (BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(content.read()))) {
+            JSONTokener tokener = new JSONTokener(bufferedReader);
+            return new JSONObject(tokener);
+        }
     }
 }
 
