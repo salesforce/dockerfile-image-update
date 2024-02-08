@@ -58,13 +58,12 @@ public class PullRequests {
      * @param fork A GitHubContentToProcess object that contains the fork repository that is under process
      * @return true if the file is found in the path specified and is not disabled, false otherwise
      */
-    public boolean isRenovateEnabled(List<String> filePaths, GitHubContentToProcess fork) throws IOException {
+    protected boolean isRenovateEnabled(List<String> filePaths, GitHubContentToProcess fork) throws IOException {
         for (String filePath : filePaths) {
             try {
                 GHContent fileContent = fork.getParent().getFileContent(filePath);
                 JSONObject json;
-                try (InputStream is = fileContent.read();
-                     BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(is))) {
+                try (BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(fileContent.read()))) {
                     JSONTokener tokener = new JSONTokener(bufferedReader);
                     json = new JSONObject(tokener);
                     //If the file has the key 'enabled' set to false, it indicates that while the repo has been onboarded to renovate, it has been disabled for some reason
