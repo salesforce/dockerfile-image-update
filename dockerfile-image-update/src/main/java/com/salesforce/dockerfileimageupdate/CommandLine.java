@@ -65,7 +65,7 @@ public class CommandLine {
                 ArgumentParsers.newFor("dockerfile-image-update").addHelp(true).build()
                 .description("Image Updates through Pull Request Automator");
 
-        parser.addArgument("-re", "--" + CHECK_FOR_RENOVATE)
+        parser.addArgument("-R", "--" + CHECK_FOR_RENOVATE)
                 .type(Boolean.class)
                 .setDefault(false) //To prevent null from being returned by the argument
                 .help("Check if Renovate app is being used to receive remediation PRs.");
