@@ -72,6 +72,11 @@ public class PullRequests {
         return false;
     }
 
+    /**
+     * Read the content of a fle from a repository and convert it into a JSON object
+     * @param content The GHContent object for the content in the repository
+     * @return json object for the content read from the repository
+     */
     private JSONObject readJsonFromContent(GHContent content) throws IOException {
         try (BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(content.read()))) {
             JSONTokener tokener = new JSONTokener(bufferedReader);
