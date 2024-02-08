@@ -66,7 +66,7 @@ public class PullRequests {
             JSONTokener tokener = new JSONTokener(bufferedReader);
             JSONObject json = new JSONObject(tokener);
             //If the renovate.json file has the key 'enabled' set to false, it indicates that while the repo has been onboarded to renovate, it has been disabled for some reason
-            if (json.has("enabled") && json.get("enabled").toString() == "false") {
+            if (json.has("enabled") && json.getBoolean("enabled") == false) {
                 return false;
             }
         } catch (FileNotFoundException e) {
