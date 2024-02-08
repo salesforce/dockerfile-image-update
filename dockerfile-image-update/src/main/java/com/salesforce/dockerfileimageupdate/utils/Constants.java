@@ -10,6 +10,7 @@ package com.salesforce.dockerfileimageupdate.utils;
 
 
 import java.time.Duration;
+import java.util.*;
 
 /**
  * @author minho-park
@@ -51,4 +52,7 @@ public class Constants {
     public static final Duration DEFAULT_TOKEN_ADDING_RATE = Duration.ofMinutes(DEFAULT_CONSUMING_TOKEN_RATE);
     public static final String FILENAME_DOCKERFILE = "dockerfile";
     public static final String FILENAME_DOCKER_COMPOSE = "docker-compose";
+    public static final String CHECK_FOR_RENOVATE = "checkforrenovate";
+    //The Renovate configuration file can be in any one of the following locations. Refer to https://docs.renovatebot.com/configuration-options/
+    public static final List<String> RENOVATE_CONFIG_FILEPATHS = Arrays.asList("renovate.json", "renovate.json5", ".github/renovate.json", ".github/renovate.json5", ".gitlab/renovate.json", ".gitlab/renovate.json5", ".renovaterc", ".renovaterc.json", ".renovaterc.json5");
 }

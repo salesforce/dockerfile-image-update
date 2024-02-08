@@ -3,6 +3,7 @@
 *.ipr
 *.iws
 *.iml
+*.DS_Store
 
 # Vim files
 *.swp

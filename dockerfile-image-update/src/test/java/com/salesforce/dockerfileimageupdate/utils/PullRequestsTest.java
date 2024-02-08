@@ -6,6 +6,7 @@ import com.salesforce.dockerfileimageupdate.process.*;
 import net.sourceforge.argparse4j.inf.*;
 import org.kohsuke.github.*;
 import org.mockito.*;
+import org.testng.*;
 import org.testng.annotations.*;
 
 import java.io.*;
@@ -21,7 +22,7 @@ public class PullRequestsTest {
                 "image", Constants.TAG,
                 "tag", Constants.STORE,
                 "store", Constants.SKIP_PR_CREATION,
-                false);
+                false, Constants.CHECK_FOR_RENOVATE, false);
         Namespace ns = new Namespace(nsMap);
         PullRequests pullRequests = new PullRequests();
         GitHubPullRequestSender pullRequestSender = mock(GitHubPullRequestSender.class);
@@ -51,7 +52,7 @@ public class PullRequestsTest {
                 "image", Constants.TAG,
                 "tag", Constants.STORE,
                 "store", Constants.SKIP_PR_CREATION,
-                false);
+                false, Constants.CHECK_FOR_RENOVATE, false);
         Namespace ns = new Namespace(nsMap);
         PullRequests pullRequests = new PullRequests();
         GitHubPullRequestSender pullRequestSender = mock(GitHubPullRequestSender.class);
@@ -89,7 +90,7 @@ public class PullRequestsTest {
                 "image", Constants.TAG,
                 "tag", Constants.STORE,
                 "store", Constants.SKIP_PR_CREATION,
-                false);
+                false, Constants.CHECK_FOR_RENOVATE, false);
         Namespace ns = new Namespace(nsMap);
         PullRequests pullRequests = new PullRequests();
         GitHubPullRequestSender pullRequestSender = mock(GitHubPullRequestSender.class);
@@ -109,5 +110,118 @@ public class PullRequestsTest {
         verify(dockerfileGitHubUtil, times(0)).changeDockerfiles(eq(ns),
                 eq(pathToDockerfilesInParentRepo),
                 eq(gitHubContentToProcess), anyList(), eq(gitForkBranch),eq(rateLimiter));
+    }
+
+    @Test
+    public void testPullRequestsPrepareSkipsSendingPRIfRepoOnboardedToRenovate() throws Exception {
+        Map<String, Object> nsMap = ImmutableMap.of(
+                Constants.IMG, "image",
+                Constants.TAG, "tag",
+                Constants.STORE,"store",
+                Constants.SKIP_PR_CREATION,false,
+                Constants.CHECK_FOR_RENOVATE, true);
+
+
+        Namespace ns = new Namespace(nsMap);
+        PullRequests pullRequests = new PullRequests();
+        GitHubPullRequestSender pullRequestSender = mock(GitHubPullRequestSender.class);
+        PagedSearchIterable<GHContent> contentsFoundWithImage = mock(PagedSearchIterable.class);
+        GitForkBranch gitForkBranch = mock(GitForkBranch.class);
+        DockerfileGitHubUtil dockerfileGitHubUtil = mock(DockerfileGitHubUtil.class);
+        RateLimiter rateLimiter = Mockito.spy(new RateLimiter());
+        Multimap<String, GitHubContentToProcess> pathToDockerfilesInParentRepo = ArrayListMultimap.create();
+        GitHubContentToProcess gitHubContentToProcess = mock(GitHubContentToProcess.class);
+        pathToDockerfilesInParentRepo.put("repo1", gitHubContentToProcess);
+        pathToDockerfilesInParentRepo.put("repo2", gitHubContentToProcess);
+        pathToDockerfilesInParentRepo.put("repo3", gitHubContentToProcess);
+        GHContent content = mock(GHContent.class);
+        InputStream inputStream1 = new ByteArrayInputStream("{someKey:someValue}".getBytes());
+        InputStream inputStream2 = new ByteArrayInputStream("{enabled:false}".getBytes());
+        GHRepository ghRepository = mock(GHRepository.class);
+
+        when(pullRequestSender.forkRepositoriesFoundAndGetPathToDockerfiles(contentsFoundWithImage, gitForkBranch)).thenReturn(pathToDockerfilesInParentRepo);
+        when(gitHubContentToProcess.getParent()).thenReturn(ghRepository);
+        //Fetch the content of the renovate.json file for the 3 repos.
+        // The first one returns a file with regular json content.
+        // The second one returns a file with the key 'enabled' set to 'false' to replicate a repo that has been onboarded to renovate but has it disabled
+        // The third repo does not have the renovate.json file
+        when(ghRepository.getFileContent(anyString())).thenReturn(content).thenReturn(content).thenThrow(new FileNotFoundException());
+        when(ghRepository.getFullName()).thenReturn("org/repo");
+        when(content.read()).thenReturn(inputStream1).thenReturn(inputStream2);
+
+        pullRequests.prepareToCreate(ns, pullRequestSender, contentsFoundWithImage,
+                gitForkBranch, dockerfileGitHubUtil, rateLimiter);
+
+        //Verify that the DFIU PR is skipped for the first repo, but is sent to the other two repos
+        verify(dockerfileGitHubUtil, times(2)).changeDockerfiles(eq(ns),
+                eq(pathToDockerfilesInParentRepo),
+                eq(gitHubContentToProcess), anyList(), eq(gitForkBranch),
+                eq(rateLimiter));
+    }
+
+    @Test
+    public void testisRenovateEnabledReturnsFalseIfRenovateConfigFileNotFound() throws IOException {
+        PullRequests pullRequests = new PullRequests();
+        List<String> filePaths = Collections.singletonList("renovate.json");
+        GitHubContentToProcess gitHubContentToProcess = mock(GitHubContentToProcess.class);
+        GHRepository ghRepository = mock(GHRepository.class);
+        when(gitHubContentToProcess.getParent()).thenReturn(ghRepository);
+        when(ghRepository.getFileContent(anyString())).thenThrow(new FileNotFoundException());
+        Assert.assertFalse(pullRequests.isRenovateEnabled(filePaths, gitHubContentToProcess));
+    }
+
+    @Test
+    public void testisRenovateEnabledReturnsFalseIfRenovateConfigFileFoundButIsDisabled() throws IOException {
+        PullRequests pullRequests = new PullRequests();
+        List<String> filePaths = Collections.singletonList("renovate.json");
+        GitHubContentToProcess gitHubContentToProcess = mock(GitHubContentToProcess.class);
+        GHRepository ghRepository = mock(GHRepository.class);
+        GHContent content = mock(GHContent.class);
+        InputStream inputStream = new ByteArrayInputStream("{enabled:false}".getBytes());
+        when(gitHubContentToProcess.getParent()).thenReturn(ghRepository);
+        when(ghRepository.getFileContent(anyString())).thenReturn(content);
+        when(content.read()).thenReturn(inputStream);
+        Assert.assertFalse(pullRequests.isRenovateEnabled(filePaths, gitHubContentToProcess));
+    }
+
+    @Test
+    public void testisRenovateEnabledReturnsTrueIfRenovateConfigFileFoundButEnabledKeyNotFound() throws IOException {
+        PullRequests pullRequests = new PullRequests();
+        List<String> filePaths = Collections.singletonList("renovate.json");
+        GitHubContentToProcess gitHubContentToProcess = mock(GitHubContentToProcess.class);
+        GHRepository ghRepository = mock(GHRepository.class);
+        GHContent content = mock(GHContent.class);
+        InputStream inputStream = new ByteArrayInputStream("{someKey:someValue}".getBytes());
+        when(gitHubContentToProcess.getParent()).thenReturn(ghRepository);
+        when(ghRepository.getFileContent(anyString())).thenReturn(content);
+        when(content.read()).thenReturn(inputStream);
+        Assert.assertTrue(pullRequests.isRenovateEnabled(filePaths, gitHubContentToProcess));
+    }
+
+    @Test
+    public void testisRenovateEnabledReturnsTrueIfRenovateConfigFileFoundAndResourcesThrowAnException() throws IOException {
+        PullRequests pullRequests = new PullRequests();
+        List<String> filePaths = Collections.singletonList("renovate.json");
+        GitHubContentToProcess gitHubContentToProcess = mock(GitHubContentToProcess.class);
+        GHRepository ghRepository = mock(GHRepository.class);
+        GHContent content = mock(GHContent.class);
+        when(gitHubContentToProcess.getParent()).thenReturn(ghRepository);
+        when(ghRepository.getFileContent(anyString())).thenReturn(content);
+        when(content.read()).thenThrow(new IOException());
+        Assert.assertFalse(pullRequests.isRenovateEnabled(filePaths, gitHubContentToProcess));
+    }
+
+    @Test
+    public void testisRenovateEnabledReturnsTrueIfRenovateConfigFileFoundAndEnabledKeySetToTrue() throws IOException {
+        PullRequests pullRequests = new PullRequests();
+        List<String> filePaths = Collections.singletonList("renovate.json");
+        GitHubContentToProcess gitHubContentToProcess = mock(GitHubContentToProcess.class);
+        GHRepository ghRepository = mock(GHRepository.class);
+        GHContent content = mock(GHContent.class);
+        InputStream inputStream = new ByteArrayInputStream("{enabled:true}".getBytes());
+        when(gitHubContentToProcess.getParent()).thenReturn(ghRepository);
+        when(ghRepository.getFileContent(anyString())).thenReturn(content);
+        when(content.read()).thenReturn(inputStream);
+        Assert.assertTrue(pullRequests.isRenovateEnabled(filePaths, gitHubContentToProcess));
     }
 }
