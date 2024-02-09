@@ -32,7 +32,7 @@ public class PullRequests {
                     //If the repository has been onboarded to renovate enterprise, skip sending the DFIU PR
                     if(ns.getBoolean(Constants.CHECK_FOR_RENOVATE)
                             && (isRenovateEnabled(Constants.RENOVATE_CONFIG_FILEPATHS, forkWithContentPaths.get()))) {
-                        log.info("Found a renovate configuration file in the repo %s. Skip sending DFIU PRs to this repository.", forkWithContentPaths.get().getParent().getFullName());
+                        log.info("Found a renovate configuration file in the repo {}. Skip sending DFIU PRs to this repository.", forkWithContentPaths.get().getParent().getFullName());
                     } else {
                         dockerfileGitHubUtil.changeDockerfiles(ns,
                                 pathToDockerfilesInParentRepo,
@@ -64,9 +64,9 @@ public class PullRequests {
                 //If the file has the key 'enabled' set to false, it indicates that while the repo has been onboarded to renovate, it has been disabled for some reason
                 return readJsonFromContent(fork.getParent().getFileContent(filePath)).optBoolean("enabled", true);
             } catch (FileNotFoundException e) {
-                log.debug("The file with name %s not found in the repository. Exception: %s", filePath, e.getMessage());
+                log.debug("The file with name {} not found in the repository. Exception: {}", filePath, e.getMessage());
             } catch (IOException e) {
-                log.debug("Exception while trying to close a resource. Exception: %s", e.getMessage());
+                log.debug("Exception while trying to close a resource. Exception: {}", e.getMessage());
             }
         }
         return false;
