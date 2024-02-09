@@ -32,7 +32,7 @@ public class PullRequests {
                     //If the repository has been onboarded to renovate enterprise, skip sending the DFIU PR
                     if(ns.getBoolean(Constants.CHECK_FOR_RENOVATE)
                             && (isRenovateEnabled(Constants.RENOVATE_CONFIG_FILEPATHS, forkWithContentPaths.get()))) {
-                        log.info("Found a renovate configuration file in the repo %s. Skip sending DFIU PRs to this repository.", forkWithContentPaths.get().getParent().getFullName());
+                        log.info(String.format("Found a renovate configuration file in the repo %s. Skip sending DFIU PRs to this repository.", forkWithContentPaths.get().getParent().getFullName()));
                     } else {
                         dockerfileGitHubUtil.changeDockerfiles(ns,
                                 pathToDockerfilesInParentRepo,
