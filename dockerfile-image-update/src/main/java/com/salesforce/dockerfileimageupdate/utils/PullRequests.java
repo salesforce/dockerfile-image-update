@@ -67,9 +67,9 @@ public class PullRequests {
             } catch (FileNotFoundException e) {
                 log.debug("The file with name {} not found in the repository.Returning false. Exception: {}", filePath, e.getMessage());
             } catch (IOException e) {
-                log.debug("Exception while trying to close a resource. Returning false. Exception: {}", e.getMessage());
+                log.warn("Exception while trying to close a resource. Returning false. Exception: {}", e.getMessage());
             } catch (JSONException e) {
-                log.debug("Exception while trying to read the renovate configuration file. Returning false. Exception: {}", e.getMessage());
+                log.warn("Exception while trying to read the renovate configuration file. Returning false. Exception: {}", e.getMessage());
             }
         }
         return false;
