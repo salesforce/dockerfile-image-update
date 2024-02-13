@@ -6,6 +6,7 @@ import com.salesforce.dockerfileimageupdate.process.*;
 import net.sourceforge.argparse4j.inf.*;
 import org.json.JSONObject;
 import org.json.JSONTokener;
+import org.json.JSONException;
 import org.kohsuke.github.*;
 import org.slf4j.*;
 
@@ -67,6 +68,8 @@ public class PullRequests {
                 log.debug("The file with name {} not found in the repository. Exception: {}", filePath, e.getMessage());
             } catch (IOException e) {
                 log.debug("Exception while trying to close a resource. Exception: {}", e.getMessage());
+            } catch (JSONException e) {
+                log.debug("Exception while trying to read the renovate configuration file. Exception: {}", e.getMessage());
             }
         }
         return false;
