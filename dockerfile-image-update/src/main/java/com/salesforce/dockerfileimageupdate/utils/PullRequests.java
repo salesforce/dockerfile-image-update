@@ -65,11 +65,11 @@ public class PullRequests {
                 //If the file has the key 'enabled' set to false, it indicates that while the repo has been onboarded to renovate, it has been disabled for some reason
                 return readJsonFromContent(fork.getParent().getFileContent(filePath)).optBoolean("enabled", true);
             } catch (FileNotFoundException e) {
-                log.debug("The file with name {} not found in the repository. Exception: {}", filePath, e.getMessage());
+                log.debug("The file with name {} not found in the repository.Returning false. Exception: {}", filePath, e.getMessage());
             } catch (IOException e) {
-                log.debug("Exception while trying to close a resource. Exception: {}", e.getMessage());
+                log.debug("Exception while trying to close a resource. Returning false. Exception: {}", e.getMessage());
             } catch (JSONException e) {
-                log.debug("Exception while trying to read the renovate configuration file. Exception: {}", e.getMessage());
+                log.debug("Exception while trying to read the renovate configuration file. Returning false. Exception: {}", e.getMessage());
             }
         }
         return false;
