@@ -4,6 +4,7 @@ import com.google.common.collect.*;
 import com.salesforce.dockerfileimageupdate.model.*;
 import com.salesforce.dockerfileimageupdate.process.*;
 import net.sourceforge.argparse4j.inf.*;
+import org.json.JSONException;
 import org.kohsuke.github.*;
 import org.mockito.*;
 import org.testng.*;
@@ -199,7 +200,7 @@ public class PullRequestsTest {
     }
 
     @Test
-    public void testisRenovateEnabledReturnsTrueIfRenovateConfigFileFoundAndResourcesThrowAnException() throws IOException {
+    public void testisRenovateEnabledReturnsFalseIfRenovateConfigFileFoundAndResourcesThrowAnException() throws IOException {
         PullRequests pullRequests = new PullRequests();
         List<String> filePaths = Collections.singletonList("renovate.json");
         GitHubContentToProcess gitHubContentToProcess = mock(GitHubContentToProcess.class);
@@ -208,6 +209,19 @@ public class PullRequestsTest {
         when(gitHubContentToProcess.getParent()).thenReturn(ghRepository);
         when(ghRepository.getFileContent(anyString())).thenReturn(content);
         when(content.read()).thenThrow(new IOException());
+        Assert.assertFalse(pullRequests.isRenovateEnabled(filePaths, gitHubContentToProcess));
+    }
+
+    @Test
+    public void testisRenovateEnabledReturnsFalseIfRenovateConfigFileFoundAndJSONParsingThrowsAnException() throws IOException {
+        PullRequests pullRequests = new PullRequests();
+        List<String> filePaths = Collections.singletonList("renovate.json");
+        GitHubContentToProcess gitHubContentToProcess = mock(GitHubContentToProcess.class);
+        GHRepository ghRepository = mock(GHRepository.class);
+        GHContent content = mock(GHContent.class);
+        when(gitHubContentToProcess.getParent()).thenReturn(ghRepository);
+        when(ghRepository.getFileContent(anyString())).thenReturn(content);
+        when(content.read()).thenThrow(new JSONException(""));
         Assert.assertFalse(pullRequests.isRenovateEnabled(filePaths, gitHubContentToProcess));
     }
 
