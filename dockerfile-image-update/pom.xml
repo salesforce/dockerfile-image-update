@@ -125,7 +125,7 @@
         <dependency>
             <groupId>org.kohsuke</groupId>
             <artifactId>github-api</artifactId>
-            <version>1.315</version>
+            <version>1.322</version>
         </dependency>
         <dependency>
             <groupId>com.amazonaws</groupId>
