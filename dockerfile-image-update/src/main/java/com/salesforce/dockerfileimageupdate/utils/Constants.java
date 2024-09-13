@@ -44,6 +44,8 @@ public class Constants {
     public static final String RATE_LIMIT_PR_CREATION = "rate_limit_pr_creations";
     public static final String SKIP_GITHUB_APP_ID = "skipAppId";
     public static final String SKIP_GITHUB_APP_KEY = "skipAppKey";
+    public static final String SKIP_GITHUB_APP_SERVER_API_TOKEN = "skipAppServerApiToken";
+    public static final String SKIP_GITHUB_APP_SERVER_API_ENDPOINT = "skipAppServerApiEndpoint";
     public static final String DEBUG = "debug";
     //max number of PRs to be sent (or tokens to be added)  per DEFAULT_RATE_LIMIT_DURATION(per hour in this case)
     public static final long DEFAULT_RATE_LIMIT = 60;

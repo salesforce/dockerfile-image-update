@@ -22,11 +22,21 @@ import java.security.spec.PKCS8EncodedKeySpec;
 import java.time.Instant;
 import java.util.Date;
 
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.Scanner;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+
+
 public class GithubAppCheck {
     private static final Logger log = LoggerFactory.getLogger(GithubAppCheck.class);
 
     private final String appId;
     private final String privateKeyPath;
+    private final String appServerApiToken;
+    private final String appServerApiEndpoint;
     private String jwt;
     private Instant jwtExpiry;
     private GitHub gitHub;
@@ -34,6 +44,8 @@ public class GithubAppCheck {
     public GithubAppCheck(final Namespace ns){
         this.appId = ns.get(Constants.SKIP_GITHUB_APP_ID);
         this.privateKeyPath = ns.get(Constants.SKIP_GITHUB_APP_KEY);
+        this.appServerApiToken = ns.get(Constants.SKIP_GITHUB_APP_SERVER_API_TOKEN);
+        this.appServerApiEndpoint = ns.get(Constants.SKIP_GITHUB_APP_SERVER_API_ENDPOINT);
         this.jwt = null;
         this.jwtExpiry = null;
         this.gitHub = null;
@@ -63,6 +75,27 @@ public class GithubAppCheck {
      * @return True if github app is installed, false otherwise. 
      */
     protected boolean isGithubAppEnabledOnRepository(String fullRepoName) {
+        Integer maxRetryCount = 5;
+        Boolean isGithubAppInstalled = isGithubAppEnabledOnRepositoryWithGitApi(fullRepoName);
+        if (!isGithubAppInstalled) {
+            for (Integer i = 0; i < maxRetryCount; i++) {
+                isGithubAppInstalled = isGithubAppEnabledOnRepositoryWithGitApi(fullRepoName);
+                if (isGithubAppInstalled) break;
+            }
+        }
+        if (!isGithubAppInstalled) {
+            isGithubAppInstalled = isGithubAppEnabledOnRepositoryWithRenovateApi(fullRepoName);
+        }
+        return isGithubAppInstalled;
+    }
+
+    /**
+     * Method to verify whether the github app is installed on a repository or not, using Git API
+     * @param fullRepoName = The repository full name, i.e, of the format "owner/repoName". Eg: "Salesforce/dockerfile-image-update"
+     * @return True if github app is installed, false otherwise. 
+     * Reference: https://docs.github.com/en/rest/apps/apps?apiVersion=2022-11-28#get-a-repository-installation-for-the-authenticated-app
+     */
+    protected boolean isGithubAppEnabledOnRepositoryWithGitApi(String fullRepoName) {
         refreshJwtIfNeeded(appId, privateKeyPath);
         try {
             gitHub.getApp().getInstallationByRepository(fullRepoName.split("/")[0], fullRepoName.split("/")[1]);
@@ -79,6 +112,52 @@ public class GithubAppCheck {
             return false;
         }
     }
+
+    /**
+     * Method to verify whether the github app is installed on a repository or not, using Renovate API
+     * @param fullRepoName = The repository full name, i.e, of the format "owner/repoName". Eg: "Salesforce/dockerfile-image-update"
+     * @return True if github app is installed, false otherwise. 
+     * Reference: https://github.com/mend/renovate-ce-ee/blob/main/docs/reporting-apis.md#repo-info
+     */
+    protected boolean isGithubAppEnabledOnRepositoryWithRenovateApi(String fullRepoName) {
+        try {
+            String apiEndpoint = appServerApiEndpoint + "/api/repos/" + fullRepoName;
+            URL url = new URL(apiEndpoint);
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("GET");
+            conn.setRequestProperty("Accept", "application/json");
+            conn.setRequestProperty("authorization", "Bearer " + appServerApiToken);
+            conn.connect();
+            
+            Integer responseCode = conn.getResponseCode();
+            if (responseCode != 200) {
+                throw new RuntimeException("HttpResponseCode: " + responseCode);
+            } else {
+                String inline = "";
+                Scanner scanner = new Scanner(url.openStream());
+                while (scanner.hasNext()) {
+                    inline += scanner.nextLine();
+                }
+                scanner.close();
+
+                //Using the JSON simple library parse the string into a json object
+                JSONParser parse = new JSONParser();
+                JSONObject dataObject = (JSONObject) parse.parse(inline);
+                String appInstallationState = (String) dataObject.get("state");
+                String appActivationStatus = (String) dataObject.get("status");
+
+                // Return app installation and activation status
+                if (appInstallationState == "installed" && appActivationStatus == "activated") {
+                    return true;
+                }
+                return false;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
 
     /**
      * Method to refresh the JWT token if needed. Checks the JWT expiry time, and if it is 60s away from expiring, refreshes it. 
