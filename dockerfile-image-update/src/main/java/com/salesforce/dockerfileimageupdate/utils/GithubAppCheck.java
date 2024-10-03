@@ -24,10 +24,22 @@ import java.util.Date;
 
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLConnection;
 import java.util.Scanner;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
+
+import io.github.resilience4j.retry.Retry;
+import io.github.resilience4j.retry.RetryConfig;
+import io.github.resilience4j.retry.MaxRetriesExceeded;
+import java.time.Duration;
+import java.util.function.Supplier;
+
+import org.apache.commons.lang3.exception.ExceptionUtils;
+import java.util.concurrent.TimeoutException;
+import java.io.UncheckedIOException;
 
 
 public class GithubAppCheck {
@@ -40,6 +52,7 @@ public class GithubAppCheck {
     private String jwt;
     private Instant jwtExpiry;
     private GitHub gitHub;
+    private CloseableHttpClient httpClient = HttpClients.createDefault();
 
     public GithubAppCheck(final Namespace ns){
         this.appId = ns.get(Constants.SKIP_GITHUB_APP_ID);
@@ -75,19 +88,24 @@ public class GithubAppCheck {
      * @return True if github app is installed, false otherwise. 
      */
     protected boolean isGithubAppEnabledOnRepository(String fullRepoName) {
-        Integer maxRetryCount = 5;
-        Boolean isGithubAppInstalled = isGithubAppEnabledOnRepositoryWithGitApi(fullRepoName);
-        if (!isGithubAppInstalled) {
-            for (Integer i = 0; i < maxRetryCount; i++) {
-                isGithubAppInstalled = isGithubAppEnabledOnRepositoryWithGitApi(fullRepoName);
-                if (isGithubAppInstalled) break;
-            }
+        try {
+            return isGithubAppEnabledOnRepositoryWithRetry(fullRepoName, () -> isGithubAppEnabledOnRepositoryWithRenovateApi(fullRepoName));  
+        } catch (MaxRetriesExceeded | UncheckedIOException exception) {
+            return isGithubAppEnabledOnRepositoryWithRetry(fullRepoName, () -> isGithubAppEnabledOnRepositoryWithGitApi(fullRepoName));
         }
-        if (!isGithubAppInstalled) {
-            isGithubAppInstalled = isGithubAppEnabledOnRepositoryWithRenovateApi(fullRepoName);
-        }
-        return isGithubAppInstalled;
     }
+
+    protected boolean isGithubAppEnabledOnRepositoryWithRetry(String fullRepoName, Supplier<Boolean> supplier) {
+        RetryConfig config = RetryConfig.custom()
+                .maxAttempts(2) // The maximum number of attempts (including the initial call as the first attempt); Source: https://resilience4j.readme.io/docs/retry
+                .waitDuration(Duration.ofMillis(1000))
+                .retryExceptions(TimeoutException.class, UncheckedIOException.class)
+                .build();
+        Retry retry = Retry.of("id", config);
+
+        return Retry.decorateSupplier(retry, supplier).get();
+    }
+
 
     /**
      * Method to verify whether the github app is installed on a repository or not, using Git API
@@ -95,21 +113,27 @@ public class GithubAppCheck {
      * @return True if github app is installed, false otherwise. 
      * Reference: https://docs.github.com/en/rest/apps/apps?apiVersion=2022-11-28#get-a-repository-installation-for-the-authenticated-app
      */
+
     protected boolean isGithubAppEnabledOnRepositoryWithGitApi(String fullRepoName) {
+        return isGithubAppEnabledOnRepositoryWithGitApi(fullRepoName, httpClient);
+    }
+
+    protected boolean isGithubAppEnabledOnRepositoryWithGitApi(String fullRepoName, CloseableHttpClient httpClient) {
         refreshJwtIfNeeded(appId, privateKeyPath);
-        try {
-            gitHub.getApp().getInstallationByRepository(fullRepoName.split("/")[0], fullRepoName.split("/")[1]);
-            return true;
-        } catch (HttpException exception) {
-            if (exception.getResponseCode() != 404) {
-                // Log for any HTTP status code other than 404 Not found. 
-                log.warn("Caught a HTTPException {} while trying to get app installation. Defaulting to False", exception.getMessage());
+        String apiEndpoint = "https://git.soma.salesforce.com/api/v3/repos/" + fullRepoName + "/installation";
+        HttpGet httpGet = new HttpGet(apiEndpoint);
+        httpGet.setHeader("Authorization", jwt);
+        httpGet.setHeader("Accept", "application/vnd.github+json");
+        try (CloseableHttpResponse response = httpClient.execute(httpGet)) {
+            int statusCode = response.getStatusLine().getStatusCode();
+            log.warn("[isGithubAppEnabledOnRepositoryWithGitApi] -- Response code `{}` while trying to get app installation using Git API", statusCode);
+            if (statusCode >= 500) {
+                throw new UncheckedIOException(new IOException());
             }
-            return false;
+            return statusCode == 200;
         } catch (IOException exception) {
-            // Most often happens on timeout scenarios. 
-            log.warn("Caught a IOException {} while trying to get app installation. Defaulting to False", exception.getMessage());
-            return false;
+            log.warn("[isGithubAppEnabledOnRepositoryWithGitApi] -- Exception while trying to get app installation using Git API: {}", exception);
+            throw new UncheckedIOException(exception);
         }
     }
 
@@ -119,52 +143,35 @@ public class GithubAppCheck {
      * @return True if github app is installed, false otherwise. 
      * Reference: https://github.com/mend/renovate-ce-ee/blob/main/docs/reporting-apis.md#repo-info
      */
+
     protected boolean isGithubAppEnabledOnRepositoryWithRenovateApi(String fullRepoName) {
-        try {
-            String apiEndpoint = appServerApiEndpoint + "/api/repos/" + fullRepoName;
-            URL url = new URL(apiEndpoint);
-            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-            conn.setRequestMethod("GET");
-            conn.setRequestProperty("Accept", "application/json");
-            conn.setRequestProperty("authorization", "Bearer " + appServerApiToken);
-            conn.connect();
-            
-            Integer responseCode = conn.getResponseCode();
-            if (responseCode != 200) {
-                throw new RuntimeException("HttpResponseCode: " + responseCode);
-            } else {
-                String inline = "";
-                Scanner scanner = new Scanner(url.openStream());
-                while (scanner.hasNext()) {
-                    inline += scanner.nextLine();
-                }
-                scanner.close();
-
-                //Using the JSON simple library parse the string into a json object
-                JSONParser parse = new JSONParser();
-                JSONObject dataObject = (JSONObject) parse.parse(inline);
-                String appInstallationState = (String) dataObject.get("state");
-                String appActivationStatus = (String) dataObject.get("status");
-
-                // Return app installation and activation status
-                if (appInstallationState == "installed" && appActivationStatus == "activated") {
-                    return true;
-                }
-                return false;
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            return false;
-        }
+        return isGithubAppEnabledOnRepositoryWithRenovateApi(fullRepoName, httpClient);
     }
 
+    protected boolean isGithubAppEnabledOnRepositoryWithRenovateApi(String fullRepoName, CloseableHttpClient httpClient) {
+        String apiEndpoint = appServerApiEndpoint + "/api/repos/" + fullRepoName;
+        HttpGet httpGet = new HttpGet(apiEndpoint);
+        httpGet.setHeader("Authorization", appServerApiToken);
+        httpGet.setHeader("Accept", "application/json");
+        try (CloseableHttpResponse response = httpClient.execute(httpGet)) {
+            int statusCode = response.getStatusLine().getStatusCode();
+            log.warn("[isGithubAppEnabledOnRepositoryWithRenovateApi] -- Response code `{}` while trying to get app installation by Renovate API", statusCode);
+            if (statusCode >= 500) {
+                throw new UncheckedIOException(new IOException());
+            }
+            return statusCode == 200;
+        } catch (IOException exception) {
+            log.warn("[isGithubAppEnabledOnRepositoryWithRenovateApi] -- Exception while trying to get app installation using Renovate API: {}", exception);
+            throw new UncheckedIOException(exception);
+        }
+    }
 
     /**
      * Method to refresh the JWT token if needed. Checks the JWT expiry time, and if it is 60s away from expiring, refreshes it. 
      * @param appId = The id of the Github App to generate the JWT for
      * @param privateKeyPath = The path to the private key of the Github App to generate the JWT for
      */
-    private void refreshJwtIfNeeded(String appId, String privateKeyPath) {
+    protected void refreshJwtIfNeeded(String appId, String privateKeyPath) {
         if (jwt == null || jwtExpiry.isBefore(Instant.now().minusSeconds(60))) {  // Adding a buffer to ensure token validity
             try {
                 generateJWT(appId, privateKeyPath);
