@@ -57,7 +57,7 @@ jobs:
   deploy:
     needs: [ integration-test, get-next-version ]
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/disable-dfiu-if-renovate-installed'
     steps:
       - name: checkout
         uses: actions/checkout@v4
