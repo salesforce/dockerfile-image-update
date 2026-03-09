@@ -7,18 +7,18 @@ jobs:
     if: startsWith(github.ref, 'dockerfile-image-update-') == false
     steps:
       - name: checkout
-        uses: actions/checkout@main
+        uses: actions/checkout@v4
         with:
           ref: ${{ github.ref }}
       - name: docker build
         run: make mvn-docker-build get-main-project-dirs
       - name: Upload main module
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v4
         with:
           name: dockerfile-image-update
           path: dockerfile-image-update
       - name: Upload itest module
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v4
         with:
           name: dockerfile-image-update-itest
           path: dockerfile-image-update-itest
@@ -29,7 +29,7 @@ jobs:
       version: ${{ steps.version_tag.outputs.new_version }}
     steps:
       - name: checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - name: get version
@@ -42,13 +42,14 @@ jobs:
     needs: [build-test, get-next-version]
     steps:
       - name: checkout
-        uses: actions/checkout@main
+        uses: actions/checkout@v4
         with:
           ref: ${{ github.ref }}
       - name: Download itest dir
-        uses: actions/download-artifact@v1
+        uses: actions/download-artifact@v4
         with:
           name: dockerfile-image-update-itest
+          path: dockerfile-image-update-itest
       - name: integration test
         env:
           ITEST_GH_TOKEN: ${{ secrets.ITEST_GH_TOKEN }}
@@ -59,13 +60,14 @@ jobs:
     if: github.ref == 'refs/heads/main'
     steps:
       - name: checkout
-        uses: actions/checkout@main
+        uses: actions/checkout@v4
         with:
           ref: ${{ github.ref }}
       - name: Download main project dir
-        uses: actions/download-artifact@v1
+        uses: actions/download-artifact@v4
         with:
           name: dockerfile-image-update
+          path: dockerfile-image-update
       - name: deploy
         env:
           encrypted_00fae8efff8c_iv: ${{ secrets.encrypted_00fae8efff8c_iv }}
