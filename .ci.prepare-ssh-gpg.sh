@@ -1,20 +1,45 @@
 #!/usr/bin/env bash
 set -ex
-# Import SSH key to access GitHub for versioning
-openssl aes-256-cbc -K "${encrypted_96e73e3cb232_key}" -iv "${encrypted_96e73e3cb232_iv}" \
-    -in id_rsa_dockerfile_image_update.enc -out id_rsa_dockerfile_image_update -d
-mkdir -p "${HOME}/.ssh"
-mv -f id_rsa_dockerfile_image_update "${HOME}/.ssh/id_rsa"
-chmod 600 "${HOME}/.ssh/id_rsa"
-echo "github.com ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCj7ndNxQowgcQnjshcLrqPEiiphnt+VTTvDP6mHBL9j1aNUkY4Ue1gvwnGLVlOhGeYrnZaMgRK6+PKCUXaDbC7qtbW8gIkhL7aGCsOr/C56SJMy/BCZfxd1nWzAOxSDPgVsmerOBYfNqltV9/hWCqBywINIR+5dIg6JTJ72pcEpEjcYgXkE2YEFXV1JHnsKgbLWNlhScqb2UmyRkQyytRLtL+38TGxkxCflmO+5Z8CSSNY7GidjMIZ7Q4zMjA2n1nGrlTDkzwDCsw+wqFPGQA179cnfGWOWRVruj16z6XyvxvjJwbz0wQZ75XK5tKSb7FNyeIEs4TT4jk+S4dhPeAUC5y+bDYirYgM4GC7uEnztnZyaVWQ7B381AK4Qdrwt51ZqExKbQpTUNn+EjqoTwvqNj4kqx5QUCI0ThS/YkOxJCXmPUWZbhjpCg56i+2aB6CmK2JGhn57K5mj0MNdBXA4/WnwH6XoPWJzK5Nyu2zB3nAZp+S5hpQs+p1vN1/wsjk=" >> "${HOME}/.ssh/known_hosts"
 
-# Import code signing keys
-openssl aes-256-cbc -K "${encrypted_00fae8efff8c_key}" -iv "${encrypted_00fae8efff8c_iv}" -in codesigning.asc.enc -out codesigning.asc -d
-gpg --no-tty --batch --yes --fast-import codesigning.asc
+# Decrypt keys if openssl is available (usually in the alpine/openssl container)
+if command -v openssl >/dev/null 2>&1; then
+    # Import SSH key to access GitHub for versioning
+    if [ ! -f id_rsa_dockerfile_image_update ]; then
+        openssl aes-256-cbc -K "${encrypted_96e73e3cb232_key}" -iv "${encrypted_96e73e3cb232_iv}" \
+            -in id_rsa_dockerfile_image_update.enc -out id_rsa_dockerfile_image_update -d
+    fi
 
-# Allow loopback pinentry in maven-gpg-plugin (ain't nobody need no shared tty)
-echo "allow-loopback-pinentry" >> ~/.gnupg/gpg-agent.conf
-gpgconf --reload gpg-agent
+    # Import code signing keys
+    if [ ! -f codesigning.asc ]; then
+        openssl aes-256-cbc -K "${encrypted_00fae8efff8c_key}" -iv "${encrypted_00fae8efff8c_iv}" \
+            -in codesigning.asc.enc -out codesigning.asc -d
+    fi
+fi
 
-# Remove code signing keys (since the releaser plugin requires a clean git workspace)
-shred --remove codesigning.asc
+# Setup SSH and GPG if tools are available (usually in the maven container)
+if command -v gpg >/dev/null 2>&1; then
+    # Setup SSH
+    if [ -f id_rsa_dockerfile_image_update ]; then
+        mkdir -p "${HOME}/.ssh"
+        mv -f id_rsa_dockerfile_image_update "${HOME}/.ssh/id_rsa"
+        chmod 600 "${HOME}/.ssh/id_rsa"
+        echo "github.com ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCj7ndNxQowgcQnjshcLrqPEiiphnt+VTTvDP6mHBL9j1aNUkY4Ue1gvwnGLVlOhGeYrnZaMgRK6+PKCUXaDbC7qtbW8gIkhL7aGCsOr/C56SJMy/BCZfxd1nWzAOxSDPgVsmerOBYfNqltV9/hWCqBywINIR+5dIg6JTJ72pcEpEjcYgXkE2YEFXV1JHnsKgbLWNlhScqb2UmyRkQyytRLtL+38TGxkxCflmO+5Z8CSSNY7GidjMIZ7Q4zMjA2n1nGrlTDkzwDCsw+wqFPGQA179cnfGWOWRVruj16z6XyvxvjJwbz0wQZ75XK5tKSb7FNyeIEs4TT4jk+S4dhPeAUC5y+bDYirYgM4GC7uEnztnZyaVWQ7B381AK4Qdrwt51ZqExKbQpTUNn+EjqoTwvqNj4kqx5QUCI0ThS/YkOxJCXmPUWZbhjpCg56i+2aB6CmK2JGhn57K5mj0MNdBXA4/WnwH6XoPWJzK5Nyu2zB3nAZp+S5hpQs+p1vN1/wsjk=" >> "${HOME}/.ssh/known_hosts"
+    fi
+
+    # Setup GPG
+    if [ -f codesigning.asc ]; then
+        gpg --no-tty --batch --yes --fast-import codesigning.asc
+
+        # Allow loopback pinentry in maven-gpg-plugin (ain't nobody need no shared tty)
+        mkdir -p ~/.gnupg
+        echo "allow-loopback-pinentry" >> ~/.gnupg/gpg-agent.conf
+        gpgconf --reload gpg-agent
+
+        # Remove code signing keys (since the releaser plugin requires a clean git workspace)
+        if command -v shred >/dev/null 2>&1; then
+            shred --remove codesigning.asc
+        else
+            rm -f codesigning.asc
+        fi
+    fi
+fi
