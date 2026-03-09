@@ -21,6 +21,19 @@ git config --local user.name "github-actions[bot]"
 # Set up Maven settings and release
 mkdir -p "${HOME}/.m2"
 cp .ci.settings.xml "${HOME}"/.m2/settings.xml
+
+# First run: decrypt secrets using alpine/openssl image
+docker run --rm -v "${PWD}":/usr/src/build \
+                -w /usr/src/build \
+                -e encrypted_96e73e3cb232_key \
+                -e encrypted_96e73e3cb232_iv \
+                -e encrypted_00fae8efff8c_key \
+                -e encrypted_00fae8efff8c_iv \
+                --entrypoint "" \
+                alpine/openssl \
+                /bin/sh .ci.prepare-ssh-gpg.sh
+
+# Second run: setup keys and execute maven command using the current image
 docker run --rm -v "${PWD}":/usr/src/build \
                 -v "${HOME}/.m2":/root/.m2 \
                 -w /usr/src/build \
@@ -32,7 +45,7 @@ docker run --rm -v "${PWD}":/usr/src/build \
                 -e CI_DEPLOY_PASSWORD \
                 -e GPG_KEY_NAME \
                 -e GPG_PASSPHRASE \
-                maven:3.6-openjdk-"${JDK_VERSION}" \
+                maven:3.6-jdk-"${JDK_VERSION}" \
                 /bin/bash -c "source .ci.prepare-ssh-gpg.sh && cd dockerfile-image-update && mvn --quiet --batch-mode deploy -P release scm:tag -Drevision=${NEW_PATCH_VERSION}"
 
 # Get MVN_VERSION
