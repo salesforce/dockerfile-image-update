@@ -21,7 +21,7 @@ mvn-docker-build:
 #TODO: add --abort-on-container-exit to docker-compose once itests can be made not to flap see issue #21
 integration-test:
 	@-echo git_api_token=${ITEST_GH_TOKEN} > $(CURDIR)/itest.env
-	user_itest_secrets_file_secret=$(CURDIR)/itest.env docker-compose up
+	user_itest_secrets_file_secret=$(CURDIR)/itest.env docker compose up
 	rm itest.env
 
 get-main-project-dirs:
