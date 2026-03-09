@@ -149,7 +149,7 @@ public class GithubAppCheck {
     }
 
     protected boolean isGithubAppEnabledOnRepositoryWithRenovateApi(String fullRepoName, CloseableHttpClient httpClient) {
-        String apiEndpoint = appServerApiEndpoint + "/api/repos/" + fullRepoName;
+        String apiEndpoint = appServerApiEndpoint + "/api/v1/repos/" + fullRepoName;
         HttpGet httpGet = new HttpGet(apiEndpoint);
         httpGet.setHeader("Authorization", appServerApiToken);
         httpGet.setHeader("Accept", "application/json");
