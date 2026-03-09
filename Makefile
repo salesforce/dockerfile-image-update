@@ -1,7 +1,7 @@
 all: mvn-docker-build get-itest-jar-from-maven-image integration-test
 
 # JDK_VERSION should be the JDK version we use to source our container dependencies
-JDK_VERSION=11
+JDK_VERSION=17
 MVN_SNAPSHOT_VERSION=1.1-SNAPSHOT
 
 DFIU_DIR=dockerfile-image-update
@@ -21,7 +21,7 @@ mvn-docker-build:
 #TODO: add --abort-on-container-exit to docker-compose once itests can be made not to flap see issue #21
 integration-test:
 	@-echo git_api_token=${ITEST_GH_TOKEN} > $(CURDIR)/itest.env
-	user_itest_secrets_file_secret=$(CURDIR)/itest.env docker-compose up
+	user_itest_secrets_file_secret=$(CURDIR)/itest.env docker compose up
 	rm itest.env
 
 get-main-project-dirs:
