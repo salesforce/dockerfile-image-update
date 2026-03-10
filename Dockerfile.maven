@@ -1,5 +1,5 @@
 ARG JDK_VERSION
-FROM maven:3.8-openjdk-${JDK_VERSION}-slim AS build
+FROM maven:3.9-eclipse-temurin-${JDK_VERSION} AS build
 
 COPY . .
 
