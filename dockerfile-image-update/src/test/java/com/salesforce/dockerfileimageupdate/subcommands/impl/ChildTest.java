@@ -52,8 +52,8 @@ public class ChildTest {
         DockerfileGitHubUtil dockerfileGitHubUtil = mock(DockerfileGitHubUtil.class);
         RateLimiter rateLimiter = new RateLimiter();
         GitHubJsonStore imageTagStore = mock(GitHubJsonStore.class);
-        when(dockerfileGitHubUtil.getRepo(any())).thenReturn(new GHRepository());
-        when(dockerfileGitHubUtil.getOrCreateFork(any())).thenReturn(new GHRepository());
+        when(dockerfileGitHubUtil.getRepo(any())).thenReturn(mock(GHRepository.class));
+        when(dockerfileGitHubUtil.getOrCreateFork(any())).thenReturn(mock(GHRepository.class));
         doNothing().when(dockerfileGitHubUtil).modifyAllOnGithub(any(), any(), any(), any(), any());
 
         when(dockerfileGitHubUtil.getGitHubJsonStore("test")).thenReturn(imageTagStore);
@@ -81,8 +81,8 @@ public class ChildTest {
         Namespace ns = new Namespace(nsMap);
         DockerfileGitHubUtil dockerfileGitHubUtil = mock(DockerfileGitHubUtil.class);
 
-        when(dockerfileGitHubUtil.getRepo(any())).thenReturn(new GHRepository());
-        when(dockerfileGitHubUtil.getOrCreateFork(any())).thenReturn(new GHRepository());
+        when(dockerfileGitHubUtil.getRepo(any())).thenReturn(mock(GHRepository.class));
+        when(dockerfileGitHubUtil.getOrCreateFork(any())).thenReturn(mock(GHRepository.class));
         doNothing().when(dockerfileGitHubUtil).modifyAllOnGithub(any(), any(), any(), any(), any());
         doNothing().when(dockerfileGitHubUtil).createPullReq(any(), anyString(), any(), any(),eq(null));
 
