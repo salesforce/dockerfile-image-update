@@ -43,7 +43,7 @@ public class GitHubPullRequestSenderTest {
         when(contentsWithImageIterator.next()).thenReturn(content1, content2, content3, null);
         when(contentsWithImage.iterator()).thenReturn(contentsWithImageIterator);
 
-        when(dockerfileGitHubUtil.getOrCreateFork(Mockito.any())).thenReturn(new GHRepository());
+        when(dockerfileGitHubUtil.getOrCreateFork(Mockito.any())).thenReturn(mock(GHRepository.class));
         when(dockerfileGitHubUtil.getRepo(any())).thenReturn(mock(GHRepository.class));
 
         ForkableRepoValidator forkableRepoValidator = mock(ForkableRepoValidator.class);
@@ -86,7 +86,7 @@ public class GitHubPullRequestSenderTest {
         when(contentsWithImageIterator.next()).thenReturn(content1, content2, content3, null);
         when(contentsWithImage.iterator()).thenReturn(contentsWithImageIterator);
 
-        when(dockerfileGitHubUtil.getOrCreateFork(Mockito.any())).thenReturn(new GHRepository());
+        when(dockerfileGitHubUtil.getOrCreateFork(Mockito.any())).thenReturn(mock(GHRepository.class));
         when(dockerfileGitHubUtil.getRepo(any())).thenReturn(mock(GHRepository.class));
 
         ForkableRepoValidator forkableRepoValidator = mock(ForkableRepoValidator.class);
