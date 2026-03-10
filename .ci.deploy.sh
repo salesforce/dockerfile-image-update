@@ -45,7 +45,7 @@ docker run --rm -v "${PWD}":/usr/src/build \
                 -e CI_DEPLOY_PASSWORD \
                 -e GPG_KEY_NAME \
                 -e GPG_PASSPHRASE \
-                maven:3.6-openjdk-"${JDK_VERSION}" \
+                maven:3.9-eclipse-temurin-"${JDK_VERSION}" \
                 /bin/bash -c "cd dockerfile-image-update && mvn --quiet --batch-mode deploy -P release scm:tag -Drevision=${NEW_PATCH_VERSION}"
 
 # Get MVN_VERSION
